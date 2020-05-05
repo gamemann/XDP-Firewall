@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <getopt.h>
 #include <signal.h>
 #include <inttypes.h>
+#include <time.h>
+
+#include <net/if.h>
+#include <linux/if_link.h>
 
 #include "../libbpf/src/bpf.h"
 #include "../libbpf/src/libbpf.h"
@@ -22,6 +27,16 @@ const struct option opts[] =
     {"help", no_argument, &help, 'h'},
     {NULL, 0, NULL, 0}
 };
+
+// Other variables.
+static uint8_t cont = 1;
+static int filter_map_fd = -1;
+static int count_map_fd = -1;
+
+void signalHndl(int tmp)
+{
+    cont = 0;
+}
 
 void parse_command_line(int argc, char *argv[])
 {
@@ -44,6 +59,185 @@ void parse_command_line(int argc, char *argv[])
     }
 }
 
+void update_BPF(struct config_map *conf)
+{
+    // Loop through all filters and delete the map.
+    for (uint32_t i = 0; i < MAX_FILTERS; i++)
+    {
+        if (bpf_map_delete_elem(filter_map_fd, &i) != 0)
+        {
+            fprintf(stderr, "Error deleting BPF item #%d\n", i);
+        }
+    }
+
+    // Add a filter to the filter maps.
+    for (uint32_t i = 0; i < conf->filterCount; i++)
+    {
+        if (bpf_map_update_elem(filter_map_fd, &i, &conf->filters[i], BPF_ANY))
+        {
+            fprintf(stderr, "Error updating BPF item #%d\n", i);
+        }
+    }
+}
+
+int update_config(struct config_map *conf, char *configFile)
+{
+    // Open config file.
+    if (OpenConfig(configFile) != 0)
+    {
+        fprintf(stderr, "Error opening filters file: %s\n", configFile);
+        
+        return -1;
+    }
+
+    SetConfigDefaults(conf);
+
+    for (uint16_t i = 0; i < MAX_FILTERS; i++)
+    {
+        conf->filters[i] = (struct filter) {0};
+    }
+
+    // Read config and check for errors.
+    if (ReadConfig(conf) != 0)
+    {
+        fprintf(stderr, "Error reading filters file.\n");
+
+        return -1;
+    }
+
+    return 0;
+}
+
+int find_map_fd(struct bpf_object *bpf_obj, const char *mapname)
+{
+    struct bpf_map *map;
+    int fd = -1;
+
+    map = bpf_object__find_map_by_name(bpf_obj, mapname);
+
+    if (!map) 
+    {
+        fprintf(stderr, "Error finding eBPF map: %s\n", mapname);
+
+        goto out;
+    }
+
+    fd = bpf_map__fd(map);
+
+    out:
+        return fd;
+}
+
+
+int load_bpf_object_file__simple(const char *filename)
+{
+    int first_prog_fd = -1;
+    struct bpf_object *obj;
+    int err;
+
+    err = bpf_prog_load(filename, BPF_PROG_TYPE_XDP, &obj, &first_prog_fd);
+
+    if (err)
+    {
+        fprintf(stderr, "Error loading XDP program. File => %s. Error => %s. Error Num => %d\n", filename, strerror(-err), err);
+
+        return -1;
+    }
+
+    filter_map_fd = find_map_fd(obj, "filters_map");
+    count_map_fd = find_map_fd(obj, "count_map");
+
+    return first_prog_fd;
+}
+
+static int xdp_detach(int ifindex, uint32_t xdp_flags)
+{
+    int err;
+
+    err = bpf_set_link_xdp_fd(ifindex, -1, xdp_flags);
+
+    if (err < 0)
+    {
+        fprintf(stderr, "Error detaching XDP program. Error => %s. Error Num => %.d\n", strerror(-err), err);
+
+        return -1;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+static int xdp_attach(int ifindex, uint32_t *xdp_flags, int prog_fd)
+{
+    int err;
+    
+    err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+
+    if (err == -EEXIST && !(*xdp_flags & XDP_FLAGS_UPDATE_IF_NOEXIST))
+    {
+        
+        uint32_t oldflags = *xdp_flags;
+
+        *xdp_flags &= ~XDP_FLAGS_MODES;
+        *xdp_flags |= (oldflags & XDP_FLAGS_SKB_MODE) ? XDP_FLAGS_DRV_MODE : XDP_FLAGS_SKB_MODE;
+
+        err = bpf_set_link_xdp_fd(ifindex, -1, *xdp_flags);
+
+        if (!err)
+        {
+            err = bpf_set_link_xdp_fd(ifindex, prog_fd, oldflags);
+        }
+    }
+
+    // Check for no XDP-Native support.
+    if (err)
+    {
+        fprintf(stdout, "XDP-Native may not be supported with this NIC. Using SKB instead.\n");
+
+        // Remove DRV Mode flag.
+        if (*xdp_flags & XDP_FLAGS_DRV_MODE)
+        {
+            *xdp_flags &= ~XDP_FLAGS_DRV_MODE;
+        }
+
+        // Add SKB Mode flag.
+        if (!(*xdp_flags & XDP_FLAGS_SKB_MODE))
+        {
+            *xdp_flags |= XDP_FLAGS_SKB_MODE;
+        }
+
+        err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+    }
+
+    if (err < 0)
+    {
+        fprintf(stderr, "Error attaching XDP program. Error => %s. Error Num => %d. IfIndex => %d.\n", strerror(-err), -err, ifindex);
+
+        switch(-err)
+        {
+            case EBUSY:
+
+            case EEXIST:
+            {
+                xdp_detach(ifindex, *xdp_flags);
+                fprintf(stderr, "Additional: XDP already loaded on device.\n");
+                break;
+            }
+
+            case EOPNOTSUPP:
+                fprintf(stderr, "Additional: XDP-native nor SKB not supported? Not sure how that's possible.\n");
+
+                break;
+
+            default:
+                break;
+        }
+
+        return -1;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int main(int argc, char *argv[])
 {
     // Parse the command line.
@@ -56,16 +250,92 @@ int main(int argc, char *argv[])
             "--config -c => Config file location (default is /etc/xdpfw.conf).\n" \
             "--help -h => Print help menu.\n");
 
-        exit(0);
+        exit(EXIT_SUCCESS);
     }
 
     // Check for --config argument.
     if (configFile == NULL)
     {
         // Assign default.
-        configFile = "/etc/xdpfw.conf";
+        configFile = "/etc/xdpfw/xdpfw.conf";
+    }
+
+    // Initialize config.
+    struct config_map conf;
+
+    SetConfigDefaults(&conf);
+
+    // Create last updated variable.
+    time_t lastUpdated = time(NULL);
+
+    // Update config.
+    update_config(&conf, configFile);
+
+    // Get device.
+    int dev;
+
+    if ((dev = if_nametoindex(conf.interface)) < 0)
+    {
+        fprintf(stderr, "Error finding device %s.\n", conf.interface);
+
+        exit(EXIT_FAILURE);
+    }
+
+    // XDP variables.
+    int prog_fd;
+    uint32_t xdpflags;
+    char *filename = "/etc/xdpfw/xdpfw_kern.o";
+
+    xdpflags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
+
+    // Get XDP's ID.
+    prog_fd = load_bpf_object_file__simple(filename);
+
+    if (prog_fd <= 0)
+    {
+        fprintf(stderr, "Error loading eBPF object file. File name => %s.\n", filename);
+
+        exit(EXIT_FAILURE);
+    }
+    
+    // Attach XDP program to device.
+    if (xdp_attach(dev, &xdpflags, prog_fd) != 0)
+    {
+        exit(EXIT_FAILURE);
+    }
+
+    // Signal.
+    signal(SIGINT, signalHndl);
+
+    while (cont)
+    {
+        // Get current time.
+        time_t curTime = time(NULL);
+
+        // Check for auto-update.
+        if (conf.updateTime > 0 && (curTime - lastUpdated) > conf.updateTime)
+        {
+            // Update config.
+            update_config(&conf, configFile);
+
+            // Update BPF maps.
+            update_BPF(&conf);
+            
+            // Update last updated variable.
+            lastUpdated = time(NULL);
+        }
+
+        sleep(1);
+    }
+
+    // Detach XDP program.
+    if (xdp_detach(dev, xdpflags) != 0)
+    {
+        fprintf(stderr, "Error removing XDP program from device %s\n", conf.interface);
+
+        exit(EXIT_FAILURE);
     }
 
     // Exit program successfully.
-    exit(1);
+    exit(EXIT_SUCCESS);
 }
