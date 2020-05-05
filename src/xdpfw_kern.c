@@ -58,6 +58,14 @@ struct bpf_map_def SEC("maps") count_map =
     .max_entries = 1
 };
 
+struct bpf_map_def SEC("maps") stats_map =
+{
+    .type = BPF_MAP_TYPE_ARRAY,
+    .key_size = sizeof(uint32_t),
+    .value_size = sizeof(struct xdpfw_stats),
+    .max_entries = 1
+};
+
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
 {
@@ -73,6 +81,18 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_ABORTED;
     }
 
+    // Filter count.
+    uint8_t filterCount;
+
+    if (*filters > MAX_FILTERS)
+    {
+        filterCount = MAX_FILTERS;
+    }
+    else
+    {
+        filterCount = *filters;
+    }
+    
     // Initialize data.
     void *data_end = (void *)(long)ctx->data_end;
     void *data = (void *)(long)ctx->data;
@@ -91,8 +111,9 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     // Let's get the filters we need.
     struct filter *filter[MAX_FILTERS];
+    //struct filter *(*p)[] = &filter;
 
-    for (uint16_t i = 0; i < *filters; i++)
+    for (uint8_t i = 0; i < MAX_FILTERS; i++)
     {
         uint32_t key = i;
         
@@ -110,12 +131,71 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
             return XDP_PASS;
         }
-
-        // Let's match IP-header level filtering.
-        for (uint16_t i = 0; i < *filters; i++)
+        
+        // Check IP header protocols.
+        if (unlikely(iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
         {
-            // Check if enabled.
-            if (filter[i]->enabled == 0)
+            return XDP_PASS;
+        }
+
+        struct tcphdr *tcph;
+        struct udphdr *udph;
+        struct icmphdr *icmph;
+        
+        uint16_t l4headerLen = 0;
+
+        // Check protocol.
+        if (iph->protocol == IPPROTO_TCP)
+        {
+            // Scan TCP header.
+            tcph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
+
+            // Check TCP header.
+            if (tcph + 1 > (struct tcphdr *)data_end)
+            {
+                return XDP_PASS;
+            }
+
+            // Set L4 Header length.
+            l4headerLen = sizeof(struct tcphdr);
+        }
+        else if (iph->protocol == IPPROTO_UDP)
+        {
+            // Scan UDP header.
+            udph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
+
+            // Check TCP header.
+            if (udph + 1 > (struct udphdr *)data_end)
+            {
+                return XDP_PASS;
+            }
+
+            // Set L4 Header length.
+            l4headerLen = sizeof(struct udphdr);
+        }
+        else if (iph->protocol == IPPROTO_ICMP)
+        {
+            // Scan UDP header.
+            icmph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
+
+            // Check TCP header.
+            if (icmph + 1 > (struct icmphdr *)data_end)
+            {
+                return XDP_PASS;
+            }
+
+            // Set L4 Header length.
+            l4headerLen = sizeof(struct icmphdr);
+        }
+        
+        for (uint8_t i = 0; i < MAX_FILTERS; i++)
+        {
+            if (!filter[i] || filter[i]->id < 1)
+            {
+                break;
+            }
+
+            if (!filter[i]->enabled)
             {
                 continue;
             }
@@ -133,247 +213,146 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Max TTL length.
-            if (filter[i]->max_ttl > iph->ttl)
+            if (filter[i]->do_max_ttl && filter[i]->max_ttl > iph->ttl)
             {
                 continue;
             }
 
             // Min TTL length.
-            if (filter[i]->min_ttl < iph->ttl)
+            if (filter[i]->do_min_ttl && filter[i]->min_ttl < iph->ttl)
             {
                 continue;
             }
 
             // Max packet length.
-            if (filter[i]->max_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter[i]->do_max_len && filter[i]->max_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
 
             // Min packet length.
-            if (filter[i]->min_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter[i]->do_min_len && filter[i]->min_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
 
             // TOS.
-            if (filter[i]->tos != 0 && filter[i]->tos == iph->tos)
+            if (filter[i]->do_tos && filter[i]->tos != iph->tos)
             {
                 continue;
             }
 
-            // Matched.
-            matched = 1;
-            action = filter[i]->action;
-
-            break;
-        }
-
-        uint16_t l4headerLen = 0;
-
-        // Check protocol.
-        if (iph->protocol == IPPROTO_TCP)
-        {
-            // Scan TCP header.
-            struct tcphdr *tcph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
-
-            // Check TCP header.
-            if (tcph + 1 > (struct tcphdr *)data_end)
+            // Do TCP options.
+            if (iph->protocol == IPPROTO_TCP && filter[i]->tcpopts.enabled)
             {
-                return XDP_PASS;
-            }
-
-            // Set L4 Header length.
-            l4headerLen = sizeof(struct tcphdr);
-
-            // Time to loop through each filtering rule and look for TCP options.
-            for (uint16_t i = 0; i < *filters; i++)
-            {
-                // Enabled.
-                if (filter[i]->tcpopts.enabled == 0)
-                {
-                    continue;
-                }
-
                 // Source port.
-                if (filter[i]->tcpopts.sport != 0 && htons(filter[i]->tcpopts.sport) != tcph->source)
+                if (filter[i]->tcpopts.do_sport && htons(filter[i]->tcpopts.sport) != tcph->source)
                 {
                     continue;
                 }
 
                 // Destination port.
-                if (filter[i]->tcpopts.dport != 0 && htons(filter[i]->tcpopts.dport) != tcph->dest)
+                if (filter[i]->tcpopts.do_dport && htons(filter[i]->tcpopts.dport) != tcph->dest)
                 {
                     continue;
                 }
 
                 // URG flag.
-                if (filter[i]->tcpopts.urg != tcph->urg)
+                if (filter[i]->tcpopts.do_urg && filter[i]->tcpopts.urg != tcph->urg)
                 {
                     continue;
                 }
 
                 // ACK flag.
-                if (filter[i]->tcpopts.ack != tcph->ack)
+                if (filter[i]->tcpopts.do_ack && filter[i]->tcpopts.ack != tcph->ack)
                 {
                     continue;
                 }
 
                 // RST flag.
-                if (filter[i]->tcpopts.rst != tcph->rst)
+                if (filter[i]->tcpopts.do_rst && filter[i]->tcpopts.rst != tcph->rst)
                 {
                     continue;
                 }
 
                 // PSH flag.
-                if (filter[i]->tcpopts.psh != tcph->psh)
+                if (filter[i]->tcpopts.do_psh && filter[i]->tcpopts.psh != tcph->psh)
                 {
                     continue;
                 }
 
                 // SYN flag.
-                if (filter[i]->tcpopts.syn != tcph->syn)
+                if (filter[i]->tcpopts.do_syn && filter[i]->tcpopts.syn != tcph->syn)
                 {
                     continue;
                 }
 
                 // FIN flag.
-                if (filter[i]->tcpopts.fin != tcph->fin)
+                if (filter[i]->tcpopts.do_fin && filter[i]->tcpopts.fin != tcph->fin)
                 {
                     continue;
                 }
-
-                matched = 1;
-                action = filter[i]->action;
-
-                break;
             }
-        }
-        else if (iph->protocol == IPPROTO_UDP)
-        {
-            // Scan UDP header.
-            struct udphdr *udph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
-
-            // Check TCP header.
-            if (udph + 1 > (struct udphdr *)data_end)
+            else if (iph->protocol == IPPROTO_UDP && filter[i]->udpopts.enabled)
             {
-                return XDP_PASS;
-            }
-
-            // Set L4 Header length.
-            l4headerLen = sizeof(struct udphdr);
-
-            // Time to loop through each filtering rule and look for TCP options.
-            for (uint16_t i = 0; i < *filters; i++)
-            {
-                // Enabled.
-                if (filter[i]->udpopts.enabled == 0)
-                {
-                    continue;
-                }
-
                 // Source port.
-                if (filter[i]->udpopts.sport != 0 && htons(filter[i]->udpopts.sport) != udph->source)
+                if (filter[i]->udpopts.do_sport && htons(filter[i]->udpopts.sport) != udph->source)
                 {
                     continue;
                 }
 
                 // Destination port.
-                if (filter[i]->udpopts.dport != 0 && htons(filter[i]->udpopts.dport) != udph->dest)
+                if (filter[i]->udpopts.do_dport && htons(filter[i]->udpopts.dport) != udph->dest)
                 {
                     continue;
                 }
-
-                matched = 1;
-                action = filter[i]->action;
-
-                break;
             }
-        }
-        else if (iph->protocol == IPPROTO_ICMP)
-        {
-            // Scan UDP header.
-            struct icmphdr *icmph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
-
-            // Check TCP header.
-            if (icmph + 1 > (struct icmphdr *)data_end)
+            else if (iph->protocol == IPPROTO_ICMP && filter[i]->icmpopts.enabled)
             {
-                return XDP_PASS;
-            }
-
-            // Set L4 Header length.
-            l4headerLen = sizeof(struct icmphdr);
-
-            // Time to loop through each filtering rule and look for TCP options.
-            for (uint16_t i = 0; i < *filters; i++)
-            {
-                // Enabled.
-                if (filter[i]->icmpopts.enabled == 0)
-                {
-                    continue;
-                }
-
                 // Code.
-                if (filter[i]->icmpopts.code != icmph->code)
+                if (filter[i]->icmpopts.do_code && filter[i]->icmpopts.code != icmph->code)
                 {
                     continue;
                 }
 
                 // Type.
-                if (filter[i]->icmpopts.type != icmph->type)
+                if (filter[i]->icmpopts.do_type && filter[i]->icmpopts.type != icmph->type)
+                {
+                    continue;
+                }
+            }
+
+            if (filter[i]->payloadLen > 0)
+            {
+                uint8_t *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
+
+                // Now check packet data and ensure we have enough to match.
+                if (pcktData + (filter[i]->payloadLen + 1) > (uint8_t *)data_end)
                 {
                     continue;
                 }
 
-                matched = 1;
-                action = filter[i]->action;
-
-                break;
-            } 
-        }
-        
-        // Finally, perform match against payload data.
-        unsigned char *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
-
-        // Check packet data.
-        for (uint16_t i = 0; i < *filters; i++)
-        {
-            // Check if payload is set.
-            if (filter[i]->payloadLen < 1)
-            {
-                continue;
-            }
-
-            // Now check packet data and ensure we have enough to match.
-            if (pcktData + (filter[i]->payloadLen) + 1 > (unsigned char *)data_end)
-            {
-                continue;
-            }
-
-            uint8_t found = 1;
-
-            for (uint16_t j = 0; i < filter[i]->payloadLen; i++)
-            {
-                if (*pcktData == filter[i]->payloadMatch[j])
+                for (uint16_t j = 0; j < filter[i]->payloadLen; j++)
                 {
-                    pcktData++;
+                    if ((*pcktData++) == filter[i]->payloadMatch[j])
+                    {
+                        continue;
+                    }
 
-                    continue;
+                    break;
                 }
-
-                found = 0;
-
-                break;
             }
 
-            if (found)
-            {
-                matched = 1;
-                action = filter[i]->action;
-            }
+            // Matched.
+            #ifdef DEBUG
+                bpf_printk("Matched rule ID #%" PRIu8 "\n", filter[i]->id);
+            #endif
 
+            matched = 1;
+            action = filter[i]->action;
+
+            break;
         }
-
     }
 
     if (matched && action == 0)
