@@ -28,13 +28,12 @@ void SetConfigDefaults(struct config_map *cfg)
         cfg->filters[i].min_ttl = 0;
         cfg->filters[i].max_ttl = 255;
         cfg->filters[i].tos = 0;
-        cfg->filters[i].protocol = 0;
         
         cfg->filters[i].tcpopts.enabled = 0;
         cfg->filters[i].udpopts.enabled = 0;
         cfg->filters[i].icmpopts.enabled = 0;
 
-        for (uint16_t j = 0; i < MAX_PCKT_LENGTH; i++)
+        for (uint16_t j = 0; j < MAX_PCKT_LENGTH - 1; j++)
         {
             cfg->filters[i].payloadMatch[j] = 0;
         }
@@ -105,7 +104,7 @@ int ReadConfig(struct config_map *cfg)
     // Get auto update time.
     int updateTime;
 
-    if (!config_lookup_bool(&conf, "updatetime", &updateTime))
+    if (!config_lookup_int(&conf, "updatetime", &updateTime))
     {
         fprintf(stderr, "Error from LibConfig when reading 'updatetime' setting - %s\n\n", config_error_text(&conf));
         
@@ -139,7 +138,7 @@ int ReadConfig(struct config_map *cfg)
         // Enabled.
         int enabled;
 
-        if (config_setting_lookup_bool(filter, "enabled",  &enabled) != 0)
+        if (config_setting_lookup_bool(filter, "enabled",  &enabled) == CONFIG_FALSE)
         {
             // Print error and stop from existing this rule any further.
             fprintf(stderr, "Error from LibConfig when reading 'enabled' setting from filters array #%d. Error - %s\n\n", filters, config_error_text(&conf));
@@ -152,7 +151,7 @@ int ReadConfig(struct config_map *cfg)
         // Action (required).
         int action;
 
-        if (config_setting_lookup_int(filter, "action", &action) != 0)
+        if (config_setting_lookup_int(filter, "action", &action) == CONFIG_FALSE)
         {
             fprintf(stderr, "Error from LibConfig when reading 'action' setting from filters array #%d. Error - %s\n\n", filters, config_error_text(&conf));
 
@@ -179,26 +178,12 @@ int ReadConfig(struct config_map *cfg)
             cfg->filters[i].dstIP = inet_addr(dIP);
         }
 
-        // Protocol (required).
-        int protocol;
-
-        if (!config_setting_lookup_int(filter, "protocol", &protocol))
-        {
-            fprintf(stderr, "Error from LibConfig when reading 'protocol' setting from filters array #%d. Error - %s\n\n", filters, config_error_text(&conf));
-
-            cfg->filters[i].enabled = 0;
-
-            continue;
-        }
-
-        cfg->filters[i].protocol = protocol;
-
         // Minimum TTL (not required).
         int min_ttl;
 
         if (config_setting_lookup_int(filter, "min_ttl", &min_ttl))
         {
-            cfg->filters[i].min_ttl = min_ttl;
+            cfg->filters[i].min_ttl = (uint8_t)min_ttl;
         }
 
         // Maximum TTL (not required).
@@ -206,7 +191,7 @@ int ReadConfig(struct config_map *cfg)
 
         if (config_setting_lookup_int(filter, "max_ttl", &max_ttl))
         {
-            cfg->filters[i].max_ttl = max_ttl;
+            cfg->filters[i].max_ttl = (uint8_t)max_ttl;
         }
 
         // Minimum length (not required).
@@ -230,7 +215,7 @@ int ReadConfig(struct config_map *cfg)
 
         if (config_setting_lookup_int(filter, "tos", &tos))
         {
-            cfg->filters[i].tos = tos;
+            cfg->filters[i].tos = (uint8_t)tos;
         }
 
         // Payload match.
@@ -262,76 +247,81 @@ int ReadConfig(struct config_map *cfg)
         // Check TCP options.
         if (tcpopts != NULL)
         {
-            // Enabled.
-            int enabled;
-
-            if (config_setting_lookup_bool(tcpopts, "enabled", &enabled))
+            for (uint16_t j = 0; j < config_setting_length(tcpopts); j++)
             {
-                cfg->filters[i].tcpopts.enabled = enabled;
-            }
+                config_setting_t* tcp = config_setting_get_elem(tcpopts, j);
 
-            // Source port.
-            long long sport;
+                // Enabled.
+                int enabled;
 
-            if (config_setting_lookup_int64(tcpopts, "sport", &sport))
-            {
-                cfg->filters[i].tcpopts.sport = (uint16_t)sport;
-            }
+                if (config_setting_lookup_bool(tcp, "enabled", &enabled))
+                {
+                    cfg->filters[i].tcpopts.enabled = enabled;
+                }
 
-            // Destination port.
-            long long dport;
+                // Source port.
+                long long sport;
 
-            if (config_setting_lookup_int64(tcpopts, "dport", &dport))
-            {
-                cfg->filters[i].tcpopts.dport = (uint16_t)dport;
-            }
+                if (config_setting_lookup_int64(tcp, "sport", &sport))
+                {
+                    cfg->filters[i].tcpopts.sport = (uint16_t)sport;
+                }
 
-            // URG flag.
-            int urg;
+                // Destination port.
+                long long dport;
 
-            if (config_setting_lookup_bool(tcpopts, "urg", &urg))
-            {
-                cfg->filters[i].tcpopts.urg = urg;
-            }
+                if (config_setting_lookup_int64(tcp, "dport", &dport))
+                {
+                    cfg->filters[i].tcpopts.dport = (uint16_t)dport;
+                }
 
-            // ACK flag.
-            int ack;
+                // URG flag.
+                int urg;
 
-            if (config_setting_lookup_bool(tcpopts, "ack", &ack))
-            {
-                cfg->filters[i].tcpopts.ack = ack;
-            }
+                if (config_setting_lookup_bool(tcp, "urg", &urg))
+                {
+                    cfg->filters[i].tcpopts.urg = urg;
+                }
 
-            // RST flag.
-            int rst;
+                // ACK flag.
+                int ack;
 
-            if (config_setting_lookup_bool(tcpopts, "rst", &rst))
-            {
-                cfg->filters[i].tcpopts.rst = rst;
-            }
+                if (config_setting_lookup_bool(tcp, "ack", &ack))
+                {
+                    cfg->filters[i].tcpopts.ack = ack;
+                }
 
-            // PSH flag.
-            int psh;
+                // RST flag.
+                int rst;
 
-            if (config_setting_lookup_bool(tcpopts, "psh", &psh))
-            {
-                cfg->filters[i].tcpopts.psh = psh;
-            }
+                if (config_setting_lookup_bool(tcp, "rst", &rst))
+                {
+                    cfg->filters[i].tcpopts.rst = rst;
+                }
 
-            // SYN flag.
-            int syn;
+                // PSH flag.
+                int psh;
 
-            if (config_setting_lookup_bool(tcpopts, "syn", &syn))
-            {
-                cfg->filters[i].tcpopts.syn = syn;
-            }
+                if (config_setting_lookup_bool(tcp, "psh", &psh))
+                {
+                    cfg->filters[i].tcpopts.psh = psh;
+                }
 
-            // FIN flag.
-            int fin;
+                // SYN flag.
+                int syn;
 
-            if (config_setting_lookup_bool(tcpopts, "fin", &fin))
-            {
-                cfg->filters[i].tcpopts.fin = fin;
+                if (config_setting_lookup_bool(tcp, "syn", &syn))
+                {
+                    cfg->filters[i].tcpopts.syn = syn;
+                }
+
+                // FIN flag.
+                int fin;
+
+                if (config_setting_lookup_bool(tcp, "fin", &fin))
+                {
+                    cfg->filters[i].tcpopts.fin = fin;
+                }
             }
         }
 
@@ -341,28 +331,33 @@ int ReadConfig(struct config_map *cfg)
         // Check UDP options.
         if (udpopts != NULL)
         {
-            // Enabled.
-            int enabled;
-
-            if (config_setting_lookup_bool(udpopts, "enabled", &enabled))
+            for (uint16_t j = 0; j < config_setting_length(udpopts); j++)
             {
-                cfg->filters[i].udpopts.enabled = enabled;
-            }
+                config_setting_t* udp = config_setting_get_elem(udpopts, j);
 
-            // Source port.
-            long long sport;
+                // Enabled.
+                int enabled;
 
-            if (config_setting_lookup_int64(udpopts, "sport", &sport))
-            {
-                cfg->filters[i].udpopts.sport = (uint16_t)sport;
-            }
+                if (config_setting_lookup_bool(udp, "enabled", &enabled))
+                {
+                    cfg->filters[i].udpopts.enabled = enabled;
+                }
 
-            // Destination port.
-            long long dport;
+                // Source port.
+                long long sport;
 
-            if (config_setting_lookup_int64(udpopts, "dport", &dport))
-            {
-                cfg->filters[i].udpopts.dport = (uint16_t)dport;
+                if (config_setting_lookup_int64(udp, "sport", &sport))
+                {
+                    cfg->filters[i].udpopts.sport = (uint16_t)sport;
+                }
+
+                // Destination port.
+                long long dport;
+
+                if (config_setting_lookup_int64(udp, "dport", &dport))
+                {
+                    cfg->filters[i].udpopts.dport = (uint16_t)dport;
+                }
             }
         }
 
@@ -372,28 +367,33 @@ int ReadConfig(struct config_map *cfg)
         // Check UDP options.
         if (icmpopts != NULL)
         {
-            // Enabled.
-            int enabled;
-
-            if (config_setting_lookup_bool(icmpopts, "enabled", &enabled))
+            for (uint16_t j = 0; j < config_setting_length(icmpopts); j++)
             {
-                cfg->filters[i].icmpopts.enabled = enabled;
-            }
+                config_setting_t* icmp = config_setting_get_elem(icmpopts, j);
+                
+                // Enabled.
+                int enabled;
 
-            // ICMP code.
-            int code;
+                if (config_setting_lookup_bool(icmp, "enabled", &enabled))
+                {
+                    cfg->filters[i].icmpopts.enabled = enabled;
+                }
 
-            if (config_setting_lookup_int(icmpopts, "code", &code))
-            {
-                cfg->filters[i].icmpopts.code = code;
-            }
+                // ICMP code.
+                int code;
 
-            // ICMP type.
-            int type;
+                if (config_setting_lookup_int(icmp, "code", &code))
+                {
+                    cfg->filters[i].icmpopts.code = (uint8_t)code;
+                }
 
-            if (config_setting_lookup_int(icmpopts, "type", &type))
-            {
-                cfg->filters[i].icmpopts.type = type;
+                // ICMP type.
+                int type;
+
+                if (config_setting_lookup_int(icmp, "type", &type))
+                {
+                    cfg->filters[i].icmpopts.type = (uint8_t)type;
+                }
             }
         }
         

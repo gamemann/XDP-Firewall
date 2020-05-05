@@ -46,7 +46,6 @@ struct filter
 
     uint32_t srcIP;
     uint32_t dstIP;
-    uint8_t protocol;
 
     uint8_t min_ttl;
     uint8_t max_ttl;

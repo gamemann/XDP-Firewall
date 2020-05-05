@@ -3,10 +3,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <getopt.h>
 #include <signal.h>
 #include <inttypes.h>
 #include <time.h>
+#include <getopt.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
@@ -45,7 +45,7 @@ void parse_command_line(int argc, char *argv[])
 {
     int c;
 
-    while ((c = getopt_long(argc, argv, "c:hl", opts, 0)) != -1)
+    while ((c = getopt_long(argc, argv, "c:lh", opts, NULL)) != -1)
     {
         switch (c)
         {
@@ -54,9 +54,22 @@ void parse_command_line(int argc, char *argv[])
 
                 break;
 
+            case 'l':
+                list = 1;
+
+                break;
+
+            case 'h':
+                help = 1;
+
+                break;
+
             case '?':
                 fprintf(stderr, "Missing argument option...\n");
 
+                break;
+
+            default:
                 break;
         }
     }
@@ -241,6 +254,38 @@ static int xdp_attach(int ifindex, uint32_t *xdp_flags, int prog_fd)
     return EXIT_SUCCESS;
 }
 
+void SetConfigDefaultsX(struct config_map *cfg)
+{
+    cfg->updateTime = 0;
+    cfg->interface = "eth0";
+
+    for (uint16_t i = 0; i < MAX_FILTERS; i++)
+    {
+        cfg->filters[i].enabled = 0;
+        cfg->filters[i].action = 0;
+        cfg->filters[i].srcIP = 0;
+        cfg->filters[i].dstIP = 0;
+        cfg->filters[i].min_id = 0;
+        cfg->filters[i].max_id = 4294967295;
+        cfg->filters[i].min_len = 0;
+        cfg->filters[i].max_len = 65535;
+        cfg->filters[i].min_ttl = 0;
+        cfg->filters[i].max_ttl = 255;
+        cfg->filters[i].tos = 0;
+        
+        cfg->filters[i].tcpopts.enabled = 0;
+        cfg->filters[i].udpopts.enabled = 0;
+        cfg->filters[i].icmpopts.enabled = 0;
+
+        for (uint16_t j = 0; i < MAX_PCKT_LENGTH; i++)
+        {
+            cfg->filters[i].payloadMatch[j] = 0;
+        }
+
+        cfg->filters[i].payloadLen = 0;
+    }
+}
+
 int main(int argc, char *argv[])
 {
     // Parse the command line.
@@ -254,7 +299,7 @@ int main(int argc, char *argv[])
             "--list -l => Print config details including filters (this will exit program after done).\n" \
             "--help -h => Print help menu.\n");
 
-        exit(EXIT_SUCCESS);
+        return EXIT_SUCCESS;
     }
 
     // Check for --config argument.
@@ -265,85 +310,85 @@ int main(int argc, char *argv[])
     }
 
     // Initialize config.
-    struct config_map conf;
+    struct config_map *conf = malloc(sizeof(struct config_map));
 
-    SetConfigDefaults(&conf);
+    SetConfigDefaults(conf);
 
     // Create last updated variable.
     time_t lastUpdated = time(NULL);
 
     // Update config.
-    update_config(&conf, configFile);
+    update_config(conf, configFile);
 
     // Check for list option.
     if (list)
     {
         fprintf(stdout, "Details:\n");
-        fprintf(stdout, "Interface Name => %s\n", conf.interface);
-        fprintf(stdout, "Update Time => %" PRIu16 "\n", conf.updateTime);
-        fprintf(stdout, "Filters Count => %" PRIu16 "\n\n", conf.filterCount);
+        fprintf(stdout, "Interface Name => %s\n", conf->interface);
+        fprintf(stdout, "Update Time => %" PRIu16 "\n", conf->updateTime);
+        fprintf(stdout, "Filters Count => %" PRIu16 "\n\n", conf->filterCount);
 
-        for (uint16_t i = 0; i < conf.filterCount; i++)
+        for (uint16_t i = 0; i < conf->filterCount; i++)
         {
-            fprintf(stdout, "Filter #" PRIu16 ":\n");
+            fprintf(stdout, "Filter #%" PRIu16 ":\n", (i + 1));
 
             // Main.
-            fprintf(stdout, "Enabled => %" PRIu8 "\n", conf.filters[i].enabled);
-            fprintf(stdout, "Action => %" PRIu8 " (0 = Block, 1 = Allow).\n", conf.filters[i].action);
+            fprintf(stdout, "Enabled => %" PRIu8 "\n", conf->filters[i].enabled);
+            fprintf(stdout, "Action => %" PRIu8 " (0 = Block, 1 = Allow).\n", conf->filters[i].action);
 
             // IP addresses.
             struct sockaddr_in sin;
-            sin.sin_addr.s_addr = conf.filters[i].srcIP;
+            sin.sin_addr.s_addr = conf->filters[i].srcIP;
             fprintf(stdout, "Source IP => %s\n", inet_ntoa(sin.sin_addr));
 
             struct sockaddr_in din;
-            din.sin_addr.s_addr = conf.filters[i].dstIP;
+            din.sin_addr.s_addr = conf->filters[i].dstIP;
             fprintf(stdout, "Destination IP => %s\n", inet_ntoa(din.sin_addr));
 
             // Other IP header information.
-            fprintf(stdout, "Max Length => %" PRIu16 "\n", conf.filters[i].max_len);
-            fprintf(stdout, "Min Length => %" PRIu16 "\n", conf.filters[i].min_len);
-            fprintf(stdout, "Max TTL => %" PRIu8 "\n", conf.filters[i].max_ttl);
-            fprintf(stdout, "Min TTL => %" PRIu8 "\n", conf.filters[i].min_ttl);
-            fprintf(stdout, "Max ID => %" PRIu32 "\n", conf.filters[i].max_id);
-            fprintf(stdout, "Min ID => %" PRIu32 "\n", conf.filters[i].min_id);
-            fprintf(stdout, "TOS => %" PRIu8 "\n", conf.filters[i].tos);
+            fprintf(stdout, "Max Length => %" PRIu16 "\n", conf->filters[i].max_len);
+            fprintf(stdout, "Min Length => %" PRIu16 "\n", conf->filters[i].min_len);
+            fprintf(stdout, "Max TTL => %" PRIu8 "\n", conf->filters[i].max_ttl);
+            fprintf(stdout, "Min TTL => %" PRIu8 "\n", conf->filters[i].min_ttl);
+            fprintf(stdout, "Max ID => %" PRIu32 "\n", conf->filters[i].max_id);
+            fprintf(stdout, "Min ID => %" PRIu32 "\n", conf->filters[i].min_id);
+            fprintf(stdout, "TOS => %" PRIu8 "\n\n", conf->filters[i].tos);
 
             // TCP Options.
-            fprintf(stdout, "TCP Enabled => %" PRIu8 "\n", conf.filters[i].tcpopts.enabled);
-            fprintf(stdout, "TCP Source Port => %" PRIu16 "\n", conf.filters[i].tcpopts.sport);
-            fprintf(stdout, "TCP Destination Port => %" PRIu16 "\n", conf.filters[i].tcpopts.dport);
-            fprintf(stdout, "TCP URG Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.urg);
-            fprintf(stdout, "TCP ACK Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.ack);
-            fprintf(stdout, "TCP RST Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.rst);
-            fprintf(stdout, "TCP PSH Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.psh);
-            fprintf(stdout, "TCP SYN Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.syn);
-            fprintf(stdout, "TCP FIN Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.fin);
+            fprintf(stdout, "TCP Enabled => %" PRIu8 "\n", conf->filters[i].tcpopts.enabled);
+            fprintf(stdout, "TCP Source Port => %" PRIu16 "\n", conf->filters[i].tcpopts.sport);
+            fprintf(stdout, "TCP Destination Port => %" PRIu16 "\n", conf->filters[i].tcpopts.dport);
+            fprintf(stdout, "TCP URG Flag => %" PRIu8 "\n", conf->filters[i].tcpopts.urg);
+            fprintf(stdout, "TCP ACK Flag => %" PRIu8 "\n", conf->filters[i].tcpopts.ack);
+            fprintf(stdout, "TCP RST Flag => %" PRIu8 "\n", conf->filters[i].tcpopts.rst);
+            fprintf(stdout, "TCP PSH Flag => %" PRIu8 "\n", conf->filters[i].tcpopts.psh);
+            fprintf(stdout, "TCP SYN Flag => %" PRIu8 "\n", conf->filters[i].tcpopts.syn);
+            fprintf(stdout, "TCP FIN Flag => %" PRIu8 "\n\n", conf->filters[i].tcpopts.fin);
 
             // UDP Options.
-            fprintf(stdout, "UDP Enabled => %" PRIu8 "\n", conf.filters[i].udpopts.enabled);
-            fprintf(stdout, "UDP Source Port => %" PRIu16 "\n", conf.filters[i].udpopts.sport);
-            fprintf(stdout, "UDP Destination Port => %" PRIu16 "\n", conf.filters[i].udpopts.dport);
+            fprintf(stdout, "UDP Enabled => %" PRIu8 "\n", conf->filters[i].udpopts.enabled);
+            fprintf(stdout, "UDP Source Port => %" PRIu16 "\n", conf->filters[i].udpopts.sport);
+            fprintf(stdout, "UDP Destination Port => %" PRIu16 "\n\n", conf->filters[i].udpopts.dport);
 
             // ICMP Options.
-            fprintf(stdout, "ICMP Enabled => %" PRIu8 "\n", conf.filters[i].icmpopts.enabled);
-            fprintf(stdout, "ICMP Code => %" PRIu8 "\n", conf.filters[i].icmpopts.code);
-            fprintf(stdout, "ICMP Type => %" PRIu8 "\n", conf.filters[i].icmpopts.type);
+            fprintf(stdout, "ICMP Enabled => %" PRIu8 "\n", conf->filters[i].icmpopts.enabled);
+            fprintf(stdout, "ICMP Code => %" PRIu8 "\n", conf->filters[i].icmpopts.code);
+            fprintf(stdout, "ICMP Type => %" PRIu8 "\n", conf->filters[i].icmpopts.type);
 
-            fprintf(stdout, "\n");
+            fprintf(stdout, "\n\n");
         }
 
-        exit(EXIT_SUCCESS);
+        return EXIT_SUCCESS;
     }
 
     // Get device.
     int dev;
 
-    if ((dev = if_nametoindex(conf.interface)) < 0)
+    if ((dev = if_nametoindex(conf->interface)) < 0)
     {
-        fprintf(stderr, "Error finding device %s.\n", conf.interface);
+        fprintf(stderr, "Error finding device %s.\n", conf->interface);
 
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     // XDP variables.
@@ -360,13 +405,13 @@ int main(int argc, char *argv[])
     {
         fprintf(stderr, "Error loading eBPF object file. File name => %s.\n", filename);
 
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     
     // Attach XDP program to device.
     if (xdp_attach(dev, &xdpflags, prog_fd) != 0)
     {
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     // Check for valid maps.
@@ -374,14 +419,14 @@ int main(int argc, char *argv[])
     {
         fprintf(stderr, "Error finding 'filters_map' BPF map\n");
 
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     if (count_map_fd < 0)
     {
         fprintf(stderr, "Error finding 'count_map' BPF map.\n");
 
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     // Signal.
@@ -393,13 +438,13 @@ int main(int argc, char *argv[])
         time_t curTime = time(NULL);
 
         // Check for auto-update.
-        if (conf.updateTime > 0 && (curTime - lastUpdated) > conf.updateTime)
+        if (conf->updateTime > 0 && (curTime - lastUpdated) > conf->updateTime)
         {
             // Update config.
-            update_config(&conf, configFile);
+            update_config(conf, configFile);
 
             // Update BPF maps.
-            update_BPF(&conf);
+            update_BPF(conf);
             
             // Update last updated variable.
             lastUpdated = time(NULL);
@@ -411,11 +456,14 @@ int main(int argc, char *argv[])
     // Detach XDP program.
     if (xdp_detach(dev, xdpflags) != 0)
     {
-        fprintf(stderr, "Error removing XDP program from device %s\n", conf.interface);
+        fprintf(stderr, "Error removing XDP program from device %s\n", conf->interface);
 
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
+    // Free config.
+    free(conf);
+
     // Exit program successfully.
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 }
