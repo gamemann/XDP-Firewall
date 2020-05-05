@@ -1,0 +1,41 @@
+interface = "ens18";
+updatetime = 15;
+
+filters = (
+    {
+        enabled = true,
+        action = 0,
+        udpopts = (
+            {
+                enabled = true,
+                dport = 27015
+            }
+        )
+    },
+    {
+        enabled = true,
+        action = 1,
+        tcpopts = (
+            {
+                enabled = true,
+                syn = true,
+                dport = 27015
+            }
+        )
+    },
+    {
+        enabled = true,
+        action = 0,
+        icmpopts = (
+            {
+                enabled = true,
+                code = 0
+            }
+        )
+    },
+    {
+        enabled = true,
+        action = 0,
+        srcip = "10.50.0.4"
+    }
+);
