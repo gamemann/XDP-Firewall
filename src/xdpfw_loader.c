@@ -251,6 +251,7 @@ int main(int argc, char *argv[])
     {
         fprintf(stdout, "Usage:\n" \
             "--config -c => Config file location (default is /etc/xdpfw.conf).\n" \
+            "--list -l => Print config details including filters (this will exit program after done).\n" \
             "--help -h => Print help menu.\n");
 
         exit(EXIT_SUCCESS);
