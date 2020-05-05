@@ -10,6 +10,7 @@
 
 #include <net/if.h>
 #include <linux/if_link.h>
+#include <arpa/inet.h>
 
 #include "../libbpf/src/bpf.h"
 #include "../libbpf/src/libbpf.h"
@@ -20,10 +21,12 @@
 // Command line variables.
 static char *configFile;
 static int help = 0;
+static int list = 0;
 
 const struct option opts[] =
 {
     {"config", required_argument, NULL, 'c'},
+    {"list", no_argument, &list, 'l'},
     {"help", no_argument, &help, 'h'},
     {NULL, 0, NULL, 0}
 };
@@ -42,7 +45,7 @@ void parse_command_line(int argc, char *argv[])
 {
     int c;
 
-    while ((c = getopt_long(argc, argv, "c:h", opts, 0)) != -1)
+    while ((c = getopt_long(argc, argv, "c:hl", opts, 0)) != -1)
     {
         switch (c)
         {
@@ -270,6 +273,67 @@ int main(int argc, char *argv[])
 
     // Update config.
     update_config(&conf, configFile);
+
+    // Check for list option.
+    if (list)
+    {
+        fprintf(stdout, "Details:\n");
+        fprintf(stdout, "Interface Name => %s\n", conf.interface);
+        fprintf(stdout, "Update Time => %" PRIu16 "\n", conf.updateTime);
+        fprintf(stdout, "Filters Count => %" PRIu16 "\n\n", conf.filterCount);
+
+        for (uint16_t i = 0; i < conf.filterCount; i++)
+        {
+            fprintf(stdout, "Filter #" PRIu16 ":\n");
+
+            // Main.
+            fprintf(stdout, "Enabled => %" PRIu8 "\n", conf.filters[i].enabled);
+            fprintf(stdout, "Action => %" PRIu8 " (0 = Block, 1 = Allow).\n", conf.filters[i].action);
+
+            // IP addresses.
+            struct sockaddr_in sin;
+            sin.sin_addr.s_addr = conf.filters[i].srcIP;
+            fprintf(stdout, "Source IP => %s\n", inet_ntoa(sin.sin_addr));
+
+            struct sockaddr_in din;
+            din.sin_addr.s_addr = conf.filters[i].dstIP;
+            fprintf(stdout, "Destination IP => %s\n", inet_ntoa(din.sin_addr));
+
+            // Other IP header information.
+            fprintf(stdout, "Max Length => %" PRIu16 "\n", conf.filters[i].max_len);
+            fprintf(stdout, "Min Length => %" PRIu16 "\n", conf.filters[i].min_len);
+            fprintf(stdout, "Max TTL => %" PRIu8 "\n", conf.filters[i].max_ttl);
+            fprintf(stdout, "Min TTL => %" PRIu8 "\n", conf.filters[i].min_ttl);
+            fprintf(stdout, "Max ID => %" PRIu32 "\n", conf.filters[i].max_id);
+            fprintf(stdout, "Min ID => %" PRIu32 "\n", conf.filters[i].min_id);
+            fprintf(stdout, "TOS => %" PRIu8 "\n", conf.filters[i].tos);
+
+            // TCP Options.
+            fprintf(stdout, "TCP Enabled => %" PRIu8 "\n", conf.filters[i].tcpopts.enabled);
+            fprintf(stdout, "TCP Source Port => %" PRIu16 "\n", conf.filters[i].tcpopts.sport);
+            fprintf(stdout, "TCP Destination Port => %" PRIu16 "\n", conf.filters[i].tcpopts.dport);
+            fprintf(stdout, "TCP URG Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.urg);
+            fprintf(stdout, "TCP ACK Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.ack);
+            fprintf(stdout, "TCP RST Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.rst);
+            fprintf(stdout, "TCP PSH Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.psh);
+            fprintf(stdout, "TCP SYN Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.syn);
+            fprintf(stdout, "TCP FIN Flag => %" PRIu8 "\n", conf.filters[i].tcpopts.fin);
+
+            // UDP Options.
+            fprintf(stdout, "UDP Enabled => %" PRIu8 "\n", conf.filters[i].udpopts.enabled);
+            fprintf(stdout, "UDP Source Port => %" PRIu16 "\n", conf.filters[i].udpopts.sport);
+            fprintf(stdout, "UDP Destination Port => %" PRIu16 "\n", conf.filters[i].udpopts.dport);
+
+            // ICMP Options.
+            fprintf(stdout, "ICMP Enabled => %" PRIu8 "\n", conf.filters[i].icmpopts.enabled);
+            fprintf(stdout, "ICMP Code => %" PRIu8 "\n", conf.filters[i].icmpopts.code);
+            fprintf(stdout, "ICMP Type => %" PRIu8 "\n", conf.filters[i].icmpopts.type);
+
+            fprintf(stdout, "\n");
+        }
+
+        exit(EXIT_SUCCESS);
+    }
 
     // Get device.
     int dev;
