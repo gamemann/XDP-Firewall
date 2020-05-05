@@ -304,6 +304,21 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Check for valid maps.
+    if (filter_map_fd < 0)
+    {
+        fprintf(stderr, "Error finding 'filters_map' BPF map\n");
+
+        exit(1);
+    }
+
+    if (count_map_fd < 0)
+    {
+        fprintf(stderr, "Error finding 'count_map' BPF map.\n");
+
+        exit(1);
+    }
+
     // Signal.
     signal(SIGINT, signalHndl);
 
