@@ -35,6 +35,7 @@ const struct option opts[] =
 static uint8_t cont = 1;
 static int filter_map_fd = -1;
 static int count_map_fd = -1;
+static int stats_map_fd = -1;
 
 void signalHndl(int tmp)
 {
@@ -78,18 +79,17 @@ void parse_command_line(int argc, char *argv[])
 void update_BPF(struct config_map *conf)
 {
     // Loop through all filters and delete the map.
-    for (uint32_t i = 0; i < MAX_FILTERS; i++)
+    for (uint8_t i = 0; i < MAX_FILTERS; i++)
     {
-        if (bpf_map_delete_elem(filter_map_fd, &i) != 0)
-        {
-            fprintf(stderr, "Error deleting BPF item #%d\n", i);
-        }
+        uint32_t key = i;
+
+        bpf_map_delete_elem(filter_map_fd, &key);
     }
 
     // Add a filter to the filter maps.
     for (uint32_t i = 0; i < conf->filterCount; i++)
     {
-        if (bpf_map_update_elem(filter_map_fd, &i, &conf->filters[i], BPF_ANY))
+        if (bpf_map_update_elem(filter_map_fd, &i, &conf->filters[i], BPF_ANY) == -1)
         {
             fprintf(stderr, "Error updating BPF item #%d\n", i);
         }
@@ -162,6 +162,7 @@ int load_bpf_object_file__simple(const char *filename)
 
     filter_map_fd = find_map_fd(obj, "filters_map");
     count_map_fd = find_map_fd(obj, "count_map");
+    stats_map_fd = find_map_fd(obj, "stats_map");
 
     return first_prog_fd;
 }
@@ -254,38 +255,6 @@ static int xdp_attach(int ifindex, uint32_t *xdp_flags, int prog_fd)
     return EXIT_SUCCESS;
 }
 
-void SetConfigDefaultsX(struct config_map *cfg)
-{
-    cfg->updateTime = 0;
-    cfg->interface = "eth0";
-
-    for (uint16_t i = 0; i < MAX_FILTERS; i++)
-    {
-        cfg->filters[i].enabled = 0;
-        cfg->filters[i].action = 0;
-        cfg->filters[i].srcIP = 0;
-        cfg->filters[i].dstIP = 0;
-        cfg->filters[i].min_id = 0;
-        cfg->filters[i].max_id = 4294967295;
-        cfg->filters[i].min_len = 0;
-        cfg->filters[i].max_len = 65535;
-        cfg->filters[i].min_ttl = 0;
-        cfg->filters[i].max_ttl = 255;
-        cfg->filters[i].tos = 0;
-        
-        cfg->filters[i].tcpopts.enabled = 0;
-        cfg->filters[i].udpopts.enabled = 0;
-        cfg->filters[i].icmpopts.enabled = 0;
-
-        for (uint16_t j = 0; i < MAX_PCKT_LENGTH; i++)
-        {
-            cfg->filters[i].payloadMatch[j] = 0;
-        }
-
-        cfg->filters[i].payloadLen = 0;
-    }
-}
-
 int main(int argc, char *argv[])
 {
     // Parse the command line.
@@ -311,11 +280,12 @@ int main(int argc, char *argv[])
 
     // Initialize config.
     struct config_map *conf = malloc(sizeof(struct config_map));
-
+    
     SetConfigDefaults(conf);
-
+    
     // Create last updated variable.
     time_t lastUpdated = time(NULL);
+    time_t statsLastUpdated = time(NULL);
 
     // Update config.
     update_config(conf, configFile);
@@ -333,6 +303,7 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Filter #%" PRIu16 ":\n", (i + 1));
 
             // Main.
+            fprintf(stdout, "ID => %d\n", conf->filters[i].id);
             fprintf(stdout, "Enabled => %" PRIu8 "\n", conf->filters[i].enabled);
             fprintf(stdout, "Action => %" PRIu8 " (0 = Block, 1 = Allow).\n", conf->filters[i].action);
 
@@ -350,8 +321,6 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Min Length => %" PRIu16 "\n", conf->filters[i].min_len);
             fprintf(stdout, "Max TTL => %" PRIu8 "\n", conf->filters[i].max_ttl);
             fprintf(stdout, "Min TTL => %" PRIu8 "\n", conf->filters[i].min_ttl);
-            fprintf(stdout, "Max ID => %" PRIu32 "\n", conf->filters[i].max_id);
-            fprintf(stdout, "Min ID => %" PRIu32 "\n", conf->filters[i].min_id);
             fprintf(stdout, "TOS => %" PRIu8 "\n\n", conf->filters[i].tos);
 
             // TCP Options.
@@ -417,7 +386,7 @@ int main(int argc, char *argv[])
     // Check for valid maps.
     if (filter_map_fd < 0)
     {
-        fprintf(stderr, "Error finding 'filters_map' BPF map\n");
+        fprintf(stderr, "Error finding 'filters_map' BPF map.\n");
 
         return EXIT_FAILURE;
     }
@@ -428,6 +397,16 @@ int main(int argc, char *argv[])
 
         return EXIT_FAILURE;
     }
+
+    if (stats_map_fd < 0)
+    {
+        fprintf(stderr, "Error finding 'stats_map' BPF map.\n");
+
+        return EXIT_FAILURE;
+    }
+
+    // Update BPF maps.
+    update_BPF(conf);
 
     // Signal.
     signal(SIGINT, signalHndl);
@@ -448,6 +427,23 @@ int main(int argc, char *argv[])
             
             // Update last updated variable.
             lastUpdated = time(NULL);
+        }
+
+        // Update stats.
+        if ((curTime - statsLastUpdated) > 5)
+        {
+            uint16_t key = 0;
+            struct xdpfw_stats *stats;
+            
+            bpf_map_lookup_elem(stats_map_fd, &key, stats);
+
+            if (stats != NULL)
+            {
+                fprintf(stdout, "\rPackets allowed: %" PRIu64 "\n", stats->allowed);
+                fprintf(stdout, "\rPackets blocked: %" PRIu64 "\n", stats->blocked);
+
+                fflush(stdout);
+            }
         }
 
         sleep(1);

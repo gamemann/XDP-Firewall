@@ -17,21 +17,44 @@ void SetConfigDefaults(struct config_map *cfg)
 
     for (uint16_t i = 0; i < MAX_FILTERS; i++)
     {
+        cfg->filters[i].id = 0;
         cfg->filters[i].enabled = 0;
         cfg->filters[i].action = 0;
         cfg->filters[i].srcIP = 0;
         cfg->filters[i].dstIP = 0;
-        cfg->filters[i].min_id = 0;
-        cfg->filters[i].max_id = 4294967295;
+
+        cfg->filters[i].do_min_len = 0;
         cfg->filters[i].min_len = 0;
+
+        cfg->filters[i].do_max_len = 0;
         cfg->filters[i].max_len = 65535;
+
+        cfg->filters[i].do_min_ttl = 0;
         cfg->filters[i].min_ttl = 0;
+
+        cfg->filters[i].do_max_ttl = 0;
         cfg->filters[i].max_ttl = 255;
+
+        cfg->filters[i].do_tos = 0;
         cfg->filters[i].tos = 0;
         
         cfg->filters[i].tcpopts.enabled = 0;
+        cfg->filters[i].tcpopts.do_dport = 0;
+        cfg->filters[i].tcpopts.do_dport = 0;
+        cfg->filters[i].tcpopts.do_urg = 0;
+        cfg->filters[i].tcpopts.do_ack = 0;
+        cfg->filters[i].tcpopts.do_rst = 0;
+        cfg->filters[i].tcpopts.do_psh = 0;
+        cfg->filters[i].tcpopts.do_syn = 0;
+        cfg->filters[i].tcpopts.do_fin = 0;
+
         cfg->filters[i].udpopts.enabled = 0;
+        cfg->filters[i].udpopts.do_sport = 0;
+        cfg->filters[i].udpopts.do_dport = 0;
+
         cfg->filters[i].icmpopts.enabled = 0;
+        cfg->filters[i].icmpopts.do_code = 0;
+        cfg->filters[i].icmpopts.do_type = 0;
 
         for (uint16_t j = 0; j < MAX_PCKT_LENGTH - 1; j++)
         {
@@ -184,6 +207,7 @@ int ReadConfig(struct config_map *cfg)
         if (config_setting_lookup_int(filter, "min_ttl", &min_ttl))
         {
             cfg->filters[i].min_ttl = (uint8_t)min_ttl;
+            cfg->filters[i].do_min_ttl = 1;
         }
 
         // Maximum TTL (not required).
@@ -192,6 +216,7 @@ int ReadConfig(struct config_map *cfg)
         if (config_setting_lookup_int(filter, "max_ttl", &max_ttl))
         {
             cfg->filters[i].max_ttl = (uint8_t)max_ttl;
+            cfg->filters[i].do_max_ttl = 1;
         }
 
         // Minimum length (not required).
@@ -200,6 +225,7 @@ int ReadConfig(struct config_map *cfg)
         if (config_setting_lookup_int(filter, "min_len", &min_len))
         {
             cfg->filters[i].min_len = min_len;
+            cfg->filters[i].do_min_len = 1;
         }
 
         // Maximum length (not required).
@@ -208,6 +234,7 @@ int ReadConfig(struct config_map *cfg)
         if (config_setting_lookup_int(filter, "max_len", &max_len))
         {
             cfg->filters[i].max_len = max_len;
+            cfg->filters[i].do_max_len = 1;
         }
 
         // TOS (not required).
@@ -216,6 +243,7 @@ int ReadConfig(struct config_map *cfg)
         if (config_setting_lookup_int(filter, "tos", &tos))
         {
             cfg->filters[i].tos = (uint8_t)tos;
+            cfg->filters[i].do_tos = 1;
         }
 
         // Payload match.
@@ -265,6 +293,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_int64(tcp, "sport", &sport))
                 {
                     cfg->filters[i].tcpopts.sport = (uint16_t)sport;
+                    cfg->filters[i].tcpopts.do_sport = 1;
                 }
 
                 // Destination port.
@@ -273,6 +302,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_int64(tcp, "dport", &dport))
                 {
                     cfg->filters[i].tcpopts.dport = (uint16_t)dport;
+                    cfg->filters[i].tcpopts.do_dport = 1;
                 }
 
                 // URG flag.
@@ -281,6 +311,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_bool(tcp, "urg", &urg))
                 {
                     cfg->filters[i].tcpopts.urg = urg;
+                    cfg->filters[i].tcpopts.do_urg = 1;
                 }
 
                 // ACK flag.
@@ -289,6 +320,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_bool(tcp, "ack", &ack))
                 {
                     cfg->filters[i].tcpopts.ack = ack;
+                    cfg->filters[i].tcpopts.do_ack = 1;
                 }
 
                 // RST flag.
@@ -297,6 +329,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_bool(tcp, "rst", &rst))
                 {
                     cfg->filters[i].tcpopts.rst = rst;
+                    cfg->filters[i].tcpopts.do_rst = 1;
                 }
 
                 // PSH flag.
@@ -305,6 +338,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_bool(tcp, "psh", &psh))
                 {
                     cfg->filters[i].tcpopts.psh = psh;
+                    cfg->filters[i].tcpopts.do_psh = 1;
                 }
 
                 // SYN flag.
@@ -313,6 +347,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_bool(tcp, "syn", &syn))
                 {
                     cfg->filters[i].tcpopts.syn = syn;
+                    cfg->filters[i].tcpopts.do_syn = 1;
                 }
 
                 // FIN flag.
@@ -321,6 +356,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_bool(tcp, "fin", &fin))
                 {
                     cfg->filters[i].tcpopts.fin = fin;
+                    cfg->filters[i].tcpopts.do_fin = 1;
                 }
             }
         }
@@ -349,6 +385,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_int64(udp, "sport", &sport))
                 {
                     cfg->filters[i].udpopts.sport = (uint16_t)sport;
+                    cfg->filters[i].udpopts.do_sport = 1;
                 }
 
                 // Destination port.
@@ -357,6 +394,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_int64(udp, "dport", &dport))
                 {
                     cfg->filters[i].udpopts.dport = (uint16_t)dport;
+                    cfg->filters[i].udpopts.do_dport = 1;
                 }
             }
         }
@@ -385,6 +423,7 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_int(icmp, "code", &code))
                 {
                     cfg->filters[i].icmpopts.code = (uint8_t)code;
+                    cfg->filters[i].icmpopts.do_code = 1;
                 }
 
                 // ICMP type.
@@ -393,10 +432,14 @@ int ReadConfig(struct config_map *cfg)
                 if (config_setting_lookup_int(icmp, "type", &type))
                 {
                     cfg->filters[i].icmpopts.type = (uint8_t)type;
+                    cfg->filters[i].icmpopts.do_type = 1;
                 }
             }
         }
-        
+
+        // Assign ID.
+        cfg->filters[i].id = filters + 1;
+
         // Increase filter count.
         filters++;
     }
