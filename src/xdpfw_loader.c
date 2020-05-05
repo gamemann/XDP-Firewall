@@ -373,14 +373,14 @@ int main(int argc, char *argv[])
     {
         fprintf(stderr, "Error finding 'filters_map' BPF map\n");
 
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (count_map_fd < 0)
     {
         fprintf(stderr, "Error finding 'count_map' BPF map.\n");
 
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // Signal.
