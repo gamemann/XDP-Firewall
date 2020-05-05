@@ -1,13 +1,11 @@
 CC = clang
 
-objects += src/xdpfw_loader.o src/config.o
+objects += src/config.o src/xdpfw_loader.o
 
 libbpf_static_objects += libbpf/src/staticobjs/bpf.o libbpf/src/staticobjs/btf.o libbpf/src/staticobjs/libbpf_errno.o libbpf/src/staticobjs/libbpf_probes.o
 libbpf_static_objects += libbpf/src/staticobjs/libbpf.o libbpf/src/staticobjs/netlink.o libbpf/src/staticobjs/nlattr.o libbpf/src/staticobjs/str_error.o
 libbpf_static_objects += libbpf/src/staticobjs/hashmap.o libbpf/src/staticobjs/bpf_prog_linfo.o
 
-
-CFLAGS += -Ilibbpf/src -g -O2 -Wall -Werror
 LDFLAGS += -lconfig -lelf -lz
 
 all: xdpfw_loader xdpfw_filter
@@ -28,6 +26,5 @@ install:
 	cp src/xdpfw_kern.o /etc/xdpfw/xdpfw_kern.o
 	cp xdpfw /usr/bin/xdpfw
 	cp -n other/xdpfw.service /etc/systemd/system/
-
 .PHONY: libbpf all
 .DEFAULT: all
