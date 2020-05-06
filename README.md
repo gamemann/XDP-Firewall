@@ -31,6 +31,7 @@ Config option `filters` is an array. Each filter includes the following options:
 * `payloadmatch` => The payload (L4 data) the packet has to match. The format is in hexadecimal and each byte is separated by a space. An example includes: `FF FF FF FF 59`.
 
 **TCP Options**
+
 The config option `tcpopts` within a filter is an array including TCP options. This should only be one array per filter. Options include:
 
 * `enabled` => If true, check for TCP-specific matches.
@@ -44,6 +45,7 @@ The config option `tcpopts` within a filter is an array including TCP options. T
 * `fin` => If true, the packetm ust have the `FIN` flag set to match.
 
 **UDP Options**
+
 The config option `udpopts` within a filter is an array including UDP options. This should only be one array per filter. Options include:
 
 * `enabled` => If true, check for UDP-specific matches.
@@ -51,6 +53,7 @@ The config option `udpopts` within a filter is an array including UDP options. T
 * `dport` => The destination port the packet must match.
 
 **ICMP Options**
+
 The config option `icmpopts` within a filter is an array including ICMP options. This should only be one array per filter. Options include:
 
 * `enabled` => If true, check for ICMP-specific matches.
