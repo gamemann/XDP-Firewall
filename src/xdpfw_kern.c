@@ -50,14 +50,6 @@ struct bpf_map_def SEC("maps") filters_map =
     .max_entries = MAX_FILTERS
 };
 
-struct bpf_map_def SEC("maps") count_map = 
-{
-    .type = BPF_MAP_TYPE_ARRAY,
-    .key_size = sizeof(uint32_t),
-    .value_size = sizeof(uint8_t),
-    .max_entries = 1
-};
-
 struct bpf_map_def SEC("maps") stats_map =
 {
     .type = BPF_MAP_TYPE_ARRAY,
@@ -68,31 +60,7 @@ struct bpf_map_def SEC("maps") stats_map =
 
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
-{
-    // Check for count map.
-    uint32_t key = 0;
-    uint16_t *filters;
-
-    filters = bpf_map_lookup_elem(&count_map, &key);
-
-    // Check if the count map value is valid.
-    if (filters == NULL)
-    {
-        return XDP_ABORTED;
-    }
-
-    // Filter count.
-    uint8_t filterCount;
-
-    if (*filters > MAX_FILTERS)
-    {
-        filterCount = MAX_FILTERS;
-    }
-    else
-    {
-        filterCount = *filters;
-    }
-    
+{    
     // Initialize data.
     void *data_end = (void *)(long)ctx->data_end;
     void *data = (void *)(long)ctx->data;
@@ -189,11 +157,13 @@ int xdp_prog_main(struct xdp_md *ctx)
         
         for (uint8_t i = 0; i < MAX_FILTERS; i++)
         {
+            // Check if ID is above 0 (if 0, it's an invalid rule).
             if (!filter[i] || filter[i]->id < 1)
             {
                 break;
             }
 
+            // Check if the rule is enabled.
             if (!filter[i]->enabled)
             {
                 continue;
@@ -241,16 +211,19 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-            // Custom payload.
+            // Payload match.
             if (filter[i]->payloadLen > 0)
             {
+                // Initialize packet data.
                 uint8_t *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
 
                 // Now check packet data and ensure we have enough to match.
-                if (pcktData + (filter[i]->payloadLen + 1) > (uint8_t *)data_end)
+                if (pcktData + (filter[i]->payloadLen) > (uint8_t *)data_end)
                 {
                     continue;
                 }
+
+                uint8_t found = 1;
 
                 for (uint16_t j = 0; j < filter[i]->payloadLen; j++)
                 {
@@ -259,7 +232,14 @@ int xdp_prog_main(struct xdp_md *ctx)
                         continue;
                     }
 
+                    found = 0;
+
                     break;
+                }
+
+                if (!found)
+                {
+                    continue;
                 }
             }
 
@@ -370,7 +350,32 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         if (matched)
         {
-            bpf_printk("Matched with protocol %" PRIu8 " and sAddr %" PRIu32 "\n", iph->protocol, iph->saddr);
+            // Get stats map.
+            uint32_t key = 0;
+            struct xdpfw_stats *stats;
+
+            stats = bpf_map_lookup_elem(&stats_map, &key);
+
+            if (stats)
+            {
+                // Update stats map.
+                if (action == 0)
+                {
+                    stats->blocked++;
+                }
+                else
+                {
+                    stats->allowed++;
+                }
+
+                key = 0;
+
+                bpf_map_update_elem(&stats_map, &key, stats, BPF_ANY);
+            }
+
+            #ifdef DEBUG
+                bpf_printk("Matched with protocol %" PRIu8 " and sAddr %" PRIu32 "\n", iph->protocol, iph->saddr);
+            #endif
         }
     }
 

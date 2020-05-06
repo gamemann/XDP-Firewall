@@ -7,7 +7,7 @@ struct config_map
 {
     char *interface;
     uint16_t updateTime;
-    uint16_t filterCount;
+    unsigned int nostats : 1;
     struct filter filters[MAX_FILTERS];
 };
 

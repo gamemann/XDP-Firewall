@@ -14,6 +14,7 @@ void SetConfigDefaults(struct config_map *cfg)
 {
     cfg->updateTime = 0;
     cfg->interface = "eth0";
+    cfg->nostats = 0;
 
     for (uint16_t i = 0; i < MAX_FILTERS; i++)
     {
@@ -137,6 +138,14 @@ int ReadConfig(struct config_map *cfg)
     }
 
     cfg->updateTime = updateTime;
+
+    // Get no stats.
+    int nostats;
+
+    if (config_lookup_bool(&conf, "nostats", &nostats) == CONFIG_TRUE)
+    {
+        cfg->nostats = nostats;
+    }
 
     // Read filters in filters_map structure.
     setting = config_lookup(&conf, "filters");
@@ -443,9 +452,6 @@ int ReadConfig(struct config_map *cfg)
         // Increase filter count.
         filters++;
     }
-
-    // Assign filter count to config.
-    cfg->filterCount = filters;
 
     config_destroy(&conf);
 
