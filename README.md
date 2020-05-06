@@ -42,7 +42,7 @@ The config option `tcpopts` within a filter is an array including TCP options. T
 * `rst` => If true, the packet must have the `RST` flag set to match.
 * `psh` => If true, the packet must have the `PSH` flag set to match.
 * `syn` => If true, the packet must have the `SYN` flag set to match.
-* `fin` => If true, the packetm ust have the `FIN` flag set to match.
+* `fin` => If true, the packet must have the `FIN` flag set to match.
 
 #### UDP Options
 
