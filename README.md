@@ -24,10 +24,10 @@ Config option `filters` is an array. Each filter includes the following options:
 * `action` => What action to perform against the packet if matched. 0 = Block. 1 = Allow.
 * `srcip` => The source IP to match (e.g. 10.50.0.3).
 * `dstip` => The destination IP to match (e.g. 10.50.0.4).
-* `min_ttl` => The minimum TTL (time to live) the packet can has to match.
-* `max_ttl` => The maximum TTL (time to live) the packet can has to match.
-* `max_len` => The maximum packet length the packet can has to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
-* `min_len` => The minimum packet length the packet can has to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
+* `min_ttl` => The minimum TTL (time to live) the packet has to match.
+* `max_ttl` => The maximum TTL (time to live) the packet has to match.
+* `max_len` => The maximum packet length the packet has to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
+* `min_len` => The minimum packet length the packet has to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
 * `tos` => The TOS (type of service) the packet has to match.
 * `payloadmatch` => The payload (L4 data) the packet has to match. The format is in hexadecimal and each byte is separated by a space. An example includes: `FF FF FF FF 59`.
 
