@@ -1,6 +1,6 @@
 # XDP Firewall
 ## Description
-An XDP firewall designed to read filtering rules based off of a config file. Only supports IPv4 and protocols TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled.
+An XDP firewall designed to read filtering rules based off of a config file. This software only supports IPv4 and protocols TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
 
 ## Command Line Usage
 The following command line arguments are supported:
@@ -93,7 +93,7 @@ filters = (
     {
         enabled = true,
         action = 0,
-        
+
         icmpopts = (
             {
                 enabled = true,
