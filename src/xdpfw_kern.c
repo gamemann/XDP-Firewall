@@ -97,21 +97,17 @@ int xdp_prog_main(struct xdp_md *ctx)
     void *data_end = (void *)(long)ctx->data_end;
     void *data = (void *)(long)ctx->data;
 
-    uint8_t matched = 0;
-    uint8_t action = 0;
-
     // Scan ethernet header.
     struct ethhdr *ethhdr = data;
 
     // Check if the ethernet header is valid.
     if (ethhdr + 1 > (struct ethhdr *)data_end)
     {
-        return XDP_PASS;
+        return XDP_DROP;
     }
 
     // Let's get the filters we need.
     struct filter *filter[MAX_FILTERS];
-    //struct filter *(*p)[] = &filter;
 
     for (uint8_t i = 0; i < MAX_FILTERS; i++)
     {
@@ -119,6 +115,9 @@ int xdp_prog_main(struct xdp_md *ctx)
         
         filter[i] = bpf_map_lookup_elem(&filters_map, &key);
     }
+
+    uint8_t matched = 0;
+    uint8_t action = 0;
 
     // Check Ethernet protocol and ensure it's IP.
     if (likely(ethhdr->h_proto == htons(ETH_P_IP)))
@@ -129,7 +128,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         // Check if the IP header is valid.
         if (unlikely(iph + 1 > (struct iphdr *)data_end))
         {
-            return XDP_PASS;
+            return XDP_DROP;
         }
         
         // Check IP header protocols.
@@ -242,6 +241,42 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
+            // Custom payload.
+            if (filter[i]->payloadLen > 0)
+            {
+                uint8_t *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
+
+                // Now check packet data and ensure we have enough to match.
+                if (pcktData + (filter[i]->payloadLen + 1) > (uint8_t *)data_end)
+                {
+                    continue;
+                }
+
+                for (uint16_t j = 0; j < filter[i]->payloadLen; j++)
+                {
+                    if ((*pcktData++) == filter[i]->payloadMatch[j])
+                    {
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+
+            // Check layer 4 filters.
+            if (iph->protocol == IPPROTO_TCP && !filter[i]->tcpopts.enabled)
+            {
+                continue;
+            }
+            else if (iph->protocol == IPPROTO_UDP && !filter[i]->udpopts.enabled)
+            {
+                continue;
+            }
+            else if (iph->protocol == IPPROTO_ICMP && !filter[i]->icmpopts.enabled)
+            {
+                continue;
+            }
+
             // Do TCP options.
             if (iph->protocol == IPPROTO_TCP && filter[i]->tcpopts.enabled)
             {
@@ -322,27 +357,6 @@ int xdp_prog_main(struct xdp_md *ctx)
                 }
             }
 
-            if (filter[i]->payloadLen > 0)
-            {
-                uint8_t *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
-
-                // Now check packet data and ensure we have enough to match.
-                if (pcktData + (filter[i]->payloadLen + 1) > (uint8_t *)data_end)
-                {
-                    continue;
-                }
-
-                for (uint16_t j = 0; j < filter[i]->payloadLen; j++)
-                {
-                    if ((*pcktData++) == filter[i]->payloadMatch[j])
-                    {
-                        continue;
-                    }
-
-                    break;
-                }
-            }
-
             // Matched.
             #ifdef DEBUG
                 bpf_printk("Matched rule ID #%" PRIu8 "\n", filter[i]->id);
@@ -352,6 +366,11 @@ int xdp_prog_main(struct xdp_md *ctx)
             action = filter[i]->action;
 
             break;
+        }
+
+        if (matched)
+        {
+            bpf_printk("Matched with protocol %" PRIu8 " and sAddr %" PRIu32 "\n", iph->protocol, iph->saddr);
         }
     }
 
