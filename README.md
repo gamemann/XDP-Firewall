@@ -18,7 +18,6 @@ The following command line arguments are supported:
 ### Filters
 Config option `filters` is an array. Each filter includes the following options:
 
-**Main**
 * `enabled` => If true, this rule is enabled.
 * `action` => What action to perform against the packet if matched. 0 = Block. 1 = Allow.
 * `srcip` => The source IP to match (e.g. 10.50.0.3).
@@ -30,8 +29,7 @@ Config option `filters` is an array. Each filter includes the following options:
 * `tos` => The TOS (type of service) the packet has to match.
 * `payloadmatch` => The payload (L4 data) the packet has to match. The format is in hexadecimal and each byte is separated by a space. An example includes: `FF FF FF FF 59`.
 
-**TCP Options**
-
+#### TCP Options
 The config option `tcpopts` within a filter is an array including TCP options. This should only be one array per filter. Options include:
 
 * `enabled` => If true, check for TCP-specific matches.
@@ -44,7 +42,7 @@ The config option `tcpopts` within a filter is an array including TCP options. T
 * `syn` => If true, the packet must have the `SYN` flag set to match.
 * `fin` => If true, the packetm ust have the `FIN` flag set to match.
 
-**UDP Options**
+#### UDP Options
 
 The config option `udpopts` within a filter is an array including UDP options. This should only be one array per filter. Options include:
 
@@ -52,7 +50,7 @@ The config option `udpopts` within a filter is an array including UDP options. T
 * `sport` => The source port the packet must match.
 * `dport` => The destination port the packet must match.
 
-**ICMP Options**
+#### ICMP Options
 
 The config option `icmpopts` within a filter is an array including ICMP options. This should only be one array per filter. Options include:
 
