@@ -212,18 +212,19 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Payload match.
+            /*
             if (filter[i]->payloadLen > 0)
             {
+                uint8_t found = 1;
+                uint16_t len = filter[i]->payloadLen;
+
                 // Initialize packet data.
                 uint8_t *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
 
-                // Now check packet data and ensure we have enough to match.
-                if (pcktData + (filter[i]->payloadLen) > (uint8_t *)data_end)
+                if (pcktData + len > (uint8_t *)data_end)
                 {
                     continue;
                 }
-
-                uint8_t found = 1;
 
                 for (uint16_t j = 0; j < filter[i]->payloadLen; j++)
                 {
@@ -242,6 +243,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                     continue;
                 }
             }
+            */
 
             // Check layer 4 filters.
             if (iph->protocol == IPPROTO_TCP && !filter[i]->tcpopts.enabled)
