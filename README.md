@@ -13,7 +13,7 @@ The following command line arguments are supported:
 ### Main
 * `interface` => The interface for the XDP program to attach to.
 * `updatetime` => How often to update the config and filtering rules. Leaving this at 0 disables auto-updating.
-* `nostats` => If true, no accepted/blocked packet statistics will show.
+* `nostats` => If true, no accepted/blocked packet statistics will be displayed in `stdout`.
 
 ### Filters
 Config option `filters` is an array. Each filter includes the following options:
