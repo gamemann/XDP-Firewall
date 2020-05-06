@@ -60,6 +60,8 @@ The config option `icmpopts` within a filter is an array including ICMP options.
 
 **Note** - Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
 
+**Note** - As of right now, the `payloadmatch` option does not work. I am planning to implement functionality for this soon. Unfortunately, BPF hasn't liked the matching methods I've used so far.
+
 ## Configuration Example
 Here's an example of a config:
 
