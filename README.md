@@ -114,8 +114,5 @@ filters = (
 );
 ```
 
-## Status
-Not Finished.
-
 ## Credits
 * [Christian Deacon](https://www.linkedin.com/in/christian-deacon-902042186/) - Creator.
