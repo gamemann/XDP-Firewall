@@ -1,6 +1,113 @@
 # XDP Firewall
 ## Description
-A program made using XDP that is capable of filtering traffic based off of a config file.
+An XDP firewall designed to read filtering rules based off of a config file. Only supports IPv4 and protocols TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled.
+
+## Command Line Usage
+The following command line arguments are supported:
+
+* `--config -c` => Location to config file. Default => **/etc/xdpfw/xdpfw.conf**.
+* `--list -l` => List all filtering rules scanned from config file.
+* `--help -h` => Print help menu for command line options.
+
+## Configuration File Options
+### Main
+* `interface` => The interface for the XDP program to attach to.
+* `updatetime` => How often to update the config and filtering rules. Leaving this at 0 disables auto-updating.
+* `nostats` => If true, no accepted/blocked packet statistics will show.
+
+### Filters
+Config option `filters` is an array. Each filter includes the following options:
+
+**Main**
+* `enabled` => If true, this rule is enabled.
+* `action` => What action to perform against the packet if matched. 0 = Block. 1 = Allow.
+* `srcip` => The source IP to match (e.g. 10.50.0.3).
+* `dstip` => The destination IP to match (e.g. 10.50.0.4).
+* `min_ttl` => The minimum TTL (time to live) the packet can has to match.
+* `max_ttl` => The maximum TTL (time to live) the packet can has to match.
+* `max_len` => The maximum packet length the packet can has to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
+* `min_len` => The minimum packet length the packet can has to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
+* `tos` => The TOS (type of service) the packet has to match.
+* `payloadmatch` => The payload (L4 data) the packet has to match. The format is in hexadecimal and each byte is separated by a space. An example includes: `FF FF FF FF 59`.
+
+**TCP Options**
+The config option `tcpopts` within a filter is an array including TCP options. This should only be one array per filter. Options include:
+
+* `enabled` => If true, check for TCP-specific matches.
+* `sport` => The source port the packet must match.
+* `dport` => The destination port the packet must match.
+* `urg` => If true, the packet must have the `URG` flag set to match.
+* `ack` => If true, the packet must have the `ACK` flag set to match.
+* `rst` => If true, the packet must have the `RST` flag set to match.
+* `psh` => If true, the packet must have the `PSH` flag set to match.
+* `syn` => If true, the packet must have the `SYN` flag set to match.
+* `fin` => If true, the packetm ust have the `FIN` flag set to match.
+
+**UDP Options**
+The config option `udpopts` within a filter is an array including UDP options. This should only be one array per filter. Options include:
+
+* `enabled` => If true, check for UDP-specific matches.
+* `sport` => The source port the packet must match.
+* `dport` => The destination port the packet must match.
+
+**ICMP Options**
+The config option `icmpopts` within a filter is an array including ICMP options. This should only be one array per filter. Options include:
+
+* `enabled` => If true, check for ICMP-specific matches.
+* `code` => The ICMP code the packet must match.
+* `type` => The ICMP type the packet must match.
+
+**Note** - Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
+
+## Configuration Example
+Here's an example of a config:
+
+```
+interface = "ens18";
+updatetime = 15;
+
+filters = (
+    {
+        enabled = true,
+        action = 0,
+
+        udpopts = (
+            {
+                enabled = true,
+                dport = 27015
+            }
+        )
+    },
+    {
+        enabled = true,
+        action = 1,
+
+        tcpopts = (
+            {
+                enabled = true,
+                syn = true,
+                dport = 27015
+            }
+        )
+    },
+    {
+        enabled = true,
+        action = 0,
+        
+        icmpopts = (
+            {
+                enabled = true,
+                code = 0
+            }
+        )
+    },
+    {
+        enabled = true,
+        action = 0,
+        srcip = "10.50.0.4"
+    }
+);
+```
 
 ## Status
 Not Finished.
