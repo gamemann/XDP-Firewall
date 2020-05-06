@@ -2,6 +2,8 @@
 ## Description
 An XDP firewall designed to read filtering rules based off of a config file. This software only supports IPv4 and protocols TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
 
+Additionally, if the host's NIC doesn't support XDP-native, the program will attempt to attach via XDP generic. The program firstly tries XDP-native, though.
+
 ## Command Line Usage
 The following command line arguments are supported:
 
