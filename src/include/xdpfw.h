@@ -5,8 +5,7 @@
 
 #define MAX_PCKT_LENGTH 65535
 #define MAX_FILTERS 50
-#define MAX_CPUS 128
-#define LRU_MAP_SIZE 16384
+#define MAX_TRACK_IPS 30000
 
 struct tcpopts
 {

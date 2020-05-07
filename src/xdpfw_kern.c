@@ -63,7 +63,7 @@ struct bpf_map_def SEC("maps") ip_stats_map =
     .type = BPF_MAP_TYPE_PERCPU_HASH,
     .key_size = sizeof(uint32_t),
     .value_size = sizeof(struct xdpfw_ip_stats),
-    .max_entries = LRU_MAP_SIZE
+    .max_entries = MAX_TRACK_IPS
 };
 
 SEC("xdp_prog")

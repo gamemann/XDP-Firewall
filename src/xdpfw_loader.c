@@ -7,7 +7,6 @@
 #include <inttypes.h>
 #include <time.h>
 #include <getopt.h>
-#include <sys/sysinfo.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
