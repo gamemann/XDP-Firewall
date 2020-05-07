@@ -15,7 +15,7 @@
 
 #include "include/xdpfw.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 
