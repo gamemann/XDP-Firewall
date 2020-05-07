@@ -44,6 +44,8 @@ void SetConfigDefaults(struct config_map *cfg)
         
         cfg->filters[i].do_bps = 0;
         cfg->filters[i].bps = 0;
+
+        cfg->filters[i].blockTime = 1;
         
         cfg->filters[i].tcpopts.enabled = 0;
         cfg->filters[i].tcpopts.do_dport = 0;
