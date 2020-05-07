@@ -91,6 +91,8 @@ struct filter
     unsigned int do_bps : 1;
     uint64_t bps;
 
+    uint16_t blockTime;
+
     uint8_t payloadMatch[MAX_PCKT_LENGTH];
     uint16_t payloadLen;
 

@@ -344,6 +344,7 @@ int main(int argc, char *argv[])
             fprintf(stdout, "TOS => %" PRIu8 "\n", conf->filters[i].tos);
             fprintf(stdout, "PPS => %" PRIu64 "\n", conf->filters[i].pps);
             fprintf(stdout, "BPS => %" PRIu64 "\n\n", conf->filters[i].bps);
+            fprintf(stdout, "Block Time => %" PRIu16 "\n\n", conf->filters[i].blockTime);
 
             // TCP Options.
             fprintf(stdout, "TCP Enabled => %" PRIu8 "\n", conf->filters[i].tcpopts.enabled);

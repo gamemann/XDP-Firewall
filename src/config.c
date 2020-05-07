@@ -278,6 +278,18 @@ int ReadConfig(struct config_map *cfg)
             cfg->filters[i].do_bps = 1;
         }
 
+        // Block time (default 1).
+        int blocktime;
+
+        if (config_setting_lookup_int(filter, "blocktime", &blocktime))
+        {
+            cfg->filters[i].blockTime = blocktime;
+        }
+        else
+        {
+            cfg->filters[i].blockTime = 1;
+        }
+
         // Payload match.
         const char *payload;
 
