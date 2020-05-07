@@ -5,6 +5,8 @@
 
 #define MAX_PCKT_LENGTH 65535
 #define MAX_FILTERS 50
+#define MAX_CPUS 128
+#define LRU_MAP_SIZE 16384
 
 struct tcpopts
 {
@@ -84,6 +86,12 @@ struct filter
     unsigned int do_tos : 1;
     int8_t tos;
 
+    unsigned int do_pps : 1;
+    uint64_t pps;
+
+    unsigned int do_bps : 1;
+    uint64_t bps;
+
     uint8_t payloadMatch[MAX_PCKT_LENGTH];
     uint16_t payloadLen;
 
@@ -98,5 +106,11 @@ struct xdpfw_stats
     uint64_t blocked;
 };
 
+struct xdpfw_ip_stats
+{
+    uint64_t pps;
+    uint64_t bps;
+    uint64_t tracking;
+};
 
 #endif

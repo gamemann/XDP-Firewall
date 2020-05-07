@@ -1,4 +1,3 @@
-#include <linux/bpf.h>
 #include <linux/if_ether.h>
 #include <linux/udp.h>
 #include <linux/tcp.h>
@@ -6,15 +5,17 @@
 #include <linux/ip.h>
 #include <linux/in.h>
 #include <inttypes.h>
-
-#include "../libbpf/src/bpf_helpers.h"
-
 #include <stdint.h>
 #include <stdatomic.h>
 
+#include <linux/bpf.h>
+#include <linux/bpf_common.h>
+
+#include "../libbpf/src/bpf_helpers.h"
+
 #include "include/xdpfw.h"
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 
@@ -27,7 +28,6 @@
 
 #endif
 
-#define SEC(NAME) __attribute__((section(NAME), used))
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -56,6 +56,14 @@ struct bpf_map_def SEC("maps") stats_map =
     .key_size = sizeof(uint32_t),
     .value_size = sizeof(struct xdpfw_stats),
     .max_entries = 1
+};
+
+struct bpf_map_def SEC("maps") ip_stats_map =
+{
+    .type = BPF_MAP_TYPE_PERCPU_HASH,
+    .key_size = sizeof(uint32_t),
+    .value_size = sizeof(struct xdpfw_ip_stats),
+    .max_entries = LRU_MAP_SIZE
 };
 
 SEC("xdp_prog")
@@ -103,6 +111,44 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (unlikely(iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
         {
             return XDP_PASS;
+        }
+
+        // Update IP stats (PPS/BPS).
+        uint64_t pps = 0;
+        uint64_t bps = 0;
+        uint64_t now = bpf_ktime_get_ns();
+
+        struct xdpfw_ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &iph->saddr);
+
+        if (ip_stats)
+        {
+            // Check for reset.
+            if ((now - ip_stats->tracking) > 1e9)
+            {
+                ip_stats->pps = 0;
+                ip_stats->bps = 0;
+                ip_stats->tracking = now;
+            }
+
+            ip_stats->pps++;
+            ip_stats->bps += ctx->data_end - ctx->data;
+            
+            pps = ip_stats->pps;
+            bps = ip_stats->bps;
+        }
+        else
+        {
+            // Create new entry.
+            struct xdpfw_ip_stats new;
+
+            new.pps = 1;
+            new.bps = ctx->data_end - ctx->data;
+            new.tracking = now;
+
+            pps = new.pps;
+            bps = new.bps;
+
+            bpf_map_update_elem(&ip_stats_map, &iph->saddr, &new, BPF_ANY);
         }
 
         struct tcphdr *tcph;
@@ -211,24 +257,40 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
+            // PPS.
+            if (filter[i]->do_pps &&  pps <= filter[i]->pps)
+            {
+                continue;
+            }
+
+            // BPS.
+            if (filter[i]->do_bps && bps <= filter[i]->bps)
+            {
+                continue;
+            }
+
             // Payload match.
             /*
             if (filter[i]->payloadLen > 0)
             {
                 uint8_t found = 1;
-                uint16_t len = filter[i]->payloadLen;
 
                 // Initialize packet data.
-                uint8_t *pcktData = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen);
-
-                if (pcktData + len > (uint8_t *)data_end)
+                for (uint16_t j = 0; j < MAX_PCKT_LENGTH; j++)
                 {
-                    continue;
-                }
+                    if ((j + 1) > filter[i]->payloadLen)
+                    {
+                        break;
+                    }
 
-                for (uint16_t j = 0; j < filter[i]->payloadLen; j++)
-                {
-                    if ((*pcktData++) == filter[i]->payloadMatch[j])
+                    uint8_t *byte = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen + j);
+
+                    if (byte + 1 > (uint8_t *)data_end)
+                    {
+                        break;
+                    }
+
+                    if (*byte == filter[i]->payloadMatch[j])
                     {
                         continue;
                     }
@@ -341,7 +403,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             // Matched.
             #ifdef DEBUG
-                bpf_printk("Matched rule ID #%" PRIu8 "\n", filter[i]->id);
+                bpf_printk("Matched rule ID #%" PRIu8 ".\n", filter[i]->id);
             #endif
 
             matched = 1;
@@ -376,7 +438,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             #ifdef DEBUG
-                bpf_printk("Matched with protocol %" PRIu8 " and sAddr %" PRIu32 "\n", iph->protocol, iph->saddr);
+                //bpf_printk("Matched with protocol %" PRIu8 " and sAddr %" PRIu32 ".\n", iph->protocol, iph->saddr);
             #endif
         }
     }

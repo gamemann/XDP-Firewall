@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <time.h>
 #include <getopt.h>
+#include <sys/sysinfo.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
@@ -330,7 +331,9 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Min Length => %" PRIu16 "\n", conf->filters[i].min_len);
             fprintf(stdout, "Max TTL => %" PRIu8 "\n", conf->filters[i].max_ttl);
             fprintf(stdout, "Min TTL => %" PRIu8 "\n", conf->filters[i].min_ttl);
-            fprintf(stdout, "TOS => %" PRIu8 "\n\n", conf->filters[i].tos);
+            fprintf(stdout, "TOS => %" PRIu8 "\n", conf->filters[i].tos);
+            fprintf(stdout, "PPS => %" PRIu64 "\n", conf->filters[i].pps);
+            fprintf(stdout, "BPS => %" PRIu64 "\n\n", conf->filters[i].bps);
 
             // TCP Options.
             fprintf(stdout, "TCP Enabled => %" PRIu8 "\n", conf->filters[i].tcpopts.enabled);

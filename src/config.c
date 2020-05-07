@@ -38,6 +38,12 @@ void SetConfigDefaults(struct config_map *cfg)
 
         cfg->filters[i].do_tos = 0;
         cfg->filters[i].tos = 0;
+
+        cfg->filters[i].do_pps = 0;
+        cfg->filters[i].pps = 0;
+        
+        cfg->filters[i].do_bps = 0;
+        cfg->filters[i].bps = 0;
         
         cfg->filters[i].tcpopts.enabled = 0;
         cfg->filters[i].tcpopts.do_dport = 0;
@@ -123,7 +129,6 @@ int ReadConfig(struct config_map *cfg)
     }
 
     cfg->interface = strdup(interface);
-
 
     // Get auto update time.
     int updateTime;
@@ -253,6 +258,24 @@ int ReadConfig(struct config_map *cfg)
         {
             cfg->filters[i].tos = (uint8_t)tos;
             cfg->filters[i].do_tos = 1;
+        }
+
+        // PPS (not required).
+        long long pps;
+
+        if (config_setting_lookup_int64(filter, "pps", &pps))
+        {
+            cfg->filters[i].pps = pps;
+            cfg->filters[i].do_pps = 1;
+        }
+
+        // BPS (not required).
+        long long bps;
+
+        if (config_setting_lookup_int64(filter, "bps", &bps))
+        {
+            cfg->filters[i].bps = bps;
+            cfg->filters[i].do_bps = 1;
         }
 
         // Payload match.
