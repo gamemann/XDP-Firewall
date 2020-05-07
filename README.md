@@ -31,7 +31,7 @@ Config option `filters` is an array. Each filter includes the following options:
 * `tos` => The TOS (type of service) the packet must have to match.
 * `pps` => The maximum packets per second a source IP can send before matching.
 * `bps` => The maximum amount of bytes per second a source IP can send before matching.
-* `blocktime` => The maximum of time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
+* `blocktime` => The time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
 * `payloadmatch` => The payload (L4 data) the packet must have to match. The format is in hexadecimal and each byte is separated by a space. An example includes: `FF FF FF FF 59`.
 
 #### TCP Options
