@@ -480,9 +480,12 @@ int xdp_prog_main(struct xdp_md *ctx)
     if (matched && action == 0)
     {
         // Before dropping, update the blacklist map.
-        uint64_t newTime = now + (blocktime * 1000000000);
+        if (blocktime > 0)
+        {
+            uint64_t newTime = now + (blocktime * 1000000000);
 
-        bpf_map_update_elem(&ip_blacklist_map, &iph->saddr, &newTime, BPF_ANY);
+            bpf_map_update_elem(&ip_blacklist_map, &iph->saddr, &newTime, BPF_ANY);
+        }
 
         return XDP_DROP;
     }
