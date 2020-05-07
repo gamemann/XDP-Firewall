@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <time.h>
 #include <getopt.h>
+#include <sys/resource.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
@@ -274,6 +275,16 @@ int main(int argc, char *argv[])
             "--help -h => Print help menu.\n");
 
         return EXIT_SUCCESS;
+    }
+
+    // Raise RLimit.
+    struct rlimit rl = {RLIM_INFINITY, RLIM_INFINITY};
+
+    if (setrlimit(RLIMIT_MEMLOCK, &rl)) 
+    {
+        fprintf(stderr, "Error setting rlimit.\n");
+
+        return EXIT_FAILURE;
     }
 
     // Check for --config argument.
