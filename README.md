@@ -22,13 +22,13 @@ Config option `filters` is an array. Each filter includes the following options:
 
 * `enabled` => If true, this rule is enabled.
 * `action` => What action to perform against the packet if matched. 0 = Block. 1 = Allow.
-* `srcip` => The source IP the packet must have to match (e.g. 10.50.0.3).
-* `dstip` => The destination IP the packet must have to match (e.g. 10.50.0.4).
-* `min_ttl` => The minimum TTL (time to live) the packet must have to match.
-* `max_ttl` => The maximum TTL (time to live) the packet must have to match.
-* `max_len` => The maximum packet length the packet must have to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
-* `min_len` => The minimum packet length the packet must have to match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
-* `tos` => The TOS (type of service) the packet must have to match.
+* `srcip` => The source IP the packet must match (e.g. 10.50.0.3).
+* `dstip` => The destination IP the packet must match (e.g. 10.50.0.4).
+* `min_ttl` => The minimum TTL (time to live) the packet must match.
+* `max_ttl` => The maximum TTL (time to live) the packet must match.
+* `max_len` => The maximum packet length the packet must match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
+* `min_len` => The minimum packet length the packet must match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
+* `tos` => The TOS (type of service) the packet must match.
 * `pps` => The maximum packets per second a source IP can send before matching.
 * `bps` => The maximum amount of bytes per second a source IP can send before matching.
 * `blocktime` => The time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
@@ -115,6 +115,15 @@ filters = (
         srcip = "10.50.0.4"
     }
 );
+```
+
+## Building
+You can use `git` and `make` to build this project. The following should work:
+
+```
+git clone --recursive https://github.com/gamemann/XDP-Firewall.git
+cd XDP-Firewall
+make && make install
 ```
 
 ## Credits
