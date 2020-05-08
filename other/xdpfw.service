@@ -1,0 +1,11 @@
+[Unit]
+Description=XDP Firewall tool.
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+ExecStart=/usr/bin/xdpfw
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
