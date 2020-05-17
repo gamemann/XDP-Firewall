@@ -281,9 +281,9 @@ int ReadConfig(struct config_map *cfg)
         }
 
         // Block time (default 1).
-        int blocktime;
+        long long blocktime;
 
-        if (config_setting_lookup_int(filter, "blocktime", &blocktime))
+        if (config_setting_lookup_int64(filter, "blocktime", &blocktime))
         {
             cfg->filters[i].blockTime = blocktime;
         }

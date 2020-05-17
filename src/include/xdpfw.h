@@ -6,6 +6,7 @@
 #define MAX_PCKT_LENGTH 65535
 #define MAX_FILTERS 50
 #define MAX_TRACK_IPS 100000
+#define MAX_PAYLOAD_LENGTH 1500
 
 struct tcpopts
 {
@@ -91,9 +92,9 @@ struct filter
     unsigned int do_bps : 1;
     uint64_t bps;
 
-    uint16_t blockTime;
+    uint64_t blockTime;
 
-    uint8_t payloadMatch[MAX_PCKT_LENGTH];
+    uint8_t payloadMatch[MAX_PAYLOAD_LENGTH];
     uint16_t payloadLen;
 
     struct tcpopts tcpopts;
