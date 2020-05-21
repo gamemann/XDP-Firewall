@@ -132,5 +132,20 @@ cd XDP-Firewall
 make && make install
 ```
 
+## Notes
+### BPF For/While Loop Support
+This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
+
+```
+libbpf: load bpf program failed: Invalid argument
+libbpf: -- BEGIN DUMP LOG ---
+libbpf:
+back-edge from insn 113 to 100
+
+libbpf: -- END LOG --
+libbpf: failed to load program 'xdp_prog'
+libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
+```
+
 ## Credits
 * [Christian Deacon](https://www.linkedin.com/in/christian-deacon-902042186/) - Creator.
