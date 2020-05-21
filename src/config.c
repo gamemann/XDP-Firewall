@@ -65,7 +65,7 @@ void SetConfigDefaults(struct config_map *cfg)
         cfg->filters[i].icmpopts.do_code = 0;
         cfg->filters[i].icmpopts.do_type = 0;
 
-        for (uint16_t j = 0; j < MAX_PCKT_LENGTH - 1; j++)
+        for (uint16_t j = 0; j < MAX_PAYLOAD_LENGTH - 1; j++)
         {
             cfg->filters[i].payloadMatch[j] = 0;
         }
