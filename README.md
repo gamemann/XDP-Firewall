@@ -118,7 +118,7 @@ filters = (
 ```
 
 ## Building
-Before compiling, ensure the `libconfig` library is installed. For Debian/Ubuntu, you can install this with the following as root:
+Before building, ensure the `libconfig-dev` package is installed. For Debian/Ubuntu, you can install this with the following as root:
 
 ```
 apt-get install libconfig-dev
