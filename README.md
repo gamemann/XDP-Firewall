@@ -118,6 +118,12 @@ filters = (
 ```
 
 ## Building
+Before compiling, ensure the `libconfig` library is installed. For Debian/Ubuntu, you can install this with the following as root:
+
+```
+apt-get install libconfig-dev
+```
+
 You can use `git` and `make` to build this project. The following should work:
 
 ```
