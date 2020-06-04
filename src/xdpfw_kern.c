@@ -115,6 +115,12 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_DROP;
     }
 
+    // Get stats map.
+    uint32_t key = 0;
+    struct xdpfw_stats *stats;
+
+    stats = bpf_map_lookup_elem(&stats_map, &key);
+
     uint64_t now = bpf_ktime_get_ns();
 
     // Check blacklist map.
@@ -133,6 +139,12 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         else
         {
+            // Increase blocked stats entry.
+            if (stats)
+            {
+                __sync_fetch_and_add(&stats->blocked, 1);
+            }
+
             // They're still blocked. Drop the packet.
             return XDP_DROP;
         }
@@ -460,12 +472,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     if (matched)
     {
-        // Get stats map.
-        uint32_t key = 0;
-        struct xdpfw_stats *stats;
-
-        stats = bpf_map_lookup_elem(&stats_map, &key);
-
+        // Increase allowed or blocked entries on stats map.
         if (stats)
         {
             // Update stats map.
