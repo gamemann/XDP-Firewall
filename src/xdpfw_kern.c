@@ -60,7 +60,7 @@ struct bpf_map_def SEC("maps") stats_map =
 
 struct bpf_map_def SEC("maps") ip_stats_map =
 {
-    .type = BPF_MAP_TYPE_LRU_PERCPU_HASH,
+    .type = BPF_MAP_TYPE_LRU_HASH,
     .key_size = sizeof(uint32_t),
     .value_size = sizeof(struct xdpfw_ip_stats),
     .max_entries = MAX_TRACK_IPS
@@ -68,7 +68,7 @@ struct bpf_map_def SEC("maps") ip_stats_map =
 
 struct bpf_map_def SEC("maps") ip_blacklist_map =
 {
-    .type = BPF_MAP_TYPE_LRU_PERCPU_HASH,
+    .type = BPF_MAP_TYPE_LRU_HASH,
     .key_size = sizeof(uint32_t),
     .value_size = sizeof(uint64_t),
     .max_entries = MAX_TRACK_IPS
