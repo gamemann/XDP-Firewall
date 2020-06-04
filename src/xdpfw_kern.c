@@ -303,44 +303,6 @@ int xdp_prog_main(struct xdp_md *ctx)
             continue;
         }
 
-        // Payload match.
-        /*
-        if (filter[i]->payloadLen > 0)
-        {
-            uint8_t found = 1;
-
-            // Initialize packet data.
-            for (uint16_t j = 0; j < MAX_PCKT_LENGTH; j++)
-            {
-                if ((j + 1) > filter[i]->payloadLen)
-                {
-                    break;
-                }
-
-                uint8_t *byte = (data + sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen + j);
-
-                if (byte + 1 > (uint8_t *)data_end)
-                {
-                    break;
-                }
-
-                if (*byte == filter[i]->payloadMatch[j])
-                {
-                    continue;
-                }
-
-                found = 0;
-
-                break;
-            }
-
-            if (!found)
-            {
-                continue;
-            }
-        }
-        */
-
         // Check layer 4 filters.
         if (iph->protocol == IPPROTO_TCP && !filter[i]->tcpopts.enabled)
         {
@@ -354,6 +316,54 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
             continue;
         }
+
+        // Payload matching.
+        /*
+        if (filter[i]->payloadLen > 0)
+        {
+            unsigned int offset = sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen;
+            void *pos;
+            unsigned int j;
+            uint8_t *ptr;
+
+            pos = data;
+
+            int cont = 1;
+
+            for (j = 0; j < MAX_PAYLOAD_LENGTH; j++)
+            {
+                if ((j + 1) > filter[i]->payloadLen)
+                {
+                    goto out;
+                }
+
+                if ((pos + offset) + 1 > data_end)
+                {
+                    goto out;
+                }
+                
+                ptr = pos + offset;
+
+                if (*ptr == filter[i]->payloadMatch[j])
+                {
+                    offset++;
+                    
+                    continue;
+                }
+                
+                cont = 0;
+                goto exitloop;
+            }
+
+            exitloop:
+            if (!cont)
+            {
+                continue;
+            }
+        }
+
+        out:
+        */
 
         // Do TCP options.
         if (iph->protocol == IPPROTO_TCP && filter[i]->tcpopts.enabled)
@@ -477,7 +487,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         #endif
     }
 
-    if (matched && action == 0)
+    if ((matched) && action == 0)
     {
         // Before dropping, update the blacklist map.
         if (blocktime > 0)
