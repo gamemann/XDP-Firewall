@@ -154,8 +154,9 @@ int xdp_prog_main(struct xdp_md *ctx)
             ip_stats->tracking = now;
         }
 
-        ip_stats->pps++;
-        ip_stats->bps += ctx->data_end - ctx->data;
+        // Increment PPS and BPS using built-in functions.
+        __sync_fetch_and_add(&ip_stats->pps, 1);
+        __sync_fetch_and_add(&ip_stats->bps, ctx->data_end - ctx->data);
         
         pps = ip_stats->pps;
         bps = ip_stats->bps;
@@ -470,16 +471,12 @@ int xdp_prog_main(struct xdp_md *ctx)
             // Update stats map.
             if (action == 0)
             {
-                stats->blocked++;
+                __sync_fetch_and_add(&stats->blocked, 1);
             }
             else
             {
-                stats->allowed++;
+                __sync_fetch_and_add(&stats->allowed, 1);
             }
-
-            key = 0;
-
-            bpf_map_update_elem(&stats_map, &key, stats, BPF_ANY);
         }
 
         #ifdef DEBUG
