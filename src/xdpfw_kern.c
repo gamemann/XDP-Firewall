@@ -16,6 +16,7 @@
 #include "include/xdpfw.h"
 
 //#define DEBUG
+#define DOSTATSONBLOCKMAP   // Feel free to comment this out if you don't want the `blocked` entry on the stats map to be incremented every single time a packet is dropped from the source IP being on the blocked map. Commenting this line out should increase performance when blocking malicious traffic.
 
 #ifdef DEBUG
 
@@ -139,11 +140,13 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         else
         {
-            // Increase blocked stats entry.
-            if (stats)
-            {
-                __sync_fetch_and_add(&stats->blocked, 1);
-            }
+            #ifdef DOSTATSONBLOCKMAP
+                // Increase blocked stats entry.
+                if (stats)
+                {
+                    __sync_fetch_and_add(&stats->blocked, 1);
+                }
+            #endif
 
             // They're still blocked. Drop the packet.
             return XDP_DROP;
