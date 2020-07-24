@@ -147,5 +147,7 @@ libbpf: failed to load program 'xdp_prog'
 libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
 ```
 
+**Note** - It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
+
 ## Credits
 * [Christian Deacon](https://www.linkedin.com/in/christian-deacon-902042186/) - Creator.
