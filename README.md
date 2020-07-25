@@ -64,6 +64,8 @@ The config option `icmpopts` within a filter is an array including ICMP options.
 
 **Note** - Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
 
+**Note** - As of right now, you can specify up to 55 maximum filters. This is due to the BPF map's max entries limitation while using `BPF_MAP_TYPE_ARRAY`. I don't believe we'd be able to use a per-CPU map for this as well because if we do, I don't believe we'd be able to reliably read the filters within the XDP program. If you want more filters, you could try using a hash map (changing the filter map's type to `BPF_MAP_TYPE_HASH`), but keep in mind lookups on the filters will be slower.
+
 ## Configuration Example
 Here's an example of a config:
 
