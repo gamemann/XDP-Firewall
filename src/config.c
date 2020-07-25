@@ -64,13 +64,6 @@ void SetConfigDefaults(struct config_map *cfg)
         cfg->filters[i].icmpopts.enabled = 0;
         cfg->filters[i].icmpopts.do_code = 0;
         cfg->filters[i].icmpopts.do_type = 0;
-
-        for (uint16_t j = 0; j < MAX_PAYLOAD_LENGTH - 1; j++)
-        {
-            cfg->filters[i].payloadMatch[j] = 0;
-        }
-
-        cfg->filters[i].payloadLen = 0;
     }
 }
 
@@ -290,29 +283,6 @@ int ReadConfig(struct config_map *cfg)
         else
         {
             cfg->filters[i].blockTime = 1;
-        }
-
-        // Payload match.
-        const char *payload;
-
-        if (config_setting_lookup_string(filter, "payloadmatch", &payload))
-        {
-            // We need to split the string and scan everything into the uint8_t payload.
-            char *split;
-
-            char *str = malloc((strlen(payload) + 1) * sizeof(char));
-            strcpy(str, payload);
-
-            split = strtok(str, " ");
-
-            while (split != NULL)
-            {
-                sscanf(split, "%2hhx", &cfg->filters[i].payloadMatch[cfg->filters[i].payloadLen]);
-
-                cfg->filters[i].payloadLen++;
-
-                split = strtok(NULL, " ");
-            }
         }
 
         // Check for TCP options.

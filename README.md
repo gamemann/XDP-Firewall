@@ -32,7 +32,6 @@ Config option `filters` is an array. Each filter includes the following options:
 * `pps` => The maximum packets per second a source IP can send before matching.
 * `bps` => The maximum amount of bytes per second a source IP can send before matching.
 * `blocktime` => The time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
-* `payloadmatch` => The payload (L4 data) the packet must have to match. The format is in hexadecimal and each byte is separated by a space. An example includes: `FF FF FF FF 59`.
 
 #### TCP Options
 The config option `tcpopts` within a filter is an array including TCP options. This should only be one array per filter. Options include:
@@ -64,8 +63,6 @@ The config option `icmpopts` within a filter is an array including ICMP options.
 * `type` => The ICMP type the packet must match.
 
 **Note** - Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
-
-**Note** - As of right now, the `payloadmatch` option does not work. I am planning to implement functionality for this soon. Unfortunately, BPF hasn't liked the matching methods I've used so far.
 
 ## Configuration Example
 Here's an example of a config:

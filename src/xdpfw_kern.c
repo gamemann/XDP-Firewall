@@ -333,54 +333,6 @@ int xdp_prog_main(struct xdp_md *ctx)
             continue;
         }
 
-        // Payload matching.
-        /*
-        if (filter[i]->payloadLen > 0)
-        {
-            unsigned int offset = sizeof(struct ethhdr) + (iph->ihl * 4) + l4headerLen;
-            void *pos;
-            unsigned int j;
-            uint8_t *ptr;
-
-            pos = data;
-
-            int cont = 1;
-
-            for (j = 0; j < MAX_PAYLOAD_LENGTH; j++)
-            {
-                if ((j + 1) > filter[i]->payloadLen)
-                {
-                    goto out;
-                }
-
-                if ((pos + offset) + 1 > data_end)
-                {
-                    goto out;
-                }
-                
-                ptr = pos + offset;
-
-                if (*ptr == filter[i]->payloadMatch[j])
-                {
-                    offset++;
-                    
-                    continue;
-                }
-                
-                cont = 0;
-                goto exitloop;
-            }
-
-            exitloop:
-            if (!cont)
-            {
-                continue;
-            }
-        }
-
-        out:
-        */
-
         // Do TCP options.
         if (iph->protocol == IPPROTO_TCP && filter[i]->tcpopts.enabled)
         {

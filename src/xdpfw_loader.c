@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
 
     // Initialize config.
     struct config_map *conf = malloc(sizeof(struct config_map));
-    
+
     SetConfigDefaults(conf);
     
     // Create last updated variable.
@@ -366,19 +366,6 @@ int main(int argc, char *argv[])
             fprintf(stdout, "ICMP Enabled => %" PRIu8 "\n", conf->filters[i].icmpopts.enabled);
             fprintf(stdout, "ICMP Code => %" PRIu8 "\n", conf->filters[i].icmpopts.code);
             fprintf(stdout, "ICMP Type => %" PRIu8 "\n", conf->filters[i].icmpopts.type);
-
-            // Payload.
-            if (conf->filters[i].payloadLen > 0)
-            {
-                fprintf(stdout, "\nPayload (%d) => ", conf->filters[i].payloadLen);
-
-                for(uint16_t j = 0; j < conf->filters[i].payloadLen; j++)
-                {
-                    fprintf(stdout, "%2hhx ", conf->filters[i].payloadMatch[j]);
-                }
-
-                fprintf(stdout, "\n");
-            }
 
             fprintf(stdout, "\n\n");
         }
