@@ -319,20 +319,6 @@ int xdp_prog_main(struct xdp_md *ctx)
             continue;
         }
 
-        // Check layer 4 filters.
-        if (iph->protocol == IPPROTO_TCP && !filter[i]->tcpopts.enabled)
-        {
-            continue;
-        }
-        else if (iph->protocol == IPPROTO_UDP && !filter[i]->udpopts.enabled)
-        {
-            continue;
-        }
-        else if (iph->protocol == IPPROTO_ICMP && !filter[i]->icmpopts.enabled)
-        {
-            continue;
-        }
-
         // Do TCP options.
         if (iph->protocol == IPPROTO_TCP && filter[i]->tcpopts.enabled)
         {
