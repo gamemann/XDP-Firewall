@@ -4,6 +4,13 @@ An XDP firewall designed to read filtering rules based off of a config file. Thi
 
 Additionally, if the host's NIC doesn't support XDP-native, the program will attempt to attach via XDP generic. The program firstly tries XDP-native, though.
 
+## Barricade Firewall (Faster)
+I'm working on a new firewall called [Barricade FW](https://github.com/Barricade-FW/Firewall) that is based off of this one. The new firewall will include more features and the XDP program itself is already faster than the XDP Firewall's program. This is due to using a eBPF map to indicate the current timestamp instead of using the kernel BPF function `bpf_ktime_get_ns()` which apparently impacts performance quite a bit according to [here](https://www.spinics.net/lists/xdp-newbies/msg01713.html).
+
+The XDP program itself is fully functional in the new Barricade Firewall project and instead of using `libconfig`, it uses JSON to parse the config.
+
+Feel free to check it out!
+
 ## Command Line Usage
 The following command line arguments are supported:
 
