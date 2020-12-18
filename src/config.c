@@ -321,172 +321,140 @@ int ReadConfig(struct config_map *cfg)
             cfg->filters[i].blockTime = 1;
         }
 
-        // Check for TCP options.
-        config_setting_t* tcpopts = config_setting_lookup(filter, "tcpopts");
-        
-        // Check TCP options.
-        if (tcpopts != NULL)
+        /* TCP options */
+        // Enabled.
+        int tcpenabled;
+
+        if (config_setting_lookup_bool(filter, "tcp_enabled", &tcpenabled))
         {
-            for (uint16_t j = 0; j < config_setting_length(tcpopts); j++)
-            {
-                config_setting_t* tcp = config_setting_get_elem(tcpopts, j);
-
-                // Enabled.
-                int enabled;
-
-                if (config_setting_lookup_bool(tcp, "enabled", &enabled))
-                {
-                    cfg->filters[i].tcpopts.enabled = enabled;
-                }
-
-                // Source port.
-                long long sport;
-
-                if (config_setting_lookup_int64(tcp, "sport", &sport))
-                {
-                    cfg->filters[i].tcpopts.sport = (uint16_t)sport;
-                    cfg->filters[i].tcpopts.do_sport = 1;
-                }
-
-                // Destination port.
-                long long dport;
-
-                if (config_setting_lookup_int64(tcp, "dport", &dport))
-                {
-                    cfg->filters[i].tcpopts.dport = (uint16_t)dport;
-                    cfg->filters[i].tcpopts.do_dport = 1;
-                }
-
-                // URG flag.
-                int urg;
-
-                if (config_setting_lookup_bool(tcp, "urg", &urg))
-                {
-                    cfg->filters[i].tcpopts.urg = urg;
-                    cfg->filters[i].tcpopts.do_urg = 1;
-                }
-
-                // ACK flag.
-                int ack;
-
-                if (config_setting_lookup_bool(tcp, "ack", &ack))
-                {
-                    cfg->filters[i].tcpopts.ack = ack;
-                    cfg->filters[i].tcpopts.do_ack = 1;
-                }
-
-                // RST flag.
-                int rst;
-
-                if (config_setting_lookup_bool(tcp, "rst", &rst))
-                {
-                    cfg->filters[i].tcpopts.rst = rst;
-                    cfg->filters[i].tcpopts.do_rst = 1;
-                }
-
-                // PSH flag.
-                int psh;
-
-                if (config_setting_lookup_bool(tcp, "psh", &psh))
-                {
-                    cfg->filters[i].tcpopts.psh = psh;
-                    cfg->filters[i].tcpopts.do_psh = 1;
-                }
-
-                // SYN flag.
-                int syn;
-
-                if (config_setting_lookup_bool(tcp, "syn", &syn))
-                {
-                    cfg->filters[i].tcpopts.syn = syn;
-                    cfg->filters[i].tcpopts.do_syn = 1;
-                }
-
-                // FIN flag.
-                int fin;
-
-                if (config_setting_lookup_bool(tcp, "fin", &fin))
-                {
-                    cfg->filters[i].tcpopts.fin = fin;
-                    cfg->filters[i].tcpopts.do_fin = 1;
-                }
-            }
+            cfg->filters[i].tcpopts.enabled = tcpenabled;
         }
 
-        // Check for UDP options.
-        config_setting_t* udpopts = config_setting_lookup(filter, "udpopts");
-        
-        // Check UDP options.
-        if (udpopts != NULL)
+        // Source port.
+        long long tcpsport;
+
+        if (config_setting_lookup_int64(filter, "tcp_sport", &tcpsport))
         {
-            for (uint16_t j = 0; j < config_setting_length(udpopts); j++)
-            {
-                config_setting_t* udp = config_setting_get_elem(udpopts, j);
-
-                // Enabled.
-                int enabled;
-
-                if (config_setting_lookup_bool(udp, "enabled", &enabled))
-                {
-                    cfg->filters[i].udpopts.enabled = enabled;
-                }
-
-                // Source port.
-                long long sport;
-
-                if (config_setting_lookup_int64(udp, "sport", &sport))
-                {
-                    cfg->filters[i].udpopts.sport = (uint16_t)sport;
-                    cfg->filters[i].udpopts.do_sport = 1;
-                }
-
-                // Destination port.
-                long long dport;
-
-                if (config_setting_lookup_int64(udp, "dport", &dport))
-                {
-                    cfg->filters[i].udpopts.dport = (uint16_t)dport;
-                    cfg->filters[i].udpopts.do_dport = 1;
-                }
-            }
+            cfg->filters[i].tcpopts.sport = (uint16_t)tcpsport;
+            cfg->filters[i].tcpopts.do_sport = 1;
         }
 
-        // Check for ICMP options.
-        config_setting_t* icmpopts = config_setting_lookup(filter, "icmpopts");
-        
-        // Check UDP options.
-        if (icmpopts != NULL)
+        // Destination port.
+        long long tcpdport;
+
+        if (config_setting_lookup_int64(filter, "tcp_dport", &tcpdport))
         {
-            for (uint16_t j = 0; j < config_setting_length(icmpopts); j++)
-            {
-                config_setting_t* icmp = config_setting_get_elem(icmpopts, j);
-                
-                // Enabled.
-                int enabled;
+            cfg->filters[i].tcpopts.dport = (uint16_t)tcpdport;
+            cfg->filters[i].tcpopts.do_dport = 1;
+        }
 
-                if (config_setting_lookup_bool(icmp, "enabled", &enabled))
-                {
-                    cfg->filters[i].icmpopts.enabled = enabled;
-                }
+        // URG flag.
+        int tcpurg;
 
-                // ICMP code.
-                int code;
+        if (config_setting_lookup_bool(filter, "tcp_urg", &tcpurg))
+        {
+            cfg->filters[i].tcpopts.urg = tcpurg;
+            cfg->filters[i].tcpopts.do_urg = 1;
+        }
 
-                if (config_setting_lookup_int(icmp, "code", &code))
-                {
-                    cfg->filters[i].icmpopts.code = (uint8_t)code;
-                    cfg->filters[i].icmpopts.do_code = 1;
-                }
+        // ACK flag.
+        int tcpack;
 
-                // ICMP type.
-                int type;
+        if (config_setting_lookup_bool(filter, "tcp_ack", &tcpack))
+        {
+            cfg->filters[i].tcpopts.ack = tcpack;
+            cfg->filters[i].tcpopts.do_ack = 1;
+        }
+        
 
-                if (config_setting_lookup_int(icmp, "type", &type))
-                {
-                    cfg->filters[i].icmpopts.type = (uint8_t)type;
-                    cfg->filters[i].icmpopts.do_type = 1;
-                }
-            }
+        // RST flag.
+        int tcprst;
+
+        if (config_setting_lookup_bool(filter, "tcp_rst", &tcprst))
+        {
+            cfg->filters[i].tcpopts.rst = tcprst;
+            cfg->filters[i].tcpopts.do_rst = 1;
+        }
+
+        // PSH flag.
+        int tcppsh;
+
+        if (config_setting_lookup_bool(filter, "tcp_psh", &tcppsh))
+        {
+            cfg->filters[i].tcpopts.psh = tcppsh;
+            cfg->filters[i].tcpopts.do_psh = 1;
+        }
+
+        // SYN flag.
+        int tcpsyn;
+
+        if (config_setting_lookup_bool(filter, "tcp_syn", &tcpsyn))
+        {
+            cfg->filters[i].tcpopts.syn = tcpsyn;
+            cfg->filters[i].tcpopts.do_syn = 1;
+        }
+
+        // FIN flag.
+        int tcpfin;
+
+        if (config_setting_lookup_bool(filter, "tcp_fin", &tcpfin))
+        {
+            cfg->filters[i].tcpopts.fin = tcpfin;
+            cfg->filters[i].tcpopts.do_fin = 1;
+        }
+
+        /* UDP options */
+        // Enabled.
+        int udpenabled;
+
+        if (config_setting_lookup_bool(filter, "udp_enabled", &udpenabled))
+        {
+            cfg->filters[i].udpopts.enabled = udpenabled;
+        }
+
+        // Source port.
+        long long udpsport;
+
+        if (config_setting_lookup_int64(filter, "udp_sport", &udpsport))
+        {
+            cfg->filters[i].udpopts.sport = (uint16_t)udpsport;
+            cfg->filters[i].udpopts.do_sport = 1;
+        }
+
+        // Destination port.
+        long long udpdport;
+
+        if (config_setting_lookup_int64(filter, "udp_dport", &udpdport))
+        {
+            cfg->filters[i].udpopts.dport = (uint16_t)udpdport;
+            cfg->filters[i].udpopts.do_dport = 1;
+        }
+
+        /* ICMP options */
+        // Enabled.
+        int icmpenabled;
+
+        if (config_setting_lookup_bool(filter, "icmp_enabled", &icmpenabled))
+        {
+            cfg->filters[i].icmpopts.enabled = icmpenabled;
+        }
+
+        // ICMP code.
+        int icmpcode;
+
+        if (config_setting_lookup_int(filter, "icmp_code", &icmpcode))
+        {
+            cfg->filters[i].icmpopts.code = (uint8_t)icmpcode;
+            cfg->filters[i].icmpopts.do_code = 1;
+        }
+
+        // ICMP type.
+        int icmptype;
+
+        if (config_setting_lookup_int(filter, "icmp_type", &icmptype))
+        {
+            cfg->filters[i].icmpopts.type = (uint8_t)icmptype;
+            cfg->filters[i].icmpopts.do_type = 1;
         }
 
         // Assign ID.

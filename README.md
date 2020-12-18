@@ -37,33 +37,31 @@ Config option `filters` is an array. Each filter includes the following options:
 * `blocktime` => The time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
 
 #### TCP Options
-The config option `tcpopts` within a filter is an array including TCP options. This should only be one array per filter. Options include:
+TCP options exist in the main filter array and start with `tcp_`. Please see below.
 
-* `enabled` => If true, check for TCP-specific matches.
-* `sport` => The source port the packet must match.
-* `dport` => The destination port the packet must match.
-* `urg` => If true, the packet must have the `URG` flag set to match.
-* `ack` => If true, the packet must have the `ACK` flag set to match.
-* `rst` => If true, the packet must have the `RST` flag set to match.
-* `psh` => If true, the packet must have the `PSH` flag set to match.
-* `syn` => If true, the packet must have the `SYN` flag set to match.
-* `fin` => If true, the packet must have the `FIN` flag set to match.
+* `tcp_enabled` => If true, check for TCP-specific matches.
+* `tcp_sport` => The source port the packet must match.
+* `tcp_dport` => The destination port the packet must match.
+* `tcp_urg` => If true, the packet must have the `URG` flag set to match.
+* `tcp_ack` => If true, the packet must have the `ACK` flag set to match.
+* `tcp_rst` => If true, the packet must have the `RST` flag set to match.
+* `tcp_psh` => If true, the packet must have the `PSH` flag set to match.
+* `tcp_syn` => If true, the packet must have the `SYN` flag set to match.
+* `tcp_fin` => If true, the packet must have the `FIN` flag set to match.
 
 #### UDP Options
+UDP options exist in the main filter array and start with `udp_`. Please see below.
 
-The config option `udpopts` within a filter is an array including UDP options. This should only be one array per filter. Options include:
-
-* `enabled` => If true, check for UDP-specific matches.
-* `sport` => The source port the packet must match.
-* `dport` => The destination port the packet must match.
+* `udp_enabled` => If true, check for UDP-specific matches.
+* `udp_sport` => The source port the packet must match.
+* `udp_dport` => The destination port the packet must match.
 
 #### ICMP Options
+ICMP options exist in the main filter array and start with `icmp_`. Please see below.
 
-The config option `icmpopts` within a filter is an array including ICMP options. This should only be one array per filter. Options include:
-
-* `enabled` => If true, check for ICMP-specific matches.
-* `code` => The ICMP code the packet must match.
-* `type` => The ICMP type the packet must match.
+* `icmp_enabled` => If true, check for ICMP-specific matches.
+* `icmp_code` => The ICMP code the packet must match.
+* `icmp_type` => The ICMP type the packet must match.
 
 **Note** - Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
 
