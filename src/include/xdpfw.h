@@ -70,6 +70,9 @@ struct filter
     uint32_t srcIP;
     uint32_t dstIP;
 
+    uint32_t srcIP6[4];
+    uint32_t dstIP6[4];
+
     unsigned int do_min_ttl : 1;
     uint8_t min_ttl;
 

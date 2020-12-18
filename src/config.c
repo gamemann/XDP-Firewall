@@ -24,6 +24,12 @@ void SetConfigDefaults(struct config_map *cfg)
         cfg->filters[i].srcIP = 0;
         cfg->filters[i].dstIP = 0;
 
+        for (uint8_t j = 0; j < 4; j++)
+        {
+            cfg->filters[i].srcIP6[j] = 0;
+            cfg->filters[i].dstIP6[j] = 0;
+        }
+
         cfg->filters[i].do_min_len = 0;
         cfg->filters[i].min_len = 0;
 
@@ -208,6 +214,36 @@ int ReadConfig(struct config_map *cfg)
         if (config_setting_lookup_string(filter, "dstip", &dIP))
         {
             cfg->filters[i].dstIP = inet_addr(dIP);
+        }
+
+        // Source IP (IPv6) (not required).
+        const char *sIP6;
+
+        if (config_setting_lookup_string(filter, "srcip6", &sIP6))
+        {
+            struct in6_addr in;
+
+            inet_pton(AF_INET6, sIP6, &in);
+
+            for (uint8_t j = 0; j < 4; j++)
+            {
+                cfg->filters[i].srcIP6[j] = in.__in6_u.__u6_addr32[j];
+            }
+        }
+
+        // Destination IP (IPv6) (not required).
+        const char *dIP6;
+
+        if (config_setting_lookup_string(filter, "dstip6", &dIP6))
+        {
+            struct in6_addr in;
+
+            inet_pton(AF_INET6, dIP6, &in);
+
+            for (uint8_t j = 0; j < 4; j++)
+            {
+                cfg->filters[i].dstIP6[j] = in.__in6_u.__u6_addr32[j];
+            }
         }
 
         // Minimum TTL (not required).

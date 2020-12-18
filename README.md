@@ -1,15 +1,8 @@
 # XDP Firewall
 ## Description
-An XDP firewall designed to read filtering rules based off of a config file. This software only supports IPv4 and protocols TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
+A stateless firewall written using [XDP](https://www.iovisor.org/technology/xdp) designed to read filtering rules based off of a config file and filter incoming packets. Both IPv4 and **IPv6** are supported! Supported protocols include TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
 
 Additionally, if the host's NIC doesn't support XDP-native, the program will attempt to attach via XDP generic. The program firstly tries XDP-native, though.
-
-## Barricade Firewall (Faster)
-I'm working on a new firewall called [Barricade Firewall](https://github.com/Barricade-FW/Firewall) that is based off of this one. The new firewall will include more features and the XDP program itself is already faster than the XDP Firewall's program. This is due to using an eBPF map to indicate the current timestamp instead of using the kernel BPF function `bpf_ktime_get_ns()` which apparently impacts performance quite a bit according to [here](https://www.spinics.net/lists/xdp-newbies/msg01713.html).
-
-The XDP program itself is fully functional in the new Barricade Firewall project and instead of using `libconfig`, it uses JSON to parse the config.
-
-Feel free to check it out!
 
 ## Command Line Usage
 The following command line arguments are supported:
@@ -29,8 +22,10 @@ Config option `filters` is an array. Each filter includes the following options:
 
 * `enabled` => If true, this rule is enabled.
 * `action` => What action to perform against the packet if matched. 0 = Block. 1 = Allow.
-* `srcip` => The source IP the packet must match (e.g. 10.50.0.3).
-* `dstip` => The destination IP the packet must match (e.g. 10.50.0.4).
+* `srcip` => The source IP address the packet must match (e.g. 10.50.0.3).
+* `dstip` => The destination IP address the packet must match (e.g. 10.50.0.4).
+* `srcip6` => The source IPv6 address the packet must match (e.g. fe80::18c4:dfff:fe70:d8a6).
+* `dstip6` => The destination IPv6 address the packet must match (e.g. fe80::ac21:14ff:fe4b:3a6d).
 * `min_ttl` => The minimum TTL (time to live) the packet must match.
 * `max_ttl` => The maximum TTL (time to live) the packet must match.
 * `max_len` => The maximum packet length the packet must match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
