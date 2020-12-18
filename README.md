@@ -79,35 +79,23 @@ filters = (
         enabled = true,
         action = 0,
 
-        udpopts = (
-            {
-                enabled = true,
-                dport = 27015
-            }
-        )
+        udp_enabled = true,
+        udp_dport = 27015
     },
     {
         enabled = true,
         action = 1,
 
-        tcpopts = (
-            {
-                enabled = true,
-                syn = true,
-                dport = 27015
-            }
-        )
+        tcp_enabled = true,
+        tcp_syn = true,
+        tcp_dport = 27015
     },
     {
         enabled = true,
         action = 0,
 
-        icmpopts = (
-            {
-                enabled = true,
-                code = 0
-            }
-        )
+        icmp_enabled = true,
+        icmp_code = 0
     },
     {
         enabled = true,
