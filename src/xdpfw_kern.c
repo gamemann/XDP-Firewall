@@ -563,38 +563,35 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         else if (filter->icmpopts.enabled)
         {
-            if (!icmph)
+            if (icmph)
             {
-                continue;
-            }
+                // Code.
+                if (filter->icmpopts.do_code && filter->icmpopts.code != icmph->code)
+                {
+                    continue;
+                }
 
-            // Code.
-            if (filter->icmpopts.do_code && filter->icmpopts.code != icmph->code)
-            {
-                continue;
+                // Type.
+                if (filter->icmpopts.do_type && filter->icmpopts.type != icmph->type)
+                {
+                    continue;
+                }  
             }
+            else if (icmp6h)
+            {
+                // Code.
+                if (filter->icmpopts.do_code && filter->icmpopts.code != icmp6h->icmp6_code)
+                {
+                    continue;
+                }
 
-            // Type.
-            if (filter->icmpopts.do_type && filter->icmpopts.type != icmph->type)
-            {
-                continue;
-            }  
-        }
-        else if (icmp6h && filter->icmpopts.enabled)
-        {
-            if (!icmp6h)
-            {
-                continue;
+                // Type.
+                if (filter->icmpopts.do_type && filter->icmpopts.type != icmp6h->icmp6_type)
+                {
+                    continue;
+                }
             }
-
-            // Code.
-            if (filter->icmpopts.do_code && filter->icmpopts.code != icmp6h->icmp6_code)
-            {
-                continue;
-            }
-
-            // Type.
-            if (filter->icmpopts.do_type && filter->icmpopts.type != icmp6h->icmp6_type)
+            else
             {
                 continue;
             }
