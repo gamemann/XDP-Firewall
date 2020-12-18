@@ -8,6 +8,7 @@ Additionally, if the host's NIC doesn't support XDP-native, the program will att
 The following command line arguments are supported:
 
 * `--config -c` => Location to config file. Default => **/etc/xdpfw/xdpfw.conf**.
+* `--offload -o` => Tries to load the XDP program in hardware/offload mode.
 * `--list -l` => List all filtering rules scanned from config file.
 * `--help -h` => Print help menu for command line options.
 

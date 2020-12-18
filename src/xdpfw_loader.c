@@ -23,10 +23,12 @@
 static char *configFile;
 static int help = 0;
 static int list = 0;
+static int offload = 0;
 
 const struct option opts[] =
 {
     {"config", required_argument, NULL, 'c'},
+    {"offload", no_argument, &offload, 'o'},
     {"list", no_argument, &list, 'l'},
     {"help", no_argument, &help, 'h'},
     {NULL, 0, NULL, 0}
@@ -52,6 +54,11 @@ void parse_command_line(int argc, char *argv[])
         {
             case 'c':
                 configFile = optarg;
+
+                break;
+
+            case 'o':
+                offload = 1;
 
                 break;
 
@@ -193,42 +200,53 @@ static int xdp_attach(int ifindex, uint32_t *xdp_flags, int prog_fd)
 {
     int err;
     
-    err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
-
-    if (err == -EEXIST && !(*xdp_flags & XDP_FLAGS_UPDATE_IF_NOEXIST))
+    if (offload)
     {
+        fprintf(stdout, "Trying to load in offload/hardware mode...\n");
         
-        uint32_t oldflags = *xdp_flags;
-
-        *xdp_flags &= ~XDP_FLAGS_MODES;
-        *xdp_flags |= (oldflags & XDP_FLAGS_SKB_MODE) ? XDP_FLAGS_DRV_MODE : XDP_FLAGS_SKB_MODE;
-
-        err = bpf_set_link_xdp_fd(ifindex, -1, *xdp_flags);
-
-        if (!err)
-        {
-            err = bpf_set_link_xdp_fd(ifindex, prog_fd, oldflags);
-        }
-    }
-
-    // Check for no XDP-Native support.
-    if (err)
-    {
-        fprintf(stdout, "XDP-Native may not be supported with this NIC. Using SKB instead.\n");
-
-        // Remove DRV Mode flag.
-        if (*xdp_flags & XDP_FLAGS_DRV_MODE)
-        {
-            *xdp_flags &= ~XDP_FLAGS_DRV_MODE;
-        }
-
-        // Add SKB Mode flag.
-        if (!(*xdp_flags & XDP_FLAGS_SKB_MODE))
-        {
-            *xdp_flags |= XDP_FLAGS_SKB_MODE;
-        }
+        *xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_HW_MODE;
 
         err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+    }
+    else
+    {
+        err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+
+        if (err == -EEXIST && !(*xdp_flags & XDP_FLAGS_UPDATE_IF_NOEXIST))
+        {
+            
+            uint32_t oldflags = *xdp_flags;
+
+            *xdp_flags &= ~XDP_FLAGS_MODES;
+            *xdp_flags |= (oldflags & XDP_FLAGS_SKB_MODE) ? XDP_FLAGS_DRV_MODE : XDP_FLAGS_SKB_MODE;
+
+            err = bpf_set_link_xdp_fd(ifindex, -1, *xdp_flags);
+
+            if (!err)
+            {
+                err = bpf_set_link_xdp_fd(ifindex, prog_fd, oldflags);
+            }
+        }
+
+        // Check for no XDP-Native support.
+        if (err)
+        {
+            fprintf(stdout, "XDP-Native may not be supported with this NIC. Using SKB instead.\n");
+
+            // Remove DRV Mode flag.
+            if (*xdp_flags & XDP_FLAGS_DRV_MODE)
+            {
+                *xdp_flags &= ~XDP_FLAGS_DRV_MODE;
+            }
+
+            // Add SKB Mode flag.
+            if (!(*xdp_flags & XDP_FLAGS_SKB_MODE))
+            {
+                *xdp_flags |= XDP_FLAGS_SKB_MODE;
+            }
+
+            err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+        }
     }
 
     if (err < 0)
