@@ -138,9 +138,9 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
 
         srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[0] << 0;
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[1] << 16;
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[2] << 32;
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[3] << 48;
+        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[1] << 32;
+        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[2] << 48;
+        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[3] << 96;
     }
     else
     {
