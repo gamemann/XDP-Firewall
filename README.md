@@ -137,5 +137,13 @@ libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
 
 **Note** - It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
 
+## Other XDP Project(s)
+I just wanted to share other project(s) I make using XDP here for those interested.
+
+### XDP Forwarding
+This XDP project performs basic layer 3/4 forwarding using source port mapping similar to IPTables/NFTables. This is one of my newer projects and still a work in progress. I also feel the code is a lot neater in the XDP Forwarding project.
+
+[GitHub Repository](https://github.com/gamemann/XDP-Forwarding)
+
 ## Credits
 * [Christian Deacon](https://www.linkedin.com/in/christian-deacon-902042186/) - Creator.
