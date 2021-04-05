@@ -2,7 +2,7 @@
 ## Description
 A stateless firewall that attaches to the [XDP](https://www.iovisor.org/technology/xdp) hook for fast packet processing. This firewall is designed to read filtering rules based off of a config file and filter incoming packets. Both IPv4 and **IPv6** are supported! Supported protocols include TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
 
-Additionally, if the host's NIC doesn't support XDP-native, the program will attempt to attach via XDP generic. The program firstly tries XDP-native, though.
+Additionally, if the host's NIC doesn't support XDP DRV hook (AKA native), the program will attempt to attach to the XDP SKB hook (AKA generic). The program firstly tries XDP DRV mode, though.
 
 ## Command Line Usage
 The following command line arguments are supported:
@@ -146,4 +146,4 @@ This XDP project performs basic layer 3/4 forwarding using source port mapping s
 [GitHub Repository](https://github.com/gamemann/XDP-Forwarding)
 
 ## Credits
-* [Christian Deacon](https://www.linkedin.com/in/christian-deacon-902042186/) - Creator.
+* [Christian Deacon](https://github.com/gamemann) - Creator.
