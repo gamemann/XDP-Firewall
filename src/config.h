@@ -2,7 +2,7 @@
 
 #include "xdpfw.h"
 
-struct config_map
+struct config
 {
     char *interface;
     uint16_t updateTime;
@@ -10,6 +10,6 @@ struct config_map
     struct filter filters[MAX_FILTERS];
 };
 
-void setcfgdefaults(struct config_map *cfg);
+void setcfgdefaults(struct config *cfg);
 int opencfg(const char *FileName);
-int readcfg(struct config_map *cfg);
+int readcfg(struct config *cfg);
