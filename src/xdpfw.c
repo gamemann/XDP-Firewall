@@ -17,8 +17,8 @@
 #include "../libbpf/src/bpf.h"
 #include "../libbpf/src/libbpf.h"
 
-#include "include/xdpfw.h"
-#include "include/config.h"
+#include "xdpfw.h"
+#include "config.h"
 
 // Command line variables.
 static char *configFile;

@@ -15,7 +15,7 @@
 
 #include "../libbpf/src/bpf_helpers.h"
 
-#include "include/xdpfw.h"
+#include "xdpfw.h"
 
 //#define DEBUG
 //#define DOSTATSONBLOCKMAP   // Feel free to comment this out if you don't want the `blocked` entry on the stats map to be incremented every single time a packet is dropped from the source IP being on the blocked map. Commenting this line out should increase performance when blocking malicious traffic.
