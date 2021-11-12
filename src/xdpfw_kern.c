@@ -135,7 +135,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
     
     // Check IP header protocols.
-    if ((eth->h_proto == htons(ETH_P_IPV6) && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (eth->h_proto == htons(ETH_P_IP) && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
+    if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
     {
         return XDP_PASS;
     }
@@ -398,7 +398,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
         }
-        else
+        else if (iph)
         {
             // Source address.
             if (filter->srcip && iph->saddr != filter->srcip)
