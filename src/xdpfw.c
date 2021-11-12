@@ -137,7 +137,7 @@ int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
  * 
  * @return BPF's program FD.
 */
-int loadbpfobj(const char *filename, int ifidx)
+int loadbpfobj(const char *filename, __u8 offload, int ifidx)
 {
     int fd = -1;
 
@@ -145,9 +145,14 @@ int loadbpfobj(const char *filename, int ifidx)
     struct bpf_prog_load_attr attrs = 
     {
 		.prog_type = BPF_PROG_TYPE_XDP,
-        .ifindex = ifidx,
 	};
 
+    // If we want to offload the XDP program, we must send the ifindex item to the interface's index.
+    if (offload)
+    {
+        attrs.ifindex = ifidx;
+    }
+    
     attrs.file = filename;
 
     // Check if we can access the BPF object file.
@@ -423,7 +428,7 @@ int main(int argc, char *argv[])
     const char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
     // Get XDP's ID.
-    progfd = loadbpfobj(filename, ifidx);
+    progfd = loadbpfobj(filename, cmd.offload, ifidx);
 
     if (progfd <= 0)
     {
