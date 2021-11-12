@@ -136,13 +136,18 @@ int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
  * 
  * @return BPF's program FD.
 */
-int loadbpfobj(const char *filename)
+int loadbpfobj(const char *filename, int ifidx)
 {
+    struct bpf_prog_load_attr attrs = {0};
+    attrs.file = filename;
+    attrs.prog_type = BPF_PROG_TYPE_XDP;
+    attrs.ifindex = ifidx;
+
     int firstfd = -1;
     struct bpf_object *obj;
     int err;
 
-    err = bpf_prog_load(filename, BPF_PROG_TYPE_XDP, &obj, &firstfd);
+    err = bpf_prog_load_xattr(&attrs, &obj, &firstfd);
 
     if (err)
     {
@@ -389,7 +394,7 @@ int main(int argc, char *argv[])
     const char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
     // Get XDP's ID.
-    progfd = loadbpfobj(filename);
+    progfd = loadbpfobj(filename, ifidx);
 
     if (progfd <= 0)
     {
