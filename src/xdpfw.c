@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
 
     // XDP variables.
     int progfd;
-    char *filename = "/etc/xdpfw/xdpfw_kern.o";
+    const char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
     // Get XDP's ID.
     progfd = loadbpfobj(filename);
