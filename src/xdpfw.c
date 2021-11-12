@@ -14,8 +14,8 @@
 #include <linux/if_link.h>
 #include <arpa/inet.h>
 
-#include "../libbpf/src/bpf.h"
-#include "../libbpf/src/libbpf.h"
+#include <bpf.h>
+#include <libbpf.h>
 
 #include "xdpfw.h"
 #include "config.h"
