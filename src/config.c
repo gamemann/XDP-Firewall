@@ -5,8 +5,8 @@
 
 #include <arpa/inet.h>
 
-#include "include/xdpfw.h"
-#include "include/config.h"
+#include "xdpfw.h"
+#include "config.h"
 
 FILE *file;
 
