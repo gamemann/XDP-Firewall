@@ -87,16 +87,16 @@ int xdp_prog_main(struct xdp_md *ctx)
     void *data = (void *)(long)ctx->data;
 
     // Scan ethernet header.
-    struct ethhdr *ethhdr = data;
+    struct ethhdr *eth = data;
 
     // Check if the ethernet header is valid.
-    if (ethhdr + 1 > (struct ethhdr *)data_end)
+    if (eth + 1 > (struct ethhdr *)data_end)
     {
         return XDP_DROP;
     }
 
     // Check Ethernet protocol.
-    if (unlikely(ethhdr->h_proto != htons(ETH_P_IP) && ethhdr->h_proto != htons(ETH_P_IPV6)))
+    if (unlikely(eth->h_proto != htons(ETH_P_IP) && eth->h_proto != htons(ETH_P_IPV6)))
     {
         return XDP_PASS;
     }
@@ -110,7 +110,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     __u128 srcip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
-    if (ethhdr->h_proto == htons(ETH_P_IPV6))
+    if (eth->h_proto == htons(ETH_P_IPV6))
     {
         iph6 = (data + sizeof(struct ethhdr));
 
@@ -135,7 +135,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
     
     // Check IP header protocols.
-    if ((ethhdr->h_proto == htons(ETH_P_IPV6) && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (ethhdr->h_proto == htons(ETH_P_IP) && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
+    if ((eth->h_proto == htons(ETH_P_IPV6) && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (eth->h_proto == htons(ETH_P_IP) && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
     {
         return XDP_PASS;
     }
@@ -149,7 +149,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Check blacklist map.
     __u64 *blocked = NULL;
 
-    if (ethhdr->h_proto == htons(ETH_P_IPV6))
+    if (eth->h_proto == htons(ETH_P_IPV6))
     {
         blocked = bpf_map_lookup_elem(&ip6_blacklist_map, &srcip6);
     }
@@ -167,7 +167,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (now > *blocked)
         {
             // Remove element from map.
-            if (ethhdr->h_proto == htons(ETH_P_IPV6))
+            if (eth->h_proto == htons(ETH_P_IPV6))
             {
                 bpf_map_delete_elem(&ip6_blacklist_map, &srcip6);
             }
@@ -197,7 +197,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     struct ip_stats *ip_stats = NULL;
     
-    if (ethhdr->h_proto == htons(ETH_P_IPV6))
+    if (eth->h_proto == htons(ETH_P_IPV6))
     {
         ip_stats = bpf_map_lookup_elem(&ip6_stats_map, &srcip6);
     }
@@ -235,7 +235,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         pps = new.pps;
         bps = new.bps;
 
-        if (ethhdr->h_proto == htons(ETH_P_IPV6))
+        if (eth->h_proto == htons(ETH_P_IPV6))
         {
             bpf_map_update_elem(&ip6_stats_map, &srcip6, &new, BPF_ANY);
         }
@@ -251,7 +251,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct icmp6hdr *icmp6h = NULL;
     
     // Check protocol.
-    if (ethhdr->h_proto == htons(ETH_P_IPV6))
+    if (eth->h_proto == htons(ETH_P_IPV6))
     {
         switch (iph6->nexthdr)
         {
@@ -353,7 +353,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
 
         // Do specific IPv6.
-        if (ethhdr->h_proto == htons(ETH_P_IPV6))
+        if (eth->h_proto == htons(ETH_P_IPV6))
         {
             if (iph6 + 1 > (struct ipv6hdr *)data_end)
             {
@@ -604,7 +604,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             {
                 __u64 newTime = now + (blocktime * 1000000000);
                 
-                if (ethhdr->h_proto == htons(ETH_P_IPV6))
+                if (eth->h_proto == htons(ETH_P_IPV6))
                 {
                     bpf_map_update_elem(&ip6_blacklist_map, &srcip6, &newTime, BPF_ANY);
                 }
