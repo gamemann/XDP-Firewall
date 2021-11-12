@@ -21,7 +21,7 @@
 #define ntohl(x) (x)
 #endif
 
-#define uint128_t __uint128_t
+#define __u128 __uint128_t
 #endif
 
 struct tcpopts

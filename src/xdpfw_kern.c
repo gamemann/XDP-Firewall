@@ -68,7 +68,7 @@ struct bpf_map_def SEC("maps") ip_blacklist_map =
 struct bpf_map_def SEC("maps") ip6_stats_map =
 {
     .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(uint128_t),
+    .key_size = sizeof(__u128),
     .value_size = sizeof(struct ip_stats),
     .max_entries = MAX_TRACK_IPS
 };
@@ -76,7 +76,7 @@ struct bpf_map_def SEC("maps") ip6_stats_map =
 struct bpf_map_def SEC("maps") ip6_blacklist_map =
 {
     .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(uint128_t),
+    .key_size = sizeof(__u128),
     .value_size = sizeof(__u64),
     .max_entries = MAX_TRACK_IPS
 };
@@ -109,7 +109,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Initialize IP headers.
     struct iphdr *iph;
     struct ipv6hdr *iph6;
-    uint128_t srcip6 = 0;
+    __u128 srcip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
     if (ethhdr->h_proto == htons(ETH_P_IPV6))
@@ -121,10 +121,10 @@ int xdp_prog_main(struct xdp_md *ctx)
             return XDP_DROP;
         }
 
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[0] << 0;
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[1] << 32;
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[2] << 64;
-        srcip6 |= (uint128_t) iph6->saddr.in6_u.u6_addr32[3] << 96;
+        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[0] << 0;
+        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[1] << 32;
+        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[2] << 64;
+        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[3] << 96;
     }
     else
     {
