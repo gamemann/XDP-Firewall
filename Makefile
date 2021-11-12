@@ -13,6 +13,8 @@ LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/strset.o $(LIBBPFSRC)/staticobjs/xsk.o
 
 CONFIGSRC = config.c
 CONFIGOBJ = config.o
+CMDLINESRC = cmdline.c
+CMDLINEOBJ = cmdline.o
 
 XDPFWSRC = xdpfw.c
 XDPFWOUT = xdpfw
@@ -21,7 +23,7 @@ XDPPROGSRC = xdpfw_kern.c
 XDPPROGBC = xdpfw_kern.bc
 XDPPROGOBJ = xdpfw_kern.o
 
-OBJS = $(BUILDDIR)/$(CONFIGOBJ)
+OBJS = $(BUILDDIR)/$(CONFIGOBJ) $(BUILDDIR)/$(CMDLINEOBJ)
 
 LDFLAGS += -lconfig -lelf -lz
 INCS = -I $(LIBBPFSRC)
@@ -36,7 +38,8 @@ xdpfw_filter:
 	llc -march=bpf -filetype=obj -o $(BUILDDIR)/$(XDPPROGOBJ) $(BUILDDIR)/$(XDPPROGBC)
 utils:
 	mkdir -p $(BUILDDIR)/
-	$(CC) -O2 -c $(LDFLAGS) -o $(BUILDDIR)/$(CONFIGOBJ) $(SRCDIR)/$(CONFIGSRC)
+	$(CC) -O2 -c -o $(BUILDDIR)/$(CONFIGOBJ) $(SRCDIR)/$(CONFIGSRC)
+	$(CC) -O2 -c -o $(BUILDDIR)/$(CMDLINEOBJ) $(SRCDIR)/$(CMDLINESRC)
 libbpf:
 	$(MAKE) -C libbpf/src
 clean:
