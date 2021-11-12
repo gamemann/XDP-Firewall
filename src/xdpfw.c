@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <sys/resource.h>
 #include <sys/sysinfo.h>
+#include <fcntl.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
@@ -138,28 +139,52 @@ int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
 */
 int loadbpfobj(const char *filename, int ifidx)
 {
-    struct bpf_prog_load_attr attrs = {0};
-    attrs.file = filename;
-    attrs.prog_type = BPF_PROG_TYPE_XDP;
-    attrs.ifindex = ifidx;
+    int fd = -1;
 
-    int firstfd = -1;
-    struct bpf_object *obj;
+    // Create attributes and assign XDP type + file name.
+    struct bpf_prog_load_attr attrs = 
+    {
+		.prog_type = BPF_PROG_TYPE_XDP,
+	};
+
+    attrs.file = filename;
+
+    // Check if we can access the BPF object file.
+    if (access(filename, O_RDONLY) < 0) 
+    {
+        fprintf(stderr, "Could not read/access BPF object file :: %s (%s).\n", filename, strerror(errno));
+
+        return fd;
+    }
+
+    struct bpf_object *obj = NULL;
     int err;
 
-    err = bpf_prog_load_xattr(&attrs, &obj, &firstfd);
+    err = bpf_prog_load_xattr(&attrs, &obj, &fd);
 
-    if (err)
+    if (err) 
     {
-        fprintf(stderr, "Error loading XDP program. File => %s. Error => %s. Error Num => %d\n", filename, strerror(-err), err);
+        fprintf(stderr, "Could not load XDP BPF program :: %s.\n", strerror(errno));
 
-        return -1;
+        return fd;
+    }
+
+    struct bpf_program *prog;
+
+    prog = bpf_object__find_program_by_title(obj, "xdp_prog");
+    fd = bpf_program__fd(prog);
+
+    if (fd < 0) 
+    {
+        printf("XDP program not found by section/title :: xdp_prog (%s).\n", strerror(fd));
+
+        return fd;
     }
 
     filtersmap = findmapfd(obj, "filters_map");
     statsmap = findmapfd(obj, "stats_map");
 
-    return firstfd;
+    return fd;
 }
 
 /**
