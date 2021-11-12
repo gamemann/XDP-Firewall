@@ -479,11 +479,8 @@ int readcfg(struct config *cfg)
             cfg->filters[i].icmpopts.do_type = 1;
         }
 
-        // Assign ID.
-        cfg->filters[i].id = filters + 1;
-
-        // Increase filter count.
-        filters++;
+        // Assign ID and increase filter count.
+        cfg->filters[i].id = ++filters;
     }
 
     config_destroy(&conf);
