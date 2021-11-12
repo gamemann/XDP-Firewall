@@ -31,7 +31,7 @@ void signalHndl(int tmp)
     cont = 0;
 }
 
-void update_BPF(struct config_map *conf)
+void updatefilters(struct config_map *conf)
 {
     // Loop through all filters and delete the map.
     for (uint8_t i = 0; i < MAX_FILTERS; i++)
@@ -58,7 +58,7 @@ void update_BPF(struct config_map *conf)
     }
 }
 
-int update_config(struct config_map *conf, char *configFile)
+int updateconfig(struct config_map *conf, char *configFile)
 {
     // Open config file.
     if (OpenConfig(configFile) != 0)
@@ -86,7 +86,7 @@ int update_config(struct config_map *conf, char *configFile)
     return 0;
 }
 
-int find_map_fd(struct bpf_object *bpf_obj, const char *mapname)
+int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
 {
     struct bpf_map *map;
     int fd = -1;
@@ -106,7 +106,7 @@ int find_map_fd(struct bpf_object *bpf_obj, const char *mapname)
         return fd;
 }
 
-int load_bpf_object_file__simple(const char *filename)
+int loadbpfobj(const char *filename)
 {
     int first_prog_fd = -1;
     struct bpf_object *obj;
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
     time_t statsLastUpdated = time(NULL);
 
     // Update config.
-    update_config(conf, cmd.cfgfile);
+    updateconfig(conf, cmd.cfgfile);
 
     // Check for list option.
     if (cmd.list)
@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
     char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
     // Get XDP's ID.
-    progfd = load_bpf_object_file__simple(filename);
+    progfd = loadbpfobj(filename);
 
     if (progfd <= 0)
     {
@@ -393,7 +393,7 @@ int main(int argc, char *argv[])
     }
 
     // Update BPF maps.
-    update_BPF(conf);
+    updatefilters(conf);
 
     // Signal.
     signal(SIGINT, signalHndl);
@@ -410,10 +410,10 @@ int main(int argc, char *argv[])
         if (conf->updateTime > 0 && (curTime - lastUpdated) > conf->updateTime)
         {
             // Update config.
-            update_config(conf, cmd.cfgfile);
+            updateconfig(conf, cmd.cfgfile);
 
             // Update BPF maps.
-            update_BPF(conf);
+            updatefilters(conf);
             
             // Update last updated variable.
             lastUpdated = time(NULL);
