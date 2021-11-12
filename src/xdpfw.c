@@ -138,11 +138,11 @@ int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
 */
 int loadbpfobj(const char *filename)
 {
-    int first_prog_fd = -1;
+    int firstfd = -1;
     struct bpf_object *obj;
     int err;
 
-    err = bpf_prog_load(filename, BPF_PROG_TYPE_XDP, &obj, &first_prog_fd);
+    err = bpf_prog_load(filename, BPF_PROG_TYPE_XDP, &obj, &firstfd);
 
     if (err)
     {
@@ -154,7 +154,7 @@ int loadbpfobj(const char *filename)
     filtersmap = findmapfd(obj, "filters_map");
     statsmap = findmapfd(obj, "stats_map");
 
-    return first_prog_fd;
+    return firstfd;
 }
 
 /**
