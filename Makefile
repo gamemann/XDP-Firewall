@@ -1,30 +1,53 @@
 CC = clang
 
-objects += src/config.o src/xdpfw_loader.o
+BUILDDIR = build
+SRCDIR = src
 
-libbpf_static_objects += libbpf/src/staticobjs/bpf.o libbpf/src/staticobjs/btf.o libbpf/src/staticobjs/libbpf_errno.o libbpf/src/staticobjs/libbpf_probes.o
-libbpf_static_objects += libbpf/src/staticobjs/libbpf.o libbpf/src/staticobjs/netlink.o libbpf/src/staticobjs/nlattr.o libbpf/src/staticobjs/str_error.o
-libbpf_static_objects += libbpf/src/staticobjs/hashmap.o libbpf/src/staticobjs/bpf_prog_linfo.o
+LIBBPFSRC = libbpf/src
+LIBBPFOBJS = $(LIBBPFSRC)/staticobjs/bpf_prog_linfo.o $(LIBBPFSRC)/staticobjs/bpf.o $(LIBBPFSRC)/staticobjs/btf_dump.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/btf.o $(LIBBPFSRC)/staticobjs/gen_loader.o $(LIBBPFSRC)/staticobjs/hashmap.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/libbpf_errno.o $(LIBBPFSRC)/staticobjs/libbpf_probes.o $(LIBBPFSRC)/staticobjs/libbpf.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/linker.o $(LIBBPFSRC)/staticobjs/netlink.o $(LIBBPFSRC)/staticobjs/nlattr.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/relo_core.o $(LIBBPFSRC)/staticobjs/ringbuf.o $(LIBBPFSRC)/staticobjs/str_error.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/strset.o $(LIBBPFSRC)/staticobjs/xsk.o
+
+CONFIGSRC = config.c
+CONFIGOBJ = config.o
+
+XDPFWSRC = xdpfw.c
+XDPFWOUT = xdpfw
+
+XDPPROGSRC = xdpfw_kern.c
+XDPPROGBC = xdpfw_kern.bc
+XDPPROGOBJ = xdpfw_kern.o
+
+OBJS = $(BUILDDIR)/$(CONFIGOBJ)
 
 LDFLAGS += -lconfig -lelf -lz
+INCS = -I $(LIBBPFSRC)
 
-all: xdpfw_loader xdpfw_filter
-xdpfw_loader: libbpf $(objects)
-	clang $(LDFLAGS) -o xdpfw $(libbpf_static_objects) $(objects)
-xdpfw_filter: src/xdpfw_kern.o
-	clang -D__BPF__ -Wall -Wextra -O2 -emit-llvm -c src/xdpfw_kern.c -o src/xdpfw_kern.bc
-	llc -march=bpf -filetype=obj src/xdpfw_kern.bc -o src/xdpfw_kern.o
+all: xdpfw xdpfw_filter utils
+xdpfw: utils libbpf $(OBJS)
+	mkdir -p $(BUILDDIR)/
+	$(CC) $(LDFLAGS) $(INCS) -o $(BUILDDIR)/$(XDPFWOUT) $(LIBBPFOBJS) $(OBJS) $(SRCDIR)/$(XDPFWSRC)
+xdpfw_filter:
+	mkdir -p $(BUILDDIR)/
+	$(CC) $(INCS) -D__BPF__ -Wall -Wextra -O2 -emit-llvm -c -o $(BUILDDIR)/$(XDPPROGBC) $(SRCDIR)/$(XDPPROGSRC)
+	llc -march=bpf -filetype=obj -o $(BUILDDIR)/$(XDPPROGOBJ) $(BUILDDIR)/$(XDPPROGBC)
+utils:
+	mkdir -p $(BUILDDIR)/
+	$(CC) -O2 -c $(LDFLAGS) -o $(BUILDDIR)/$(CONFIGOBJ) $(SRCDIR)/$(CONFIGSRC)
 libbpf:
 	$(MAKE) -C libbpf/src
 clean:
 	$(MAKE) -C libbpf/src clean
-	rm -f src/*.o src/*.bc
-	rm -f xdpfw_loader
+	rm -f $(BUILDDIR)/*.o $(BUILDDIR)/*.bc
+	rm -f $(BUILDDIR)/$(XDPFWOUT)
 install:
 	mkdir -p /etc/xdpfw/
 	cp -n xdpfw.conf.example /etc/xdpfw/xdpfw.conf
-	cp src/xdpfw_kern.o /etc/xdpfw/xdpfw_kern.o
-	cp xdpfw /usr/bin/xdpfw
+	cp $(BUILDDIR)/$(XDPPROGOBJ) /etc/xdpfw/$(XDPPROGOBJ)
+	cp $(BUILDDIR)/$(XDPFWOUT) /usr/bin/$(XDPFWOUT)
 	cp -n other/xdpfw.service /etc/systemd/system/
 .PHONY: libbpf all
 .DEFAULT: all
