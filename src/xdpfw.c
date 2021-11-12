@@ -241,6 +241,7 @@ int main(int argc, char *argv[])
         fprintf(stdout, "Usage:\n" \
             "--config -c => Config file location (default is /etc/xdpfw/xdpfw.conf).\n" \
             "--offload -o => Tries to load the XDP program in hardware/offload mode." \
+            "--skb -s => Force the XDP program to load with SKB mode instead of DRV." \
             "--list -l => Print config details including filters (this will exit program after done).\n" \
             "--help -h => Print help menu.\n");
 
