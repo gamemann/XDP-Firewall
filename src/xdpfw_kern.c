@@ -52,7 +52,7 @@
 struct bpf_map_def SEC("maps") filters_map = 
 {
     .type = BPF_MAP_TYPE_ARRAY,
-    .key_size = sizeof(uint32_t),
+    .key_size = sizeof(__u32),
     .value_size = sizeof(struct filter),
     .max_entries = MAX_FILTERS
 };
@@ -60,24 +60,24 @@ struct bpf_map_def SEC("maps") filters_map =
 struct bpf_map_def SEC("maps") stats_map =
 {
     .type = BPF_MAP_TYPE_PERCPU_ARRAY,
-    .key_size = sizeof(uint32_t),
-    .value_size = sizeof(struct xdpfw_stats),
+    .key_size = sizeof(__u32),
+    .value_size = sizeof(struct stats),
     .max_entries = 1
 };
 
 struct bpf_map_def SEC("maps") ip_stats_map =
 {
     .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(uint32_t),
-    .value_size = sizeof(struct xdpfw_ip_stats),
+    .key_size = sizeof(__u32),
+    .value_size = sizeof(struct ip_stats),
     .max_entries = MAX_TRACK_IPS
 };
 
 struct bpf_map_def SEC("maps") ip_blacklist_map =
 {
     .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(uint32_t),
-    .value_size = sizeof(uint64_t),
+    .key_size = sizeof(__u32),
+    .value_size = sizeof(__u64),
     .max_entries = MAX_TRACK_IPS
 };
 
@@ -85,7 +85,7 @@ struct bpf_map_def SEC("maps") ip6_stats_map =
 {
     .type = BPF_MAP_TYPE_LRU_HASH,
     .key_size = sizeof(uint128_t),
-    .value_size = sizeof(struct xdpfw_ip_stats),
+    .value_size = sizeof(struct ip_stats),
     .max_entries = MAX_TRACK_IPS
 };
 
@@ -93,7 +93,7 @@ struct bpf_map_def SEC("maps") ip6_blacklist_map =
 {
     .type = BPF_MAP_TYPE_LRU_HASH,
     .key_size = sizeof(uint128_t),
-    .value_size = sizeof(uint64_t),
+    .value_size = sizeof(__u64),
     .max_entries = MAX_TRACK_IPS
 };
 
@@ -119,8 +119,8 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    uint8_t action = 0;
-    uint64_t blocktime = 1;
+    __u8 action = 0;
+    __u64 blocktime = 1;
 
     // Initialize IP headers.
     struct iphdr *iph;
@@ -159,13 +159,13 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Get stats map.
-    uint32_t key = 0;
-    struct xdpfw_stats *stats = bpf_map_lookup_elem(&stats_map, &key);
+    __u32 key = 0;
+    struct stats *stats = bpf_map_lookup_elem(&stats_map, &key);
 
-    uint64_t now = bpf_ktime_get_ns();
+    __u64 now = bpf_ktime_get_ns();
 
     // Check blacklist map.
-    uint64_t *blocked = NULL;
+    __u64 *blocked = NULL;
 
     if (ethhdr->h_proto == htons(ETH_P_IPV6))
     {
@@ -179,7 +179,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     if (blocked != NULL && *blocked > 0)
     {
         #ifdef DEBUG
-            bpf_printk("Checking for blocked packet... Block time %" PRIu64 "\n", *blocked);
+            bpf_printk("Checking for blocked packet... Block time %llu.\n", *blocked);
         #endif
 
         if (now > *blocked)
@@ -200,7 +200,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Increase blocked stats entry.
                 if (stats)
                 {
-                    stats->blocked++;
+                    stats->dropped++;
                 }
             #endif
 
@@ -210,10 +210,10 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Update IP stats (PPS/BPS).
-    uint64_t pps = 0;
-    uint64_t bps = 0;
+    __u64 pps = 0;
+    __u64 bps = 0;
 
-    struct xdpfw_ip_stats *ip_stats = NULL;
+    struct ip_stats *ip_stats = NULL;
     
     if (ethhdr->h_proto == htons(ETH_P_IPV6))
     {
@@ -244,7 +244,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     else
     {
         // Create new entry.
-        struct xdpfw_ip_stats new;
+        struct ip_stats new;
 
         new.pps = 1;
         new.bps = ctx->data_end - ctx->data;
@@ -352,9 +352,9 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
     }
     
-    for (uint8_t i = 0; i < MAX_FILTERS; i++)
+    for (__u8 i = 0; i < MAX_FILTERS; i++)
     {
-        uint32_t key = i;
+        __u32 key = i;
 
         struct filter *filter = bpf_map_lookup_elem(&filters_map, &key);
 
@@ -379,19 +379,19 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Source address.
-            if (filter->srcIP6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->srcIP6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->srcIP6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->srcIP6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->srcIP6[3]))
+            if (filter->srcip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->srcip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->srcip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->srcip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->srcip6[3]))
             {
                 continue;
             }
 
             // Destination address.
-            if (filter->dstIP6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dstIP6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->dstIP6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dstIP6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->dstIP6[3]))
+            if (filter->dstip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dstip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->dstip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dstip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->dstip6[3]))
             {
                 continue;
             }
 
             #ifdef ALLOWSINGLEIPV4V6
-            if (filter->srcIP != 0 || filter->dstIP != 0)
+            if (filter->srcip != 0 || filter->dstip != 0)
             {
                 continue;
             }
@@ -424,19 +424,19 @@ int xdp_prog_main(struct xdp_md *ctx)
         else
         {
             // Source address.
-            if (filter->srcIP != 0 && iph->saddr != filter->srcIP)
+            if (filter->srcip && iph->saddr != filter->srcip)
             {
                 continue;
             }
 
             // Destination address.
-            if (filter->dstIP != 0 && iph->daddr != filter->dstIP)
+            if (filter->dstip != 0 && iph->daddr != filter->dstip)
             {
                 continue;
             }
 
             #ifdef ALLOWSINGLEIPV4V6
-            if ((filter->srcIP6[0] != 0 || filter->srcIP6[1] != 0 || filter->srcIP6[2] != 0 || filter->srcIP6[3] != 0) || (filter->dstIP6[0] != 0 || filter->dstIP6[1] != 0 || filter->dstIP6[2] != 0 || filter->dstIP6[3] != 0))
+            if ((filter->srcip6[0] != 0 || filter->srcip6[1] != 0 || filter->srcip6[2] != 0 || filter->srcip6[3] != 0) || (filter->dstip6[0] != 0 || filter->dstip6[1] != 0 || filter->dstip6[2] != 0 || filter->dstip6[3] != 0))
             {
                 continue;
             }
@@ -599,11 +599,11 @@ int xdp_prog_main(struct xdp_md *ctx)
         
         // Matched.
         #ifdef DEBUG
-            bpf_printk("Matched rule ID #%" PRIu8 ".\n", filter->id);
+            bpf_printk("Matched rule ID #%d.\n", filter->id);
         #endif
         
         action = filter->action;
-        blocktime = filter->blockTime;
+        blocktime = filter->blocktime;
 
         goto matched;
     }
@@ -614,13 +614,13 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (action == 0)
         {
            #ifdef DEBUG
-                //bpf_printk("Matched with protocol %" PRIu8 " and sAddr %" PRIu32 ".\n", iph->protocol, iph->saddr);
+                //bpf_printk("Matched with protocol %d and sAddr %lu.\n", iph->protocol, iph->saddr);
             #endif
 
             // Before dropping, update the blacklist map.
             if (blocktime > 0)
             {
-                uint64_t newTime = now + (blocktime * 1000000000);
+                __u64 newTime = now + (blocktime * 1000000000);
                 
                 if (ethhdr->h_proto == htons(ETH_P_IPV6))
                 {
@@ -634,7 +634,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             if (stats)
             {
-                stats->blocked++;
+                stats->dropped++;
             }
 
             return XDP_DROP;

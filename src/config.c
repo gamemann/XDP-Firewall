@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <libconfig.h>
 #include <string.h>
+#include <linux/types.h>
 
 #include <arpa/inet.h>
 
@@ -12,22 +13,22 @@ FILE *file;
 
 void setcfgdefaults(struct config *cfg)
 {
-    cfg->updateTime = 0;
+    cfg->updatetime = 0;
     cfg->interface = "eth0";
     cfg->nostats = 0;
 
-    for (uint16_t i = 0; i < MAX_FILTERS; i++)
+    for (__u16 i = 0; i < MAX_FILTERS; i++)
     {
         cfg->filters[i].id = 0;
         cfg->filters[i].enabled = 0;
         cfg->filters[i].action = 0;
-        cfg->filters[i].srcIP = 0;
-        cfg->filters[i].dstIP = 0;
+        cfg->filters[i].srcip = 0;
+        cfg->filters[i].dstip = 0;
 
-        for (uint8_t j = 0; j < 4; j++)
+        for (__u8 j = 0; j < 4; j++)
         {
-            cfg->filters[i].srcIP6[j] = 0;
-            cfg->filters[i].dstIP6[j] = 0;
+            cfg->filters[i].srcip6[j] = 0;
+            cfg->filters[i].dstip6[j] = 0;
         }
 
         cfg->filters[i].do_min_len = 0;
@@ -51,7 +52,7 @@ void setcfgdefaults(struct config *cfg)
         cfg->filters[i].do_bps = 0;
         cfg->filters[i].bps = 0;
 
-        cfg->filters[i].blockTime = 1;
+        cfg->filters[i].blocktime = 1;
         
         cfg->filters[i].tcpopts.enabled = 0;
         cfg->filters[i].tcpopts.do_dport = 0;
@@ -73,7 +74,7 @@ void setcfgdefaults(struct config *cfg)
     }
 }
 
-int opencfg(const char *FileName)
+int opencfg(const char *filename)
 {
     // Close any existing files.
     if (file != NULL)
@@ -83,7 +84,7 @@ int opencfg(const char *FileName)
         file = NULL;
     }
 
-    file = fopen(FileName, "r");
+    file = fopen(filename, "r");
 
     if (file == NULL)
     {
@@ -132,9 +133,9 @@ int readcfg(struct config *cfg)
     cfg->interface = strdup(interface);
 
     // Get auto update time.
-    int updateTime;
+    int updatetime;
 
-    if (!config_lookup_int(&conf, "updatetime", &updateTime))
+    if (!config_lookup_int(&conf, "updatetime", &updatetime))
     {
         fprintf(stderr, "Error from LibConfig when reading 'updatetime' setting - %s\n\n", config_error_text(&conf));
         
@@ -143,7 +144,7 @@ int readcfg(struct config *cfg)
         return 1;    
     }
 
-    cfg->updateTime = updateTime;
+    cfg->updatetime = updatetime;
 
     // Get no stats.
     int nostats;
@@ -169,7 +170,7 @@ int readcfg(struct config *cfg)
     // Set filter count.
     int filters = 0;
 
-    for (uint8_t i = 0; i < config_setting_length(setting); i++)
+    for (__u8 i = 0; i < config_setting_length(setting); i++)
     {
         config_setting_t* filter = config_setting_get_elem(setting, i);
 
@@ -201,48 +202,48 @@ int readcfg(struct config *cfg)
         cfg->filters[i].action = action;
 
         // Source IP (not required).
-        const char *sIP;
+        const char *sip;
 
-        if (config_setting_lookup_string(filter, "srcip", &sIP))
+        if (config_setting_lookup_string(filter, "srcip", &sip))
         {
-            cfg->filters[i].srcIP = inet_addr(sIP);
+            cfg->filters[i].srcip = inet_addr(sip);
         }
 
         // Destination IP (not required).
-        const char *dIP;
+        const char *dip;
 
-        if (config_setting_lookup_string(filter, "dstip", &dIP))
+        if (config_setting_lookup_string(filter, "dstip", &dip))
         {
-            cfg->filters[i].dstIP = inet_addr(dIP);
+            cfg->filters[i].dstip = inet_addr(dip);
         }
 
         // Source IP (IPv6) (not required).
-        const char *sIP6;
+        const char *sip6;
 
-        if (config_setting_lookup_string(filter, "srcip6", &sIP6))
+        if (config_setting_lookup_string(filter, "srcip6", &sip6))
         {
             struct in6_addr in;
 
-            inet_pton(AF_INET6, sIP6, &in);
+            inet_pton(AF_INET6, sip6, &in);
 
-            for (uint8_t j = 0; j < 4; j++)
+            for (__u8 j = 0; j < 4; j++)
             {
-                cfg->filters[i].srcIP6[j] = in.__in6_u.__u6_addr32[j];
+                cfg->filters[i].srcip6[j] = in.__in6_u.__u6_addr32[j];
             }
         }
 
         // Destination IP (IPv6) (not required).
-        const char *dIP6;
+        const char *dip6;
 
-        if (config_setting_lookup_string(filter, "dstip6", &dIP6))
+        if (config_setting_lookup_string(filter, "dstip6", &dip6))
         {
             struct in6_addr in;
 
-            inet_pton(AF_INET6, dIP6, &in);
+            inet_pton(AF_INET6, dip6, &in);
 
-            for (uint8_t j = 0; j < 4; j++)
+            for (__u8 j = 0; j < 4; j++)
             {
-                cfg->filters[i].dstIP6[j] = in.__in6_u.__u6_addr32[j];
+                cfg->filters[i].dstip6[j] = in.__in6_u.__u6_addr32[j];
             }
         }
 
@@ -251,7 +252,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "min_ttl", &min_ttl))
         {
-            cfg->filters[i].min_ttl = (uint8_t)min_ttl;
+            cfg->filters[i].min_ttl = (__u8)min_ttl;
             cfg->filters[i].do_min_ttl = 1;
         }
 
@@ -260,7 +261,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "max_ttl", &max_ttl))
         {
-            cfg->filters[i].max_ttl = (uint8_t)max_ttl;
+            cfg->filters[i].max_ttl = (__u8)max_ttl;
             cfg->filters[i].do_max_ttl = 1;
         }
 
@@ -287,7 +288,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "tos", &tos))
         {
-            cfg->filters[i].tos = (uint8_t)tos;
+            cfg->filters[i].tos = (__u8)tos;
             cfg->filters[i].do_tos = 1;
         }
 
@@ -314,11 +315,11 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "blocktime", &blocktime))
         {
-            cfg->filters[i].blockTime = blocktime;
+            cfg->filters[i].blocktime = blocktime;
         }
         else
         {
-            cfg->filters[i].blockTime = 1;
+            cfg->filters[i].blocktime = 1;
         }
 
         /* TCP options */
@@ -335,7 +336,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "tcp_sport", &tcpsport))
         {
-            cfg->filters[i].tcpopts.sport = (uint16_t)tcpsport;
+            cfg->filters[i].tcpopts.sport = (__u16)tcpsport;
             cfg->filters[i].tcpopts.do_sport = 1;
         }
 
@@ -344,7 +345,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "tcp_dport", &tcpdport))
         {
-            cfg->filters[i].tcpopts.dport = (uint16_t)tcpdport;
+            cfg->filters[i].tcpopts.dport = (__u16)tcpdport;
             cfg->filters[i].tcpopts.do_dport = 1;
         }
 
@@ -417,7 +418,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "udp_sport", &udpsport))
         {
-            cfg->filters[i].udpopts.sport = (uint16_t)udpsport;
+            cfg->filters[i].udpopts.sport = (__u16)udpsport;
             cfg->filters[i].udpopts.do_sport = 1;
         }
 
@@ -426,7 +427,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "udp_dport", &udpdport))
         {
-            cfg->filters[i].udpopts.dport = (uint16_t)udpdport;
+            cfg->filters[i].udpopts.dport = (__u16)udpdport;
             cfg->filters[i].udpopts.do_dport = 1;
         }
 
@@ -444,7 +445,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "icmp_code", &icmpcode))
         {
-            cfg->filters[i].icmpopts.code = (uint8_t)icmpcode;
+            cfg->filters[i].icmpopts.code = (__u8)icmpcode;
             cfg->filters[i].icmpopts.do_code = 1;
         }
 
@@ -453,7 +454,7 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "icmp_type", &icmptype))
         {
-            cfg->filters[i].icmpopts.type = (uint8_t)icmptype;
+            cfg->filters[i].icmpopts.type = (__u8)icmptype;
             cfg->filters[i].icmpopts.do_type = 1;
         }
 

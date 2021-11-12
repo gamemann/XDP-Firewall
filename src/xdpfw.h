@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <linux/types.h>
 
 #define MAX_PCKT_LENGTH 65535
 #define MAX_FILTERS 100
@@ -11,10 +11,10 @@ struct tcpopts
     unsigned int enabled : 1;
 
     unsigned int do_sport : 1;
-    uint16_t sport;
+    __u16 sport;
 
     unsigned int do_dport : 1;
-    uint16_t dport;
+    __u16 dport;
 
     // TCP flags.
     unsigned int do_urg : 1;
@@ -41,10 +41,10 @@ struct udpopts
     unsigned int enabled : 1;
 
     unsigned int do_sport : 1;
-    uint16_t sport;
+    __u16 sport;
 
     unsigned int do_dport : 1;
-    uint16_t dport;
+    __u16 dport;
 };
 
 struct icmpopts
@@ -52,63 +52,63 @@ struct icmpopts
     unsigned int enabled : 1;
 
     unsigned int do_code : 1;
-    uint8_t code;
+    __u8 code;
 
     unsigned int do_type : 1;
-    uint8_t type;
+    __u8 type;
 };
 
 struct filter
 {
-    uint8_t id;
+    __u8 id;
 
     unsigned int enabled : 1;
 
-    uint8_t action;
+    __u8 action;
 
-    uint32_t srcIP;
-    uint32_t dstIP;
+    __u32 srcip;
+    __u32 dstip;
 
-    uint32_t srcIP6[4];
-    uint32_t dstIP6[4];
+    __u32 srcip6[4];
+    __u32 dstip6[4];
 
     unsigned int do_min_ttl : 1;
-    uint8_t min_ttl;
+    __u8 min_ttl;
 
     unsigned int do_max_ttl : 1;
-    uint8_t max_ttl;
+    __u8 max_ttl;
 
     unsigned int do_min_len : 1;
-    uint16_t min_len;
+    __u16 min_len;
 
     unsigned int do_max_len : 1;
-    uint16_t max_len;
+    __u16 max_len;
 
     unsigned int do_tos : 1;
     int8_t tos;
 
     unsigned int do_pps : 1;
-    uint64_t pps;
+    __u64 pps;
 
     unsigned int do_bps : 1;
-    uint64_t bps;
+    __u64 bps;
 
-    uint64_t blockTime;
+    __u64 blocktime;
 
     struct tcpopts tcpopts;
     struct udpopts udpopts;
     struct icmpopts icmpopts;
 };
 
-struct xdpfw_stats
+struct stats
 {
-    uint64_t allowed;
-    uint64_t blocked;
+    __u64 allowed;
+    __u64 dropped;
 };
 
-struct xdpfw_ip_stats
+struct ip_stats
 {
-    uint64_t pps;
-    uint64_t bps;
-    uint64_t tracking;
+    __u64 pps;
+    __u64 bps;
+    __u64 tracking;
 };

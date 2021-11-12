@@ -4,7 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <inttypes.h>
+#include <linux/types.h>
 #include <time.h>
 #include <getopt.h>
 #include <sys/resource.h>
@@ -22,9 +22,9 @@
 #include "cmdline.h"
 
 // Other variables.
-static uint8_t cont = 1;
-static int filter_map_fd = -1;
-static int stats_map_fd = -1;
+static __u8 cont = 1;
+static int filtersmap = -1;
+static int statsmap = -1;
 
 void signalHndl(int tmp)
 {
@@ -34,15 +34,15 @@ void signalHndl(int tmp)
 void updatefilters(struct config *cfg)
 {
     // Loop through all filters and delete the map.
-    for (uint8_t i = 0; i < MAX_FILTERS; i++)
+    for (__u8 i = 0; i < MAX_FILTERS; i++)
     {
-        uint32_t key = i;
+        __u32 key = i;
 
-        bpf_map_delete_elem(filter_map_fd, &key);
+        bpf_map_delete_elem(filtersmap, &key);
     }
 
     // Add a filter to the filter maps.
-    for (uint32_t i = 0; i < MAX_FILTERS; i++)
+    for (__u32 i = 0; i < MAX_FILTERS; i++)
     {
         // Check if we have a valid ID.
         if (cfg->filters[i].id < 1)
@@ -51,7 +51,7 @@ void updatefilters(struct config *cfg)
         }
 
         // Attempt to update BPF map.
-        if (bpf_map_update_elem(filter_map_fd, &i, &cfg->filters[i], BPF_ANY) == -1)
+        if (bpf_map_update_elem(filtersmap, &i, &cfg->filters[i], BPF_ANY) == -1)
         {
             fprintf(stderr, "Error updating BPF item #%d\n", i);
         }
@@ -70,7 +70,7 @@ int updateconfig(struct config *cfg, char *cfgfile)
 
     setcfgdefaults(cfg);
 
-    for (uint16_t i = 0; i < MAX_FILTERS; i++)
+    for (__u16 i = 0; i < MAX_FILTERS; i++)
     {
         cfg->filters[i] = (struct filter) {0};
     }
@@ -121,8 +121,8 @@ int loadbpfobj(const char *filename)
         return -1;
     }
 
-    filter_map_fd = findmapfd(obj, "filters_map");
-    stats_map_fd = findmapfd(obj, "stats_map");
+    filtersmap = findmapfd(obj, "filters_map");
+    statsmap = findmapfd(obj, "stats_map");
 
     return first_prog_fd;
 }
@@ -142,8 +142,8 @@ int attachxdp(int ifidx, int progfd, struct cmdline *cmd)
 
     char *smode;
 
-    uint32_t flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
-    uint32_t mode = XDP_FLAGS_DRV_MODE;
+    __u32 flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
+    __u32 mode = XDP_FLAGS_DRV_MODE;
 
     smode = "DRV/native";
 
@@ -270,8 +270,8 @@ int main(int argc, char *argv[])
     setcfgdefaults(&cfg);
     
     // Create last updated variable.
-    time_t lastUpdated = time(NULL);
-    time_t statsLastUpdated = time(NULL);
+    time_t lastupdated = time(NULL);
+    time_t statslastupdated = time(NULL);
 
     // Update config.
     updateconfig(&cfg, cmd.cfgfile);
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
     {
         fprintf(stdout, "Details:\n");
         fprintf(stdout, "Interface Name => %s\n", cfg.interface);
-        fprintf(stdout, "Update Time => %" PRIu16 "\n", cfg.updateTime);
+        fprintf(stdout, "Update Time => %d\n", cfg.updatetime);
 
         for (uint16_t i = 0; i < MAX_FILTERS; i++)
         {
@@ -290,52 +290,52 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            fprintf(stdout, "Filter #%" PRIu16 ":\n", (i + 1));
+            fprintf(stdout, "Filter #%d:\n", (i + 1));
 
             // Main.
             fprintf(stdout, "ID => %d\n", cfg.filters[i].id);
-            fprintf(stdout, "Enabled => %" PRIu8 "\n", cfg.filters[i].enabled);
-            fprintf(stdout, "Action => %" PRIu8 " (0 = Block, 1 = Allow).\n", cfg.filters[i].action);
+            fprintf(stdout, "Enabled => %d\n", cfg.filters[i].enabled);
+            fprintf(stdout, "Action => %d (0 = Block, 1 = Allow).\n", cfg.filters[i].action);
 
             // IP addresses.
             struct sockaddr_in sin;
-            sin.sin_addr.s_addr = cfg.filters[i].srcIP;
+            sin.sin_addr.s_addr = cfg.filters[i].srcip;
             fprintf(stdout, "Source IP => %s\n", inet_ntoa(sin.sin_addr));
 
             struct sockaddr_in din;
-            din.sin_addr.s_addr = cfg.filters[i].dstIP;
+            din.sin_addr.s_addr = cfg.filters[i].dstip;
             fprintf(stdout, "Destination IP => %s\n", inet_ntoa(din.sin_addr));
 
             // Other IP header information.
-            fprintf(stdout, "Max Length => %" PRIu16 "\n", cfg.filters[i].max_len);
-            fprintf(stdout, "Min Length => %" PRIu16 "\n", cfg.filters[i].min_len);
-            fprintf(stdout, "Max TTL => %" PRIu8 "\n", cfg.filters[i].max_ttl);
-            fprintf(stdout, "Min TTL => %" PRIu8 "\n", cfg.filters[i].min_ttl);
-            fprintf(stdout, "TOS => %" PRIu8 "\n", cfg.filters[i].tos);
-            fprintf(stdout, "PPS => %" PRIu64 "\n", cfg.filters[i].pps);
-            fprintf(stdout, "BPS => %" PRIu64 "\n\n", cfg.filters[i].bps);
-            fprintf(stdout, "Block Time => %" PRIu64 "\n\n", cfg.filters[i].blockTime);
+            fprintf(stdout, "Max Length => %d\n", cfg.filters[i].max_len);
+            fprintf(stdout, "Min Length => %d\n", cfg.filters[i].min_len);
+            fprintf(stdout, "Max TTL => %d\n", cfg.filters[i].max_ttl);
+            fprintf(stdout, "Min TTL => %d\n", cfg.filters[i].min_ttl);
+            fprintf(stdout, "TOS => %d\n", cfg.filters[i].tos);
+            fprintf(stdout, "PPS => %llu\n", cfg.filters[i].pps);
+            fprintf(stdout, "BPS => %llu\n\n", cfg.filters[i].bps);
+            fprintf(stdout, "Block Time => %llu\n\n", cfg.filters[i].blocktime);
 
             // TCP Options.
-            fprintf(stdout, "TCP Enabled => %" PRIu8 "\n", cfg.filters[i].tcpopts.enabled);
-            fprintf(stdout, "TCP Source Port => %" PRIu16 "\n", cfg.filters[i].tcpopts.sport);
-            fprintf(stdout, "TCP Destination Port => %" PRIu16 "\n", cfg.filters[i].tcpopts.dport);
-            fprintf(stdout, "TCP URG Flag => %" PRIu8 "\n", cfg.filters[i].tcpopts.urg);
-            fprintf(stdout, "TCP ACK Flag => %" PRIu8 "\n", cfg.filters[i].tcpopts.ack);
-            fprintf(stdout, "TCP RST Flag => %" PRIu8 "\n", cfg.filters[i].tcpopts.rst);
-            fprintf(stdout, "TCP PSH Flag => %" PRIu8 "\n", cfg.filters[i].tcpopts.psh);
-            fprintf(stdout, "TCP SYN Flag => %" PRIu8 "\n", cfg.filters[i].tcpopts.syn);
-            fprintf(stdout, "TCP FIN Flag => %" PRIu8 "\n\n", cfg.filters[i].tcpopts.fin);
+            fprintf(stdout, "TCP Enabled => %d\n", cfg.filters[i].tcpopts.enabled);
+            fprintf(stdout, "TCP Source Port => %d\n", cfg.filters[i].tcpopts.sport);
+            fprintf(stdout, "TCP Destination Port => %d\n", cfg.filters[i].tcpopts.dport);
+            fprintf(stdout, "TCP URG Flag => %d\n", cfg.filters[i].tcpopts.urg);
+            fprintf(stdout, "TCP ACK Flag => %d\n", cfg.filters[i].tcpopts.ack);
+            fprintf(stdout, "TCP RST Flag => %d\n", cfg.filters[i].tcpopts.rst);
+            fprintf(stdout, "TCP PSH Flag => %d\n", cfg.filters[i].tcpopts.psh);
+            fprintf(stdout, "TCP SYN Flag => %d\n", cfg.filters[i].tcpopts.syn);
+            fprintf(stdout, "TCP FIN Flag => %d\n\n", cfg.filters[i].tcpopts.fin);
 
             // UDP Options.
-            fprintf(stdout, "UDP Enabled => %" PRIu8 "\n", cfg.filters[i].udpopts.enabled);
-            fprintf(stdout, "UDP Source Port => %" PRIu16 "\n", cfg.filters[i].udpopts.sport);
-            fprintf(stdout, "UDP Destination Port => %" PRIu16 "\n\n", cfg.filters[i].udpopts.dport);
+            fprintf(stdout, "UDP Enabled => %d\n", cfg.filters[i].udpopts.enabled);
+            fprintf(stdout, "UDP Source Port => %d\n", cfg.filters[i].udpopts.sport);
+            fprintf(stdout, "UDP Destination Port => %d\n\n", cfg.filters[i].udpopts.dport);
 
             // ICMP Options.
-            fprintf(stdout, "ICMP Enabled => %" PRIu8 "\n", cfg.filters[i].icmpopts.enabled);
-            fprintf(stdout, "ICMP Code => %" PRIu8 "\n", cfg.filters[i].icmpopts.code);
-            fprintf(stdout, "ICMP Type => %" PRIu8 "\n", cfg.filters[i].icmpopts.type);
+            fprintf(stdout, "ICMP Enabled => %d\n", cfg.filters[i].icmpopts.enabled);
+            fprintf(stdout, "ICMP Code => %d\n", cfg.filters[i].icmpopts.code);
+            fprintf(stdout, "ICMP Type => %d\n", cfg.filters[i].icmpopts.type);
 
             fprintf(stdout, "\n\n");
         }
@@ -378,14 +378,14 @@ int main(int argc, char *argv[])
     }
 
     // Check for valid maps.
-    if (filter_map_fd < 0)
+    if (filtersmap < 0)
     {
         fprintf(stderr, "Error finding 'filters_map' BPF map.\n");
 
         return EXIT_FAILURE;
     }
 
-    if (stats_map_fd < 0)
+    if (statsmap < 0)
     {
         fprintf(stderr, "Error finding 'stats_map' BPF map.\n");
 
@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
         time_t curTime = time(NULL);
 
         // Check for auto-update.
-        if (cfg.updateTime > 0 && (curTime - lastUpdated) > cfg.updateTime)
+        if (cfg.updatetime > 0 && (curTime - lastupdated) > cfg.updatetime)
         {
             // Update config.
             updateconfig(&cfg, cmd.cfgfile);
@@ -416,30 +416,30 @@ int main(int argc, char *argv[])
             updatefilters(&cfg);
             
             // Update last updated variable.
-            lastUpdated = time(NULL);
+            lastupdated = time(NULL);
         }
 
         // Update stats.
-        if ((curTime - statsLastUpdated) > 2 && !cfg.nostats)
+        if ((curTime - statslastupdated) > 2 && !cfg.nostats)
         {
-            uint32_t key = 0;
-            struct xdpfw_stats stats[cpus];
+            __u32 key = 0;
+            struct stats stats[cpus];
 
-            uint64_t allowed = 0;
-            uint64_t dropped = 0;
+            __u64 allowed = 0;
+            __u64 dropped = 0;
             
-            bpf_map_lookup_elem(stats_map_fd, &key, &stats);
+            bpf_map_lookup_elem(statsmap, &key, &stats);
 
             for (int i = 0; i < cpus; i++)
             {
                 allowed += stats[i].allowed;
-                dropped += stats[i].blocked;
+                dropped += stats[i].dropped;
             }
 
             fflush(stdout);
-            fprintf(stdout, "\rPackets Allowed: %" PRIu64 " | Packets Blocked: %" PRIu64, allowed, dropped);
+            fprintf(stdout, "\rPackets Allowed: %llu | Packets Dropped: %llu", allowed, dropped);
         
-            statsLastUpdated = time(NULL);
+            statslastupdated = time(NULL);
         }
 
         sleep(1);
