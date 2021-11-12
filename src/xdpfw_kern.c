@@ -13,7 +13,7 @@
 #include <linux/bpf.h>
 #include <linux/bpf_common.h>
 
-#include "../libbpf/src/bpf_helpers.h"
+#include <bpf_helpers.h>
 
 #include "xdpfw.h"
 
