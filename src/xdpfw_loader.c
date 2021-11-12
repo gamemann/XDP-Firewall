@@ -8,6 +8,7 @@
 #include <time.h>
 #include <getopt.h>
 #include <sys/resource.h>
+#include <sys/sysinfo.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
@@ -446,6 +447,9 @@ int main(int argc, char *argv[])
     // Signal.
     signal(SIGINT, signalHndl);
 
+    // Receive CPU count for stats map parsing.
+    int cpus = get_nprocs_conf();
+
     while (cont)
     {
         // Get current time.
@@ -468,12 +472,21 @@ int main(int argc, char *argv[])
         if ((curTime - statsLastUpdated) > 2 && !conf->nostats)
         {
             uint32_t key = 0;
-            struct xdpfw_stats stats;
+            struct xdpfw_stats stats[cpus];
+
+            uint64_t allowed = 0;
+            uint64_t dropped = 0;
             
             bpf_map_lookup_elem(stats_map_fd, &key, &stats);
 
+            for (int i = 0; i < cpus; i++)
+            {
+                allowed += stats[i].allowed;
+                dropped += stats[i].blocked;
+            }
+
             fflush(stdout);
-            fprintf(stdout, "\rPackets Allowed: %" PRIu64 " | Packets Blocked: %" PRIu64, stats.allowed, stats.blocked);
+            fprintf(stdout, "\rPackets Allowed: %" PRIu64 " | Packets Blocked: %" PRIu64, allowed, dropped);
         
             statsLastUpdated = time(NULL);
         }

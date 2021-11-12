@@ -59,7 +59,7 @@ struct bpf_map_def SEC("maps") filters_map =
 
 struct bpf_map_def SEC("maps") stats_map =
 {
-    .type = BPF_MAP_TYPE_ARRAY,
+    .type = BPF_MAP_TYPE_PERCPU_ARRAY,
     .key_size = sizeof(uint32_t),
     .value_size = sizeof(struct xdpfw_stats),
     .max_entries = 1
@@ -200,7 +200,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Increase blocked stats entry.
                 if (stats)
                 {
-                    __sync_fetch_and_add(&stats->blocked, 1);
+                    stats->blocked++;
                 }
             #endif
 
@@ -634,7 +634,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             if (stats)
             {
-                __sync_fetch_and_add(&stats->blocked, 1);
+                stats->blocked++;
             }
 
             return XDP_DROP;
@@ -643,7 +643,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
             if (stats)
             {
-                __sync_fetch_and_add(&stats->allowed, 1);
+                stats->allowed++;
             }
         }
 
