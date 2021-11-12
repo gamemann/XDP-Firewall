@@ -1,5 +1,4 @@
-#ifndef XDPFW_Header
-#define XDPFW_Header
+#pragma once
 
 #include <inttypes.h>
 
@@ -113,5 +112,3 @@ struct xdpfw_ip_stats
     uint64_t bps;
     uint64_t tracking;
 };
-
-#endif

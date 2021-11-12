@@ -1,5 +1,4 @@
-#ifndef CONFIG_HEADER
-#define CONFIG_HEADER
+#pragma once
 
 #include "xdpfw.h"
 
@@ -14,5 +13,3 @@ struct config_map
 void SetConfigDefaults(struct config_map *cfg);
 int OpenConfig(const char *FileName);
 int ReadConfig(struct config_map *cfg);
-
-#endif
