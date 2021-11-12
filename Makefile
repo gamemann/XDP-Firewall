@@ -11,7 +11,6 @@ LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/libbpf_probes.o $(LIBBPFSRC)/staticobjs/li
 LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/nlattr.o $(LIBBPFSRC)/staticobjs/str_error.o
 LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/xsk.o
 
-
 CONFIGSRC = config.c
 CONFIGOBJ = config.o
 CMDLINESRC = cmdline.c
