@@ -149,11 +149,11 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Check blacklist map.
     __u64 *blocked = NULL;
 
-    if (eth->h_proto == htons(ETH_P_IPV6))
+    if (iph6)
     {
         blocked = bpf_map_lookup_elem(&ip6_blacklist_map, &srcip6);
     }
-    else
+    else if (iph)
     {
         blocked = bpf_map_lookup_elem(&ip_blacklist_map, &iph->saddr);
     }
@@ -167,11 +167,11 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (now > *blocked)
         {
             // Remove element from map.
-            if (eth->h_proto == htons(ETH_P_IPV6))
+            if (iph6)
             {
                 bpf_map_delete_elem(&ip6_blacklist_map, &srcip6);
             }
-            else
+            else if (iph)
             {
                 bpf_map_delete_elem(&ip_blacklist_map, &iph->saddr);
             }
@@ -197,11 +197,11 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     struct ip_stats *ip_stats = NULL;
     
-    if (eth->h_proto == htons(ETH_P_IPV6))
+    if (iph6)
     {
         ip_stats = bpf_map_lookup_elem(&ip6_stats_map, &srcip6);
     }
-    else
+    else if (iph)
     {
         ip_stats = bpf_map_lookup_elem(&ip_stats_map, &iph->saddr);
     }
@@ -235,11 +235,11 @@ int xdp_prog_main(struct xdp_md *ctx)
         pps = new.pps;
         bps = new.bps;
 
-        if (eth->h_proto == htons(ETH_P_IPV6))
+        if (iph6)
         {
             bpf_map_update_elem(&ip6_stats_map, &srcip6, &new, BPF_ANY);
         }
-        else
+        else if (iph)
         {
             bpf_map_update_elem(&ip_stats_map, &iph->saddr, &new, BPF_ANY);
         } 
@@ -251,7 +251,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct icmp6hdr *icmp6h = NULL;
     
     // Check protocol.
-    if (eth->h_proto == htons(ETH_P_IPV6))
+    if (iph6)
     {
         switch (iph6->nexthdr)
         {
@@ -292,7 +292,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 break;
         }
     }
-    else
+    else if (iph)
     {
         switch (iph->protocol)
         {
