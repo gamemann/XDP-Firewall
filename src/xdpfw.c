@@ -31,6 +31,13 @@ void signalHndl(int tmp)
     cont = 0;
 }
 
+/**
+ * Updates the filter's BPF map.
+ * 
+ * @param cfg A pointer to the config structure.
+ * 
+ * @return Void
+*/
 void updatefilters(struct config *cfg)
 {
     // Loop through all filters and delete the map.
@@ -58,6 +65,14 @@ void updatefilters(struct config *cfg)
     }
 }
 
+/**
+ * Retrieves an update from the config.
+ * 
+ * @param cfg A pointer to the config structure.
+ * @param cfgfile The path to the config file.
+ * 
+ * @return 0 on success or -1 on error.
+*/
 int updateconfig(struct config *cfg, char *cfgfile)
 {
     // Open config file.
@@ -86,6 +101,14 @@ int updateconfig(struct config *cfg, char *cfgfile)
     return 0;
 }
 
+/**
+ * Finds a BPF map's FD.
+ * 
+ * @param bpf_obj A pointer to the BPF object.
+ * @param mapname The name of the map to retrieve.
+ * 
+ * @return The map's FD.
+*/
 int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
 {
     struct bpf_map *map;
@@ -106,6 +129,13 @@ int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
         return fd;
 }
 
+/**
+ * Loads a BPF object file.
+ * 
+ * @param filename The path to the BPF object file.
+ * 
+ * @return BPF's program FD.
+*/
 int loadbpfobj(const char *filename)
 {
     int first_prog_fd = -1;

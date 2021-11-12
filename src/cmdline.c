@@ -13,6 +13,13 @@ const struct option opts[] =
     {NULL, 0, NULL, 0}
 };
 
+/**
+ * Parses the command line and stores values in the cmdline structure.
+ * 
+ * @param cmd A pointer to the cmdline structure.
+ * 
+ * @return Void
+*/
 void parsecommandline(struct cmdline *cmd, int argc, char *argv[])
 {
     int c;
