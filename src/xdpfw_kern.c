@@ -353,13 +353,8 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
 
         // Do specific IPv6.
-        if (eth->h_proto == htons(ETH_P_IPV6))
+        if (iph6)
         {
-            if (iph6 + 1 > (struct ipv6hdr *)data_end)
-            {
-                break;
-            }
-
             // Source address.
             if (filter->srcip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->srcip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->srcip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->srcip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->srcip6[3]))
             {
