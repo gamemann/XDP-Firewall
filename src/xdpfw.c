@@ -484,9 +484,6 @@ int main(int argc, char *argv[])
     // Detach XDP program.
     attachxdp(ifidx, -1, &cmd);
 
-    // Free config.
-    free(&cfg);
-
     // Add spacing.
     fprintf(stdout, "\n");
 
