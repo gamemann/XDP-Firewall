@@ -160,6 +160,7 @@ int loadbpfobj(const char *filename, int ifidx)
     struct bpf_object *obj = NULL;
     int err;
 
+    // Load the BPF object file itself.
     err = bpf_prog_load_xattr(&attrs, &obj, &fd);
 
     if (err) 
@@ -171,6 +172,7 @@ int loadbpfobj(const char *filename, int ifidx)
 
     struct bpf_program *prog;
 
+    // Load the BPF program itself by section name and try to retrieve FD.
     prog = bpf_object__find_program_by_title(obj, "xdp_prog");
     fd = bpf_program__fd(prog);
 
@@ -181,6 +183,7 @@ int loadbpfobj(const char *filename, int ifidx)
         return fd;
     }
 
+    // Retrieve BPF maps.
     filtersmap = findmapfd(obj, "filters_map");
     statsmap = findmapfd(obj, "stats_map");
 
