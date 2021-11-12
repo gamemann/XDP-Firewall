@@ -10,7 +10,7 @@
 
 FILE *file;
 
-void SetConfigDefaults(struct config_map *cfg)
+void setcfgdefaults(struct config_map *cfg)
 {
     cfg->updateTime = 0;
     cfg->interface = "eth0";
@@ -73,7 +73,7 @@ void SetConfigDefaults(struct config_map *cfg)
     }
 }
 
-int OpenConfig(const char *FileName)
+int opencfg(const char *FileName)
 {
     // Close any existing files.
     if (file != NULL)
@@ -93,7 +93,7 @@ int OpenConfig(const char *FileName)
     return 0;
 }
 
-int ReadConfig(struct config_map *cfg)
+int readcfg(struct config_map *cfg)
 {
     // Not sure why this would be set to NULL after checking for it in OpenConfig(), but just for safety.
     if (file == NULL)

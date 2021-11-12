@@ -61,14 +61,14 @@ void updatefilters(struct config_map *conf)
 int updateconfig(struct config_map *conf, char *configFile)
 {
     // Open config file.
-    if (OpenConfig(configFile) != 0)
+    if (opencfg(configFile) != 0)
     {
         fprintf(stderr, "Error opening filters file: %s\n", configFile);
         
         return -1;
     }
 
-    SetConfigDefaults(conf);
+    setcfgdefaults(conf);
 
     for (uint16_t i = 0; i < MAX_FILTERS; i++)
     {
@@ -76,7 +76,7 @@ int updateconfig(struct config_map *conf, char *configFile)
     }
 
     // Read config and check for errors.
-    if (ReadConfig(conf) != 0)
+    if (readcfg(conf) != 0)
     {
         fprintf(stderr, "Error reading filters file.\n");
 
@@ -121,8 +121,8 @@ int loadbpfobj(const char *filename)
         return -1;
     }
 
-    filter_map_fd = find_map_fd(obj, "filters_map");
-    stats_map_fd = find_map_fd(obj, "stats_map");
+    filter_map_fd = findmapfd(obj, "filters_map");
+    stats_map_fd = findmapfd(obj, "stats_map");
 
     return first_prog_fd;
 }
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
     // Initialize config.
     struct config_map *conf = malloc(sizeof(struct config_map));
 
-    SetConfigDefaults(conf);
+    setcfgdefaults(conf);
     
     // Create last updated variable.
     time_t lastUpdated = time(NULL);

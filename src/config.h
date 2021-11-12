@@ -10,6 +10,6 @@ struct config_map
     struct filter filters[MAX_FILTERS];
 };
 
-void SetConfigDefaults(struct config_map *cfg);
-int OpenConfig(const char *FileName);
-int ReadConfig(struct config_map *cfg);
+void setcfgdefaults(struct config_map *cfg);
+int opencfg(const char *FileName);
+int readcfg(struct config_map *cfg);
