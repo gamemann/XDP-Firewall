@@ -145,6 +145,7 @@ int loadbpfobj(const char *filename, int ifidx)
     struct bpf_prog_load_attr attrs = 
     {
 		.prog_type = BPF_PROG_TYPE_XDP,
+        .ifindex = ifidx,
 	};
 
     attrs.file = filename;
