@@ -19,21 +19,7 @@
 
 #include "xdpfw.h"
 #include "config.h"
-
-// Command line variables.
-static char *configFile;
-static int help = 0;
-static int list = 0;
-static int offload = 0;
-
-const struct option opts[] =
-{
-    {"config", required_argument, NULL, 'c'},
-    {"offload", no_argument, &offload, 'o'},
-    {"list", no_argument, &list, 'l'},
-    {"help", no_argument, &help, 'h'},
-    {NULL, 0, NULL, 0}
-};
+#include "cmdline.h"
 
 // Other variables.
 static uint8_t cont = 1;
@@ -43,45 +29,6 @@ static int stats_map_fd = -1;
 void signalHndl(int tmp)
 {
     cont = 0;
-}
-
-void parse_command_line(int argc, char *argv[])
-{
-    int c;
-
-    while ((c = getopt_long(argc, argv, "c:lh", opts, NULL)) != -1)
-    {
-        switch (c)
-        {
-            case 'c':
-                configFile = optarg;
-
-                break;
-
-            case 'o':
-                offload = 1;
-
-                break;
-
-            case 'l':
-                list = 1;
-
-                break;
-
-            case 'h':
-                help = 1;
-
-                break;
-
-            case '?':
-                fprintf(stderr, "Missing argument option...\n");
-
-                break;
-
-            default:
-                break;
-        }
-    }
 }
 
 void update_BPF(struct config_map *conf)
@@ -159,7 +106,6 @@ int find_map_fd(struct bpf_object *bpf_obj, const char *mapname)
         return fd;
 }
 
-
 int load_bpf_object_file__simple(const char *filename)
 {
     int first_prog_fd = -1;
@@ -181,112 +127,116 @@ int load_bpf_object_file__simple(const char *filename)
     return first_prog_fd;
 }
 
-static int xdp_detach(int ifindex, uint32_t xdp_flags)
+/**
+ * Attempts to attach or detach (progfd = -1) a BPF/XDP program to an interface.
+ * 
+ * @param ifidx The index to the interface to attach to.
+ * @param progfd A file description (FD) to the BPF/XDP program.
+ * @param cmd A pointer to a cmdline struct that includes command line arguments (mostly checking for offload/HW mode set).
+ * 
+ * @return Returns the flag (int) it successfully attached the BPF/XDP program with or a negative value for error.
+ */
+int attachxdp(int ifidx, int progfd, struct cmdline *cmd)
 {
     int err;
 
-    err = bpf_set_link_xdp_fd(ifindex, -1, xdp_flags);
+    char *smode;
 
-    if (err < 0)
+    uint32_t flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
+    uint32_t mode = XDP_FLAGS_DRV_MODE;
+
+    smode = "DRV/native";
+
+    if (cmd->offload)
     {
-        fprintf(stderr, "Error detaching XDP program. Error => %s. Error Num => %.d\n", strerror(-err), err);
+        smode = "HW/offload";
 
-        return -1;
+        mode = XDP_FLAGS_HW_MODE;
+    }
+    else if (cmd->skb)
+    {
+        smode = "SKB/generic";
+        mode = XDP_FLAGS_SKB_MODE;
     }
 
-    return EXIT_SUCCESS;
-}
+    flags |= mode;
 
-static int xdp_attach(int ifindex, uint32_t *xdp_flags, int prog_fd)
-{
-    int err;
-    
-    if (offload)
+    int exit = 0;
+
+    while (!exit)
     {
-        fprintf(stdout, "Trying to load in offload/hardware mode...\n");
-        
-        *xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_HW_MODE;
+        // Try loading program with current mode.
+        int err;
 
-        err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
-    }
-    else
-    {
-        err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+        err = bpf_set_link_xdp_fd(ifidx, progfd, flags);
 
-        if (err == -EEXIST && !(*xdp_flags & XDP_FLAGS_UPDATE_IF_NOEXIST))
+        if (err || progfd == -1)
         {
+            const char *errmode;
+
+            // Decrease mode.
+            switch (mode)
+            {
+                case XDP_FLAGS_HW_MODE:
+                    mode = XDP_FLAGS_DRV_MODE;
+                    flags &= ~XDP_FLAGS_HW_MODE;
+                    errmode = "HW/offload";
+
+                    break;
+
+                case XDP_FLAGS_DRV_MODE:
+                    mode = XDP_FLAGS_SKB_MODE;
+                    flags &= ~XDP_FLAGS_DRV_MODE;
+                    errmode = "DRV/native";
+
+                    break;
+
+                case XDP_FLAGS_SKB_MODE:
+                    // Exit program and set mode to -1 indicating error.
+                    exit = 1;
+                    mode = -err;
+                    errmode = "SKB/generic";
+
+                    break;
+            }
+
+            if (progfd != -1)
+            {
+                fprintf(stderr, "Could not attach with %s mode (%s)(%d).\n", errmode, strerror(-err), err);
+            }
             
-            uint32_t oldflags = *xdp_flags;
-
-            *xdp_flags &= ~XDP_FLAGS_MODES;
-            *xdp_flags |= (oldflags & XDP_FLAGS_SKB_MODE) ? XDP_FLAGS_DRV_MODE : XDP_FLAGS_SKB_MODE;
-
-            err = bpf_set_link_xdp_fd(ifindex, -1, *xdp_flags);
-
-            if (!err)
+            if (mode != -err)
             {
-                err = bpf_set_link_xdp_fd(ifindex, prog_fd, oldflags);
+                smode = (mode == XDP_FLAGS_HW_MODE) ? "HW/offload" : (mode == XDP_FLAGS_DRV_MODE) ? "DRV/native" : (mode == XDP_FLAGS_SKB_MODE) ? "SKB/generic" : "N/A";
+                flags |= mode;
             }
         }
-
-        // Check for no XDP-Native support.
-        if (err)
+        else
         {
-            fprintf(stdout, "XDP-Native may not be supported with this NIC. Using SKB instead.\n");
+            fprintf(stdout, "Loaded XDP program in %s mode.\n", smode);
 
-            // Remove DRV Mode flag.
-            if (*xdp_flags & XDP_FLAGS_DRV_MODE)
-            {
-                *xdp_flags &= ~XDP_FLAGS_DRV_MODE;
-            }
-
-            // Add SKB Mode flag.
-            if (!(*xdp_flags & XDP_FLAGS_SKB_MODE))
-            {
-                *xdp_flags |= XDP_FLAGS_SKB_MODE;
-            }
-
-            err = bpf_set_link_xdp_fd(ifindex, prog_fd, *xdp_flags);
+            break;
         }
     }
 
-    if (err < 0)
-    {
-        fprintf(stderr, "Error attaching XDP program. Error => %s. Error Num => %d. IfIndex => %d.\n", strerror(-err), -err, ifindex);
-
-        switch(-err)
-        {
-            case EBUSY:
-
-            case EEXIST:
-            {
-                xdp_detach(ifindex, *xdp_flags);
-                fprintf(stderr, "Additional: XDP already loaded on device.\n");
-                break;
-            }
-
-            case EOPNOTSUPP:
-                fprintf(stderr, "Additional: XDP-native nor SKB not supported? Not sure how that's possible.\n");
-
-                break;
-
-            default:
-                break;
-        }
-
-        return -1;
-    }
-
-    return EXIT_SUCCESS;
+    return mode;
 }
 
 int main(int argc, char *argv[])
 {
     // Parse the command line.
-    parse_command_line(argc, argv);
+    struct cmdline cmd = 
+    {
+        .cfgfile = "/etc/xdpfw/xdpfw.conf",
+        .help = 0,
+        .list = 0,
+        .offload = 0
+    };
+
+    parsecommandline(&cmd, argc, argv);
 
     // Check for help menu.
-    if (help)
+    if (cmd.help)
     {
         fprintf(stdout, "Usage:\n" \
             "--config -c => Config file location (default is /etc/xdpfw/xdpfw.conf).\n" \
@@ -308,10 +258,10 @@ int main(int argc, char *argv[])
     }
 
     // Check for --config argument.
-    if (configFile == NULL)
+    if (cmd.cfgfile == NULL)
     {
         // Assign default.
-        configFile = "/etc/xdpfw/xdpfw.conf";
+        cmd.cfgfile = "/etc/xdpfw/xdpfw.conf";
     }
 
     // Initialize config.
@@ -324,10 +274,10 @@ int main(int argc, char *argv[])
     time_t statsLastUpdated = time(NULL);
 
     // Update config.
-    update_config(conf, configFile);
+    update_config(conf, cmd.cfgfile);
 
     // Check for list option.
-    if (list)
+    if (cmd.list)
     {
         fprintf(stdout, "Details:\n");
         fprintf(stdout, "Interface Name => %s\n", conf->interface);
@@ -394,9 +344,9 @@ int main(int argc, char *argv[])
     }
 
     // Get device.
-    int dev;
+    int ifidx;
 
-    if ((dev = if_nametoindex(conf->interface)) < 0)
+    if ((ifidx = if_nametoindex(conf->interface)) < 0)
     {
         fprintf(stderr, "Error finding device %s.\n", conf->interface);
 
@@ -404,25 +354,26 @@ int main(int argc, char *argv[])
     }
 
     // XDP variables.
-    int prog_fd;
-    uint32_t xdpflags;
+    int progfd;
     char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
-    xdpflags = XDP_FLAGS_UPDATE_IF_NOEXIST | XDP_FLAGS_DRV_MODE;
-
     // Get XDP's ID.
-    prog_fd = load_bpf_object_file__simple(filename);
+    progfd = load_bpf_object_file__simple(filename);
 
-    if (prog_fd <= 0)
+    if (progfd <= 0)
     {
         fprintf(stderr, "Error loading eBPF object file. File name => %s.\n", filename);
 
         return EXIT_FAILURE;
     }
     
-    // Attach XDP program to device.
-    if (xdp_attach(dev, &xdpflags, prog_fd) != 0)
+    // Attach XDP program.
+    int res = attachxdp(ifidx, progfd, &cmd);
+
+    if (res != XDP_FLAGS_HW_MODE && res != XDP_FLAGS_DRV_MODE && res != XDP_FLAGS_SKB_MODE)
     {
+        fprintf(stderr, "Error attaching XDP program :: %s (%d)\n", strerror(res), res);
+
         return EXIT_FAILURE;
     }
 
@@ -459,7 +410,7 @@ int main(int argc, char *argv[])
         if (conf->updateTime > 0 && (curTime - lastUpdated) > conf->updateTime)
         {
             // Update config.
-            update_config(conf, configFile);
+            update_config(conf, cmd.cfgfile);
 
             // Update BPF maps.
             update_BPF(conf);
@@ -495,12 +446,7 @@ int main(int argc, char *argv[])
     }
 
     // Detach XDP program.
-    if (xdp_detach(dev, xdpflags) != 0)
-    {
-        fprintf(stderr, "Error removing XDP program from device %s\n", conf->interface);
-
-        return EXIT_FAILURE;
-    }
+    attachxdp(ifidx, -1, &cmd);
 
     // Free config.
     free(conf);
