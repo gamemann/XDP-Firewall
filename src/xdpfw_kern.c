@@ -599,11 +599,11 @@ int xdp_prog_main(struct xdp_md *ctx)
             {
                 __u64 newTime = now + (blocktime * 1000000000);
                 
-                if (eth->h_proto == htons(ETH_P_IPV6))
+                if (iph6)
                 {
                     bpf_map_update_elem(&ip6_blacklist_map, &srcip6, &newTime, BPF_ANY);
                 }
-                else
+                else if (iph)
                 {
                     bpf_map_update_elem(&ip_blacklist_map, &iph->saddr, &newTime, BPF_ANY);
                 }
