@@ -105,8 +105,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     __u64 blocktime = 1;
 
     // Initialize IP headers.
-    struct iphdr *iph;
-    struct ipv6hdr *iph6;
+    struct iphdr *iph = NULL;
+    struct ipv6hdr *iph6 = NULL;
     __u128 srcip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
