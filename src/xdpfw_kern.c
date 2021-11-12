@@ -23,14 +23,12 @@
 #define ALLOWSINGLEIPV4V6 // When this is defined, a check will occur inside the IPv4 and IPv6 filters. For IPv6 packets, if no IPv6 source/destination IP addresses are set, but there is an IPv4 address, it will ignore the filter. The same goes for IPv4, if there is no IPv4 source/destination IP addresses set, if an IPv6 address is set, it will ignore the filter.
 
 #ifdef DEBUG
-
 #define bpf_printk(fmt, ...)					\
 ({								\
 	       char ____fmt[] = fmt;				\
 	       bpf_trace_printk(____fmt, sizeof(____fmt),	\
 				##__VA_ARGS__);			\
 })
-
 #endif
 
 struct bpf_map_def SEC("maps") filters_map = 
@@ -163,7 +161,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     if (blocked != NULL && *blocked > 0)
     {
         #ifdef DEBUG
-            bpf_printk("Checking for blocked packet... Block time %llu.\n", *blocked);
+        bpf_printk("Checking for blocked packet... Block time %llu.\n", *blocked);
         #endif
 
         if (now > *blocked)
@@ -181,11 +179,11 @@ int xdp_prog_main(struct xdp_md *ctx)
         else
         {
             #ifdef DOSTATSONBLOCKMAP
-                // Increase blocked stats entry.
-                if (stats)
-                {
-                    stats->dropped++;
-                }
+            // Increase blocked stats entry.
+            if (stats)
+            {
+                stats->dropped++;
+            }
             #endif
 
             // They're still blocked. Drop the packet.
@@ -583,7 +581,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         
         // Matched.
         #ifdef DEBUG
-            bpf_printk("Matched rule ID #%d.\n", filter->id);
+        bpf_printk("Matched rule ID #%d.\n", filter->id);
         #endif
         
         action = filter->action;
@@ -597,8 +595,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     matched:
         if (action == 0)
         {
-           #ifdef DEBUG
-                //bpf_printk("Matched with protocol %d and sAddr %lu.\n", iph->protocol, iph->saddr);
+            #ifdef DEBUG
+            //bpf_printk("Matched with protocol %d and sAddr %lu.\n", iph->protocol, iph->saddr);
             #endif
 
             // Before dropping, update the blacklist map.
