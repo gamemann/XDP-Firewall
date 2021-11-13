@@ -19,6 +19,7 @@ XDPFWSRC = xdpfw.c
 XDPFWOUT = xdpfw
 
 XDPPROGSRC = xdpfw_kern.c
+XDPPROGBC = xdpfw_kern.bc
 XDPPROGOBJ = xdpfw_kern.o
 
 OBJS = $(BUILDDIR)/$(CONFIGOBJ) $(BUILDDIR)/$(CMDLINEOBJ)
@@ -32,7 +33,8 @@ xdpfw: utils libbpf $(OBJS)
 	$(CC) $(LDFLAGS) $(INCS) -o $(BUILDDIR)/$(XDPFWOUT) $(LIBBPFOBJS) $(OBJS) $(SRCDIR)/$(XDPFWSRC)
 xdpfw_filter:
 	mkdir -p $(BUILDDIR)/
-	$(CC) $(INCS) -D__BPF__ -O2 -target bpf -D__TARGET_ARCH_$(ARCH) -c -o $(BUILDDIR)/$(XDPPROGOBJ) $(SRCDIR)/$(XDPPROGSRC)
+	$(CC) $(INCS) -D__BPF__ -O2 -emit-llvm -c -o $(BUILDDIR)/$(XDPPROGBC) $(SRCDIR)/$(XDPPROGSRC)
+	llc -march=bpf -filetype=obj -o $(BUILDDIR)/$(XDPPROGOBJ) $(BUILDDIR)/$(XDPPROGBC)
 utils:
 	mkdir -p $(BUILDDIR)/
 	$(CC) -O2 -c -o $(BUILDDIR)/$(CONFIGOBJ) $(SRCDIR)/$(CONFIGSRC)
