@@ -106,11 +106,11 @@ filters = (
 );
 ```
 
-## Building
+## Building & Installation
 Before building, ensure the `libconfig-dev` package is installed along with necessary building tools such as `llvm`, `clang`, and `libelf-dev`. For Debian/Ubuntu, you can install this with the following as root:
 
 ```
-apt-get install libconfig-dev
+apt-get install libconfig-dev llvm clang libelf-dev build-essential -y
 ```
 
 You can use `git` and `make` to build this project. The following should work:
