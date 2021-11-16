@@ -6,7 +6,6 @@
 #include <linux/icmp.h>
 #include <linux/icmpv6.h>
 #include <linux/in.h>
-#include <stdint.h>
 #include <stdatomic.h>
 
 #include <linux/bpf.h>
