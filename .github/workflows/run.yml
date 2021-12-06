@@ -8,7 +8,7 @@ on:
 
 jobs:
   with:
-    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@main
+    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
   build:
     runs-on: ubuntu-latest
     steps:
