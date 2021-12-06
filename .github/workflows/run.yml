@@ -16,7 +16,6 @@ jobs:
     - name: Download artifact from Build workflow
       uses: actions/download-artifact@master
       with:
-        name: Build Output
-        path: build/xdpfw
+        name: build-output
     - name: run XDP FW with help menu
       run: ./build/xdpfw -h
