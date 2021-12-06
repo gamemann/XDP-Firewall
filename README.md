@@ -1,4 +1,5 @@
 # XDP Firewall
+[![XDP Firewall Build Workflow](https://github.com/gamemann/XDP-Firewall/actions/workflows/build.yml/badge.svg)](https://github.com/gamemann/XDP-Firewall/actions/workflows/build.yml)
 ## Description
 A stateless firewall that attaches to the [XDP](https://www.iovisor.org/technology/xdp) hook for fast packet processing. This firewall is designed to read filtering rules based off of a config file and filter incoming packets. Both IPv4 and **IPv6** are supported! Supported protocols include TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
 
