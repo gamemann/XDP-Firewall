@@ -499,7 +499,7 @@ int main(int argc, char *argv[])
             __u64 allowed = 0;
             __u64 dropped = 0;
             
-            if (bpf_map_lookup_elem(statsmap, &key, &stats) != 0)
+            if (bpf_map_lookup_elem(statsmap, &key, stats) != 0)
             {
                 fprintf(stderr, "Error performing stats map lookup.\n");
             }
