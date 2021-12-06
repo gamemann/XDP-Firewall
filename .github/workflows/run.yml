@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: use build workflow
-      uses: workflows/build@v2
+      uses: ./workflows/build@v2
     - name: run XDP FW with help menu
       run: xdpfw -h
