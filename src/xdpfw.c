@@ -494,11 +494,15 @@ int main(int argc, char *argv[])
         {
             __u32 key = 0;
             struct stats stats[cpus];
+            //memset(&stats, 0, sizeof(struct stats) * cpus);
 
             __u64 allowed = 0;
             __u64 dropped = 0;
             
-            bpf_map_lookup_elem(statsmap, &key, &stats);
+            if (bpf_map_lookup_elem(statsmap, &key, &stats) != 0)
+            {
+                fprintf(stderr, "Error performing stats map lookup.\n");
+            }
 
             for (int i = 0; i < cpus; i++)
             {
