@@ -28,5 +28,5 @@ jobs:
     - name: Store build artifacts
       uses: actions/upload-artifact@master
       with:
-        name: Build Output
+        name: build-output
         path: build/xdpfw
