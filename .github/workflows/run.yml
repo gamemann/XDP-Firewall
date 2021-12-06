@@ -13,6 +13,10 @@ jobs:
     needs: reuse_build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Download artifact from Build workflow
+      uses: actions/download-artifact@master
+      with:
+        name: Build Output
+        path: build/xdpfw
     - name: run XDP FW with help menu
-      run: xdpfw -h
+      run: ./build/xdpfw -h
