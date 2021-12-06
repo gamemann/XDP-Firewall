@@ -5,6 +5,7 @@
 #define MAX_PCKT_LENGTH 65535
 #define MAX_FILTERS 100
 #define MAX_TRACK_IPS 100000
+#define MAX_CPUS 256
 
 #ifdef __BPF__
 #define likely(x) __builtin_expect(!!(x), 1)

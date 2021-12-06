@@ -493,19 +493,31 @@ int main(int argc, char *argv[])
         if ((curTime - statslastupdated) > 2 && !cfg.nostats)
         {
             __u32 key = 0;
-            struct stats stats[cpus];
-            //memset(&stats, 0, sizeof(struct stats) * cpus);
+            struct stats stats[MAX_CPUS];
+            //memset(stats, 0, sizeof(struct stats) * MAX_CPUS);
 
             __u64 allowed = 0;
             __u64 dropped = 0;
             
             if (bpf_map_lookup_elem(statsmap, &key, stats) != 0)
             {
-                fprintf(stderr, "Error performing stats map lookup.\n");
+                fprintf(stderr, "Error performing stats map lookup. Stats map FD => %d.\n", statsmap);
+
+                continue;
             }
 
             for (int i = 0; i < cpus; i++)
             {
+                // Although this should NEVER happen, I'm seeing very strange behavior in the following GitHub issue.
+                // https://github.com/gamemann/XDP-Firewall/issues/10
+                // Therefore, before accessing stats[i], make sure the pointer to the specific CPU ID is not NULL.
+                if (&stats[i] == NULL)
+                {
+                    fprintf(stderr, "Stats array at CPU ID #%d is NULL! Skipping...\n", i);
+
+                    continue;
+                }
+
                 allowed += stats[i].allowed;
                 dropped += stats[i].dropped;
             }
