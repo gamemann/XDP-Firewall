@@ -17,6 +17,12 @@ jobs:
       uses: actions/download-artifact@master
       with:
         name: build-output
+    - name: Run apt update
+      run: sudo apt update
+    - name: Install LibConfig
+      run: sudo apt install libconfig-dev
+    - name: Install LibELF
+      run: sudo apt install libelf-dev
     - name: List files
       run: ls -la
     - name: Add execute permissions to executable file
