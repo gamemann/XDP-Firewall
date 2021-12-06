@@ -19,5 +19,7 @@ jobs:
         name: build-output
     - name: List files
       run: ls -la
-    - name: run XDP FW with help menu
+    - name: Add execute permissions to executable file
+      run: sudo chmod +x ./xdpfw
+    - name: Run XDP FW with help menu
       run: sudo ./xdpfw -h
