@@ -20,4 +20,4 @@ jobs:
     - name: List files
       run: ls -la
     - name: run XDP FW with help menu
-      run: ./xdpfw -h
+      run: sudo ./xdpfw -h
