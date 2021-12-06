@@ -1,0 +1,26 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install libelf
+      run: sudo apt install -y libelf-dev
+    - name: install libconfig
+      run: sudo apt install -y libconfig-dev 
+    - name: install llvm
+      run: sudo apt install -y llvm
+    - name: make
+      run: make
+    - name: install
+      run: sudo make install
