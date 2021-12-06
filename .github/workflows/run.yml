@@ -7,9 +7,10 @@ on:
     branches: [ master ]
 
 jobs:
-  with:
+  reuse_build:
     uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
-  build:
+  run:
+    needs: reuse_build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
