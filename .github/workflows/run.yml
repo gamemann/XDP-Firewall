@@ -17,5 +17,7 @@ jobs:
       uses: actions/download-artifact@master
       with:
         name: build-output
+    - name: List files
+      run: ls -la
     - name: run XDP FW with help menu
       run: ./build/xdpfw -h
