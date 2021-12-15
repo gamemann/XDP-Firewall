@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 
 #include "cmdline.h"
@@ -8,6 +9,7 @@ const struct option opts[] =
     {"config", required_argument, NULL, 'c'},
     {"offload", no_argument, NULL, 'o'},
     {"skb", no_argument, NULL, 's'},
+    {"time", required_argument, NULL, 't'},
     {"list", no_argument, NULL, 'l'},
     {"help", no_argument, NULL, 'h'},
     {NULL, 0, NULL, 0}
@@ -24,7 +26,7 @@ void parsecommandline(struct cmdline *cmd, int argc, char *argv[])
 {
     int c;
 
-    while ((c = getopt_long(argc, argv, "c:oslh", opts, NULL)) != -1)
+    while ((c = getopt_long(argc, argv, "c:ost:lh", opts, NULL)) != -1)
     {
         switch (c)
         {
@@ -40,6 +42,11 @@ void parsecommandline(struct cmdline *cmd, int argc, char *argv[])
 
             case 's':
                 cmd->skb = 1;
+
+                break;
+
+            case 't':
+                cmd->time = atoi(optarg);
 
                 break;
 

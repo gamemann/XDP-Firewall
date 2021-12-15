@@ -311,6 +311,7 @@ int main(int argc, char *argv[])
             "--config -c => Config file location (default is /etc/xdpfw/xdpfw.conf).\n" \
             "--offload -o => Tries to load the XDP program in hardware/offload mode." \
             "--skb -s => Force the XDP program to load with SKB mode instead of DRV." \
+            "--time -t => How long to run the program for in seconds before exiting. 0 or not set = infinite.\n" \
             "--list -l => Print config details including filters (this will exit program after done).\n" \
             "--help -h => Print help menu.\n");
 
@@ -471,10 +472,18 @@ int main(int argc, char *argv[])
     // Receive CPU count for stats map parsing.
     int cpus = get_nprocs_conf();
 
+    unsigned int endTime = (cmd.time > 0) ? time(NULL) + cmd.time : 0;
+
     while (cont)
     {
         // Get current time.
         time_t curTime = time(NULL);
+
+        // Check if we should end the program.
+        if (endTime > 0 && curTime >= endTime)
+        {
+            break;
+        }
 
         // Check for auto-update.
         if (cfg.updatetime > 0 && (curTime - lastupdated) > cfg.updatetime)
