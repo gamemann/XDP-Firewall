@@ -12,6 +12,7 @@ The following command line arguments are supported:
 * `--config -c` => Location to config file. Default => **/etc/xdpfw/xdpfw.conf**.
 * `--offload -o` => Tries to load the XDP program in hardware/offload mode.
 * `--skb -s` => Forces the program to load in SKB mode instead of DRV.
+* `--time -t` => How long to run the program for in seconds before exiting. 0 or not set = infinite.
 * `--list -l` => List all filtering rules scanned from config file.
 * `--help -h` => Print help menu for command line options.
 
