@@ -5,6 +5,7 @@ Requires=network-online.target
 
 [Service]
 ExecStart=/usr/bin/xdpfw
+ExecStopPost=/bin/bash -c "ip link set dev $(grep -E ^interface /etc/xdpfw/xdpfw.conf | sed -En 's/^.+=|[\"; ]//gp') xdp off"
 Restart=always
 
 [Install]
