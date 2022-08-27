@@ -374,11 +374,33 @@ int main(int argc, char *argv[])
             // IP addresses require additional code for string printing.
             struct sockaddr_in sin;
             sin.sin_addr.s_addr = cfg.filters[i].srcip;
-            fprintf(stdout, "\t\tSource IP => %s\n", inet_ntoa(sin.sin_addr));
+            fprintf(stdout, "\t\tSource IPv4 => %s\n", inet_ntoa(sin.sin_addr));
 
             struct sockaddr_in din;
             din.sin_addr.s_addr = cfg.filters[i].dstip;
-            fprintf(stdout, "\t\tDestination IP => %s\n", inet_ntoa(din.sin_addr));
+            fprintf(stdout, "\t\tDestination IPv4 => %s\n", inet_ntoa(din.sin_addr));
+
+            struct in6_addr sin6;
+            sin6.__in6_u.__u6_addr32[0] = cfg.filters[i].srcip6[0];
+            sin6.__in6_u.__u6_addr32[1] = cfg.filters[i].srcip6[1];
+            sin6.__in6_u.__u6_addr32[2] = cfg.filters[i].srcip6[2];
+            sin6.__in6_u.__u6_addr32[3] = cfg.filters[i].srcip6[3];
+
+            char srcipv6[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &sin6, srcipv6, sizeof(srcipv6));
+
+            fprintf(stdout, "\t\tSource IPv6 => %s\n", srcipv6);
+
+            struct in6_addr din6;
+            din6.__in6_u.__u6_addr32[0] = cfg.filters[i].dstip6[0];
+            din6.__in6_u.__u6_addr32[1] = cfg.filters[i].dstip6[1];
+            din6.__in6_u.__u6_addr32[2] = cfg.filters[i].dstip6[2];
+            din6.__in6_u.__u6_addr32[3] = cfg.filters[i].dstip6[3];
+
+            char dstipv6[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, &din6, dstipv6, sizeof(dstipv6));
+
+            fprintf(stdout, "\t\tDestination IPv6 => %s\n", dstipv6);
 
             // Other IP header information.
             fprintf(stdout, "\t\tMax Length => %d\n", cfg.filters[i].max_len);
