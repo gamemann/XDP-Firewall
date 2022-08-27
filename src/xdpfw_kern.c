@@ -510,6 +510,18 @@ int xdp_prog_main(struct xdp_md *ctx)
             {
                 continue;
             }
+
+            // ECE flag.
+            if (filter->tcpopts.do_ece && filter->tcpopts.ece != tcph->ece)
+            {
+                continue;
+            }
+
+            // CWR flag.
+            if (filter->tcpopts.do_cwr && filter->tcpopts.cwr != tcph->cwr)
+            {
+                continue;
+            }
         }
         else if (filter->udpopts.enabled)
         {

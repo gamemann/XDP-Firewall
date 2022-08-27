@@ -368,8 +368,10 @@ int main(int argc, char *argv[])
             fprintf(stdout, "\tEnabled => %d\n", cfg.filters[i].enabled);
             fprintf(stdout, "\tAction => %d (0 = Block, 1 = Allow).\n\n", cfg.filters[i].action);
 
+            // IP Options.
             fprintf(stdout, "\tIP Options\n");
-            // IP addresses.
+
+            // IP addresses require additional code for string printing.
             struct sockaddr_in sin;
             sin.sin_addr.s_addr = cfg.filters[i].srcip;
             fprintf(stdout, "\t\tSource IP => %s\n", inet_ntoa(sin.sin_addr));
@@ -388,8 +390,8 @@ int main(int argc, char *argv[])
             fprintf(stdout, "\t\tBPS => %llu\n", cfg.filters[i].bps);
             fprintf(stdout, "\t\tBlock Time => %llu\n\n", cfg.filters[i].blocktime);
 
-            fprintf(stdout, "\tTCP Options\n");
             // TCP Options.
+            fprintf(stdout, "\tTCP Options\n");
             fprintf(stdout, "\t\tTCP Enabled => %d\n", cfg.filters[i].tcpopts.enabled);
             fprintf(stdout, "\t\tTCP Source Port => %d\n", cfg.filters[i].tcpopts.sport);
             fprintf(stdout, "\t\tTCP Destination Port => %d\n", cfg.filters[i].tcpopts.dport);
@@ -398,16 +400,18 @@ int main(int argc, char *argv[])
             fprintf(stdout, "\t\tTCP RST Flag => %d\n", cfg.filters[i].tcpopts.rst);
             fprintf(stdout, "\t\tTCP PSH Flag => %d\n", cfg.filters[i].tcpopts.psh);
             fprintf(stdout, "\t\tTCP SYN Flag => %d\n", cfg.filters[i].tcpopts.syn);
-            fprintf(stdout, "\t\tTCP FIN Flag => %d\n\n", cfg.filters[i].tcpopts.fin);
+            fprintf(stdout, "\t\tTCP FIN Flag => %d\n", cfg.filters[i].tcpopts.fin);
+            fprintf(stdout, "\t\tTCP ECE Flag => %d\n", cfg.filters[i].tcpopts.ece);
+            fprintf(stdout, "\t\tTCP CWR Flag => %d\n\n", cfg.filters[i].tcpopts.cwr);
 
-            fprintf(stdout, "\tUDP Options\n");
             // UDP Options.
+            fprintf(stdout, "\tUDP Options\n");
             fprintf(stdout, "\t\tUDP Enabled => %d\n", cfg.filters[i].udpopts.enabled);
             fprintf(stdout, "\t\tUDP Source Port => %d\n", cfg.filters[i].udpopts.sport);
             fprintf(stdout, "\t\tUDP Destination Port => %d\n\n", cfg.filters[i].udpopts.dport);
 
-            fprintf(stdout, "\tICMP Options\n");
             // ICMP Options.
+            fprintf(stdout, "\tICMP Options\n");
             fprintf(stdout, "\t\tICMP Enabled => %d\n", cfg.filters[i].icmpopts.enabled);
             fprintf(stdout, "\t\tICMP Code => %d\n", cfg.filters[i].icmpopts.code);
             fprintf(stdout, "\t\tICMP Type => %d\n", cfg.filters[i].icmpopts.type);

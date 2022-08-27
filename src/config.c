@@ -70,6 +70,8 @@ void setcfgdefaults(struct config *cfg)
         cfg->filters[i].tcpopts.do_psh = 0;
         cfg->filters[i].tcpopts.do_syn = 0;
         cfg->filters[i].tcpopts.do_fin = 0;
+        cfg->filters[i].tcpopts.do_ece = 0;
+        cfg->filters[i].tcpopts.do_cwr = 0;
 
         cfg->filters[i].udpopts.enabled = 0;
         cfg->filters[i].udpopts.do_sport = 0;
@@ -423,6 +425,24 @@ int readcfg(struct config *cfg)
         {
             cfg->filters[i].tcpopts.fin = tcpfin;
             cfg->filters[i].tcpopts.do_fin = 1;
+        }
+
+        // ECE flag.
+        int tcpece;
+
+        if (config_setting_lookup_bool(filter, "tcp_ece", &tcpece))
+        {
+            cfg->filters[i].tcpopts.ece = tcpece;
+            cfg->filters[i].tcpopts.do_ece = 1;
+        }
+
+        // CWR flag.
+        int tcpcwr;
+
+        if (config_setting_lookup_bool(filter, "tcp_cwr", &tcpcwr))
+        {
+            cfg->filters[i].tcpopts.cwr = tcpcwr;
+            cfg->filters[i].tcpopts.do_cwr = 1;
         }
 
         /* UDP options */

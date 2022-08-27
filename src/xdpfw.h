@@ -58,6 +58,12 @@ struct tcpopts
 
     unsigned int do_fin : 1;
     unsigned int fin : 1;
+
+    unsigned int do_ece : 1;
+    unsigned int ece : 1;
+
+    unsigned int do_cwr : 1;
+    unsigned int cwr : 1;
 };
 
 struct udpopts
