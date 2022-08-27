@@ -444,13 +444,13 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
 
         // PPS.
-        if (filter->do_pps &&  pps <= filter->pps)
+        if (filter->do_pps &&  pps < filter->pps)
         {
             continue;
         }
 
         // BPS.
-        if (filter->do_bps && bps <= filter->bps)
+        if (filter->do_bps && bps < filter->bps)
         {
             continue;
         }
