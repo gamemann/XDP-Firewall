@@ -419,25 +419,25 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Max TTL length.
-            if (filter->do_max_ttl && filter->max_ttl > iph->ttl)
+            if (filter->do_max_ttl && filter->max_ttl < iph->ttl)
             {
                 continue;
             }
 
             // Min TTL length.
-            if (filter->do_min_ttl && filter->min_ttl < iph->ttl)
+            if (filter->do_min_ttl && filter->min_ttl > iph->ttl)
             {
                 continue;
             }
 
             // Max packet length.
-            if (filter->do_max_len && filter->max_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter->do_max_len && filter->max_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
 
             // Min packet length.
-            if (filter->do_min_len && filter->min_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter->do_min_len && filter->min_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
