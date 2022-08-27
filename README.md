@@ -52,6 +52,8 @@ TCP options exist in the main filter array and start with `tcp_`. Please see bel
 * `tcp_psh` => If true, the packet must have the `PSH` flag set to match.
 * `tcp_syn` => If true, the packet must have the `SYN` flag set to match.
 * `tcp_fin` => If true, the packet must have the `FIN` flag set to match.
+* `tcp_ece` => If true, the packet must have the `ECE` flag set to match.
+* `tcp_cwr` => If true, the packet must have the `CWR` flag set to match.
 
 #### UDP Options
 UDP options exist in the main filter array and start with `udp_`. Please see below.
