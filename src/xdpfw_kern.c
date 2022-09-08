@@ -24,6 +24,10 @@
 })
 #endif
 
+#ifndef memcpy
+#define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
+#endif
+
 struct bpf_map_def SEC("maps") filters_map = 
 {
     .type = BPF_MAP_TYPE_ARRAY,
@@ -112,10 +116,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             return XDP_DROP;
         }
 
-        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[0] << 0;
-        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[1] << 32;
-        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[2] << 64;
-        srcip6 |= (__u128) iph6->saddr.in6_u.u6_addr32[3] << 96;
+        memcpy(&srcip6, &iph6->saddr.in6_u.u6_addr32, sizeof(srcip6));
     }
     else
     {
