@@ -2,19 +2,30 @@
 [![XDP Firewall Build Workflow](https://github.com/gamemann/XDP-Firewall/actions/workflows/build.yml/badge.svg)](https://github.com/gamemann/XDP-Firewall/actions/workflows/build.yml) [![XDP Firewall Run Workflow](https://github.com/gamemann/XDP-Firewall/actions/workflows/run.yml/badge.svg)](https://github.com/gamemann/XDP-Firewall/actions/workflows/run.yml)
 
 ## Description
-A stateless firewall that attaches to the [XDP](https://www.iovisor.org/technology/xdp) hook for fast packet processing. This firewall is designed to read filtering rules based off of a config file and filter incoming packets. Both IPv4 and **IPv6** are supported! Supported protocols include TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which can be disabled if need to be.
+A *stateless* firewall that attaches to the Linux kernel's [XDP](https://www.iovisor.org/technology/xdp) hook for fast packet processing. This firewall is designed to read filtering rules based off of a config file on disk and filter incoming packets. Both IPv4 and **IPv6** are supported! The protocols currently supported are TCP, UDP, and ICMP at the moment. With that said, the program comes with accepted and blocked packet statistics which may be disabled if need to be.
 
-Additionally, if the host's NIC doesn't support XDP DRV hook (AKA native), the program will attempt to attach to the XDP SKB hook (AKA generic). The program firstly tries XDP DRV mode, though.
+Additionally, if the host's network configuration or network interface card (NIC) doesn't support the XDP DRV hook (AKA native; occurs before [SKB creation](http://vger.kernel.org/~davem/skb.html)), the program will attempt to attach to the XDP SKB hook (AKA generic; occurs after SKB creation which is where IPTables and NFTables are processed via the `netfilter` kernel module). You may use overrides through the command-line to force SKB or offload modes.
+
+With that said, reasons for a host's network configuration not supporting XDP's DRV hook may be the following.
+
+* Running an outdated kernel that doesn't support your NIC's driver.
+* Your NIC's driver not yet being supported. [Here's](https://github.com/iovisor/bcc/blob/master/docs/kernel-versions.md#xdp) a NIC driver XDP support list. With enough Linux kernel development knowledge, you could try implementing XDP DRV support into your non-supported NIC's driver (I'd highly recommend giving [this](https://www.youtube.com/watch?v=ayFWnFj5fY8) video a watch!).
+* You don't have enough RX/TX queues (e.g. not enabling multi-queue) or your RX/TX queue counts aren't matching. From the information I gathered, it's recommended to have one RX and TX queue per CPU core/thread. You could try learning how to use [ethtool](https://www.poftut.com/linux-ethtool-tutorial-usage-examples/) and try altering the NIC's RX/TX queue settings ([this](https://www.linode.com/docs/guides/multiqueue-nic/) article may be helpful!).
 
 ## Command Line Usage
 The following command line arguments are supported:
 
 * `--config -c` => Location to config file. Default => **/etc/xdpfw/xdpfw.conf**.
-* `--offload -o` => Tries to load the XDP program in hardware/offload mode.
+* `--offload -o` => Tries to load the XDP program in hardware/offload mode (please read **Offload Information** below).
 * `--skb -s` => Forces the program to load in SKB mode instead of DRV.
 * `--time -t` => How long to run the program for in seconds before exiting. 0 or not set = infinite.
 * `--list -l` => List all filtering rules scanned from config file.
 * `--help -h` => Print help menu for command line options.
+
+### Offload Information
+Offloading your XDP/BPF program to your system's NIC allows for the fastest packet processing you can achieve due to the NIC dropping the packets with its hardware. However, for one, there are **not** many NIC manufacturers that do support this feature **and** you're limited to the NIC's memory/processing (e.g. your BPF map sizes will be extremely limited). Additionally, there are usually stricter BPF verifier limitations for offloaded BPF programs, but you may try reaching out to the NIC's manufacturer to see if they will give you a special version of their NIC driver raising these limitations (this is what I did with one manufacturer I used).
+
+As of this time, I am not aware of any NIC manufacturers that will be able to offload this firewall completely to the NIC due to its BPF complexity. To be honest, in the current networking age, I believe it's best to leave offloaded programs to BPF map lookups and minimum packet inspection. For example, a BPF blacklist map lookup for malicious source IPs or ports. However, XDP is still very new and I would imagine we're going to see these limitations loosened or lifted in the next upcoming years. This is why I added support for offload mode on this firewall. 
 
 ## Configuration File Options
 ### Main
@@ -69,14 +80,14 @@ ICMP options exist in the main filter array and start with `icmp_`. Please see b
 * `icmp_code` => The ICMP code the packet must match.
 * `icmp_type` => The ICMP type the packet must match.
 
-**Note** - Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
+Everything besides the main `enabled` and `action` options within a filter are **not** required. This means you do not have to define them within your config.
 
 **Note** - As of right now, you can specify up to 100 maximum filters. This is due to BPF's max jump limit within the while loop.
 
 ## Configuration Example
 Here's an example of a config:
 
-```
+```squidconf
 interface = "ens18";
 updatetime = 15;
 
@@ -114,23 +125,29 @@ filters = (
 ## Building & Installation
 Before building, ensure the `libconfig-dev` package is installed along with necessary building tools such as `llvm`, `clang`, and `libelf-dev`. For Debian/Ubuntu, you can install this with the following as root:
 
-```
+```bash
+# Install dependencies.
 apt-get install libconfig-dev llvm clang libelf-dev build-essential -y
 ```
 
 You can use `git` and `make` to build this project. The following should work:
 
-```
+```bash
+# Clone repository via Git. Use recursive flag to download LibBPF sub-module.
 git clone --recursive https://github.com/gamemann/XDP-Firewall.git
+
+# Change directory to repository.
 cd XDP-Firewall
-make && make install
+
+# Build project and install as root via Sudo.
+make && sudo make install
 ```
 
 ## Notes
 ### BPF For/While Loop Support
 This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
 
-```
+```vim
 libbpf: load bpf program failed: Invalid argument
 libbpf: -- BEGIN DUMP LOG ---
 libbpf:
@@ -141,7 +158,12 @@ libbpf: failed to load program 'xdp_prog'
 libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
 ```
 
-**Note** - It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
+It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
+
+### Will You Make This Firewall Stateful?
+There is a possibility I may make this firewall stateful in the future *when* I have time, but this will require a complete overhaul along with implementing application-specific filters. With that said, I am still on contract from my previous employers for certain filters of game servers. If others are willing to contribute to the project and implement these features, feel free to make pull requests!
+
+You may also be interested in this awesome project called [FastNetMon](https://github.com/pavel-odintsov/fastnetmon)!
 
 ## Other XDP Project(s)
 I just wanted to share other project(s) I've made using XDP for those interested.
