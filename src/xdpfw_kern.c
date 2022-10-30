@@ -523,6 +523,12 @@ int xdp_prog_main(struct xdp_md *ctx)
             {
                 continue;
             }
+		
+            // NONE flag.
+            if (filter->tcpopts.do_none && filter->tcpopts.none != tcph->none)
+            {
+                continue;
+            }
         }
         else if (filter->udpopts.enabled)
         {
