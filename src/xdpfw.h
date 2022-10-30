@@ -64,6 +64,9 @@ struct tcpopts
 
     unsigned int do_cwr : 1;
     unsigned int cwr : 1;
+    
+    unsigned int do_none : 1;
+    unsigned int none : 1;
 };
 
 struct udpopts
