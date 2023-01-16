@@ -162,6 +162,8 @@ libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
 
 It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
 
+**NOTE** - Due to the use of loops inside this XDP program, it's likely performance won't be as fast as XDP programs that use BPF map lookups directly. This firewall was designed to be as flexible as possible in regards to configuration. Therefore, in that case, we can't really use BPF maps via key lookup unless if we insert **many** entries inside of the maps themselves which is less than ideal for how much configuration we allow.
+
 ### Will You Make This Firewall Stateful?
 There is a possibility I may make this firewall stateful in the future *when* I have time, but this will require a complete overhaul along with implementing application-specific filters. With that said, I am still on contract from my previous employers for certain filters of game servers. If others are willing to contribute to the project and implement these features, feel free to make pull requests!
 
