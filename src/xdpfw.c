@@ -514,7 +514,7 @@ int main(int argc, char *argv[])
         {
             // Memleak fix for strdup() in updateconfig()
             // Before updating it again, we need to free the old return value
-            free(cfg.interface)
+            free(cfg.interface);
 
             // Update config.
             updateconfig(&cfg, cmd.cfgfile);
