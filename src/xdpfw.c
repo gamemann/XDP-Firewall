@@ -512,6 +512,10 @@ int main(int argc, char *argv[])
         // Check for auto-update.
         if (cfg.updatetime > 0 && (curTime - lastupdated) > cfg.updatetime)
         {
+            // Memleak fix for strdup() in updateconfig()
+            // Before updating it again, we need to free the old return value
+            free(cfg.interface)
+
             // Update config.
             updateconfig(&cfg, cmd.cfgfile);
 
