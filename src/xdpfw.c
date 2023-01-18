@@ -291,6 +291,7 @@ int attachxdp(int ifidx, int progfd, struct cmdline *cmd)
     return mode;
 }
 
+struct stat conf_stat;
 int main(int argc, char *argv[])
 {
     // Parse the command line.
@@ -341,8 +342,9 @@ int main(int argc, char *argv[])
     setcfgdefaults(&cfg);
     
     // Create last updated variable.
-    time_t lastupdated = time(NULL);
+    time_t lastupdatecheck = time(NULL);
     time_t statslastupdated = time(NULL);
+    time_t lastupdated = time(NULL);
 
     // Update config.
     updateconfig(&cfg, cmd.cfgfile);
@@ -510,20 +512,26 @@ int main(int argc, char *argv[])
         }
 
         // Check for auto-update.
-        if (cfg.updatetime > 0 && (curTime - lastupdated) > cfg.updatetime)
+        if (cfg.updatetime > 0 && (curTime - lastupdatecheck) > cfg.updatetime)
         {
-            // Memleak fix for strdup() in updateconfig()
-            // Before updating it again, we need to free the old return value
-            free(cfg.interface);
+            // Check if config file have been modified
+            if (stat(cmd.cfgfile, &conf_stat) == 0 && conf_stat.st_mtime > lastupdated) {
+                // Memleak fix for strdup() in updateconfig()
+                // Before updating it again, we need to free the old return value
+                free(cfg.interface);
 
-            // Update config.
-            updateconfig(&cfg, cmd.cfgfile);
+                // Update config.
+                updateconfig(&cfg, cmd.cfgfile);
 
-            // Update BPF maps.
-            updatefilters(&cfg);
-            
+                // Update BPF maps.
+                updatefilters(&cfg);
+
+                // Update timer
+                lastupdated = time(NULL);
+            }
+
             // Update last updated variable.
-            lastupdated = time(NULL);
+            lastupdatecheck = time(NULL);
         }
 
         // Update stats.
