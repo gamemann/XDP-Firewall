@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <sys/resource.h>
 #include <sys/sysinfo.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 #include <net/if.h>
