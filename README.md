@@ -172,10 +172,11 @@ You may also be interested in this awesome project called [FastNetMon](https://g
 ## Other XDP Project(s)
 I just wanted to share other project(s) I've made using XDP for those interested.
 
-### XDP Forwarding
+### [XDP Forwarding](https://github.com/gamemann/XDP-Forwarding)
 This XDP project performs basic layer 3/4 forwarding using source port mapping similar to IPTables/NFTables. This is one of my newer projects and still a work in progress. I also feel the code is a lot neater in the XDP Forwarding project.
 
-[GitHub Repository](https://github.com/gamemann/XDP-Forwarding)
+### [Kilimanjaro](https://github.com/gamemann/Kilimanjaro)
+This is a complex packet processing/forwarding/dropping project I made for a gaming community I was a part of that utilizes XDP, AF_XDP, and the IPIP network protocol. I no longer work on the project, but the source code should be very helpful to other XDP developers, especially when it comes to manipulating packets inside of XDP and such.
 
 ## Credits
 * [Christian Deacon](https://github.com/gamemann) - Creator.
