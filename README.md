@@ -164,6 +164,15 @@ It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was
 
 **NOTE** - Due to the use of loops inside this XDP program, it's likely performance won't be as fast as XDP programs that use BPF map lookups directly. This firewall was designed to be as flexible as possible in regards to configuration. Therefore, in that case, we can't really use BPF maps via key lookup unless if we insert **many** entries inside of the maps themselves which is less than ideal for how much configuration we allow.
 
+### Error Related To Toolchain Hardening
+As stated in issue [#38](https://github.com/gamemann/XDP-Firewall/issues/38) by [g00g1](https://github.com/g00g1), if you have toolchain hardening enabled, you may receive the following error when compiling.
+
+```
+error: <unknown>:0:0: in function xdp_prog_main i32 (ptr): A call to built-in function '__stack_chk_fail' is not supported.
+```
+
+In order to fix this, you'll need to pass the `-fno-stack-protector` flag to Clang when building LibBPF and the firewall itself. You'll want to modify the `Makefile` for each project to add this flag. Patches for this may be found [here](https://github.com/gamemann/XDP-Firewall/issues/38#issuecomment-1547965524)!
+
 ### Will You Make This Firewall Stateful?
 There is a possibility I may make this firewall stateful in the future *when* I have time, but this will require a complete overhaul along with implementing application-specific filters. With that said, I am still on contract from my previous employers for certain filters of game servers. If others are willing to contribute to the project and implement these features, feel free to make pull requests!
 
