@@ -160,7 +160,18 @@ make && sudo make install
 ### Move To LibXDP
 On **June 6th, 2023**, support for [LibXDP](https://github.com/xdp-project/xdp-tools/tree/master/lib/libxdp) from [XDP Tools](https://github.com/xdp-project/xdp-tools) was added. This requires additional packages and tools to install and use with this XDP firewall as noted above.
 
-If you're having issues with LibXDP, you may go back to commit [b54c466](https://github.com/gamemann/XDP-Firewall/commit/b54c46638d32306ec27aecc69a830283aef17e61) to use an older version of LibBPF that has worked for years for this XDP firewall.
+If you're having issues with LibXDP, you may go back to commit [b54c466](hhttps://github.com/gamemann/XDP-Firewall/tree/b54c46638d32306ec27aecc69a830283aef17e61) to use an older version of LibBPF that has worked for years for this XDP firewall.
+
+```bash
+# Make sure we're in the repository's directory.
+cd XDP-Firewall
+
+# Checkout old commit.
+git checkout b54c466
+
+# Build and install using old commit & LibBPF.
+make && sudo make install
+```
 
 ### BPF For/While Loop Support
 This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
