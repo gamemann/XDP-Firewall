@@ -18,6 +18,7 @@
 
 #include <bpf.h>
 #include <libbpf.h>
+#include <xdp/libxdp.h>
 
 #include "xdpfw.h"
 #include "config.h"
@@ -106,17 +107,25 @@ int updateconfig(struct config *cfg, char *cfgfile)
 /**
  * Finds a BPF map's FD.
  * 
- * @param bpf_obj A pointer to the BPF object.
+ * @param prog A pointer to the XDP program structure.
  * @param mapname The name of the map to retrieve.
  * 
  * @return The map's FD.
 */
-int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
+int findmapfd(struct xdp_program *prog, const char *mapname)
 {
-    struct bpf_map *map;
     int fd = -1;
 
-    map = bpf_object__find_map_by_name(bpf_obj, mapname);
+    struct bpf_object *obj = xdp_program__bpf_obj(prog);
+
+    if (obj == NULL)
+    {
+        fprintf(stderr, "Error finding BPF object from XDP program.\n");
+
+        goto out;
+    }
+
+    struct bpf_map *map = bpf_object__find_map_by_name(obj, mapname);
 
     if (!map) 
     {
@@ -136,84 +145,37 @@ int findmapfd(struct bpf_object *bpf_obj, const char *mapname)
  * 
  * @param filename The path to the BPF object file.
  * 
- * @return BPF's program FD.
+ * @return XDP program structure (pointer) or NULL.
 */
-int loadbpfobj(const char *filename, __u8 offload, int ifidx)
+struct xdp_program *loadbpfobj(const char *filename)
 {
-    int fd = -1;
+    struct xdp_program *prog = xdp_program__open_file(filename, "xdp_prog", NULL);
 
-    // Create attributes and assign XDP type + file name.
-    struct bpf_prog_load_attr attrs = 
+    if (prog == NULL)
     {
-		.prog_type = BPF_PROG_TYPE_XDP,
-	};
-
-    // If we want to offload the XDP program, we must send the ifindex item to the interface's index.
-    if (offload)
-    {
-        attrs.ifindex = ifidx;
-    }
-    
-    attrs.file = filename;
-
-    // Check if we can access the BPF object file.
-    if (access(filename, O_RDONLY) < 0) 
-    {
-        fprintf(stderr, "Could not read/access BPF object file :: %s (%s).\n", filename, strerror(errno));
-
-        return fd;
+        // The main function handles this error.
+        return NULL;
     }
 
-    struct bpf_object *obj = NULL;
-    int err;
-
-    // Load the BPF object file itself.
-    err = bpf_prog_load_xattr(&attrs, &obj, &fd);
-
-    if (err) 
-    {
-        fprintf(stderr, "Could not load XDP BPF program :: %s.\n", strerror(errno));
-
-        return fd;
-    }
-
-    struct bpf_program *prog;
-
-    // Load the BPF program itself by section name and try to retrieve FD.
-    prog = bpf_object__find_program_by_title(obj, "xdp_prog");
-    fd = bpf_program__fd(prog);
-
-    if (fd < 0) 
-    {
-        printf("XDP program not found by section/title :: xdp_prog (%s).\n", strerror(fd));
-
-        return fd;
-    }
-
-    // Retrieve BPF maps.
-    filtersmap = findmapfd(obj, "filters_map");
-    statsmap = findmapfd(obj, "stats_map");
-
-    return fd;
+    return prog;
 }
 
 /**
  * Attempts to attach or detach (progfd = -1) a BPF/XDP program to an interface.
  * 
+ * @param prog A pointer to the XDP program structure.
  * @param ifidx The index to the interface to attach to.
- * @param progfd A file description (FD) to the BPF/XDP program.
+ * @param detach If above 0, attempts to detach XDP program.
  * @param cmd A pointer to a cmdline struct that includes command line arguments (mostly checking for offload/HW mode set).
  * 
- * @return Returns the flag (int) it successfully attached the BPF/XDP program with or a negative value for error.
+ * @return 0 on success and 1 on error.
  */
-int attachxdp(int ifidx, int progfd, struct cmdline *cmd)
+int attachxdp(struct xdp_program *prog, int ifidx, __u8 detach, struct cmdline *cmd)
 {
     int err;
 
+    __u32 mode = XDP_MODE_NATIVE;
     char *smode;
-
-    __u32 flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
-    __u32 mode = XDP_FLAGS_DRV_MODE;
 
     smode = "DRV/native";
 
@@ -221,75 +183,79 @@ int attachxdp(int ifidx, int progfd, struct cmdline *cmd)
     {
         smode = "HW/offload";
 
-        mode = XDP_FLAGS_HW_MODE;
+        mode = XDP_MODE_HW;
     }
     else if (cmd->skb)
     {
         smode = "SKB/generic";
-        mode = XDP_FLAGS_SKB_MODE;
+        mode = XDP_MODE_SKB;
     }
 
-    flags |= mode;
-
-    int exit = 0;
+    __u8 exit = 0;
 
     while (!exit)
     {
         // Try loading program with current mode.
         int err;
 
-        err = bpf_set_link_xdp_fd(ifidx, progfd, flags);
-
-        if (err || progfd == -1)
+        if (detach)
         {
-            const char *errmode;
+            err = xdp_program__detach(prog, ifidx, mode, 0);
+        }
+        else
+        {
+            err = xdp_program__attach(prog, ifidx, mode, 0);
+        }
+
+        if (err)
+        {
+            if (err)
+            {
+                fprintf(stderr, "Could not attach with mode %s (%s) (%d).\n", smode, strerror(-err), -err);
+            }
 
             // Decrease mode.
             switch (mode)
             {
-                case XDP_FLAGS_HW_MODE:
-                    mode = XDP_FLAGS_DRV_MODE;
-                    flags &= ~XDP_FLAGS_HW_MODE;
-                    errmode = "HW/offload";
+                case XDP_MODE_HW:
+                    mode = XDP_MODE_NATIVE;
+                    smode = "DRV/native";
 
                     break;
 
-                case XDP_FLAGS_DRV_MODE:
-                    mode = XDP_FLAGS_SKB_MODE;
-                    flags &= ~XDP_FLAGS_DRV_MODE;
-                    errmode = "DRV/native";
+                case XDP_MODE_NATIVE:
+                    mode = XDP_MODE_SKB;
+                    smode = "SKB/generic";
 
                     break;
 
-                case XDP_FLAGS_SKB_MODE:
-                    // Exit program and set mode to -1 indicating error.
+                case XDP_MODE_SKB:
+                    // Exit loop.
                     exit = 1;
-                    mode = -err;
-                    errmode = "SKB/generic";
-
+                    smode = NULL;
+                    
                     break;
             }
 
-            if (progfd != -1)
-            {
-                fprintf(stderr, "Could not attach with %s mode (%s)(%d).\n", errmode, strerror(-err), err);
-            }
-            
-            if (mode != -err)
-            {
-                smode = (mode == XDP_FLAGS_HW_MODE) ? "HW/offload" : (mode == XDP_FLAGS_DRV_MODE) ? "DRV/native" : (mode == XDP_FLAGS_SKB_MODE) ? "SKB/generic" : "N/A";
-                flags |= mode;
-            }
+            // Retry.
+            continue;
         }
-        else
-        {
-            fprintf(stdout, "Loaded XDP program in %s mode.\n", smode);
-
-            break;
-        }
+        
+        // Success, so break current loop.
+        break;
     }
 
-    return mode;
+    // If exit is set to 1 or smode is NULL, it indicates full failure.
+    if (exit || smode == NULL)
+    {
+        fprintf(stderr, "Error attaching XDP program.\n");
+
+        return 1;
+    }
+
+    fprintf(stdout, "Loaded XDP program on mode %s.\n", smode);
+
+    return 0;
 }
 
 struct stat conf_stat;
@@ -452,13 +418,12 @@ int main(int argc, char *argv[])
     }
 
     // XDP variables.
-    int progfd;
     const char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
-    // Get XDP's ID.
-    progfd = loadbpfobj(filename, cmd.offload, ifidx);
+    // Load BPF object.
+    struct xdp_program *prog = loadbpfobj(filename);
 
-    if (progfd <= 0)
+    if (prog == NULL)
     {
         fprintf(stderr, "Error loading eBPF object file. File name => %s.\n", filename);
 
@@ -466,14 +431,14 @@ int main(int argc, char *argv[])
     }
     
     // Attach XDP program.
-    int res = attachxdp(ifidx, progfd, &cmd);
-
-    if (res != XDP_FLAGS_HW_MODE && res != XDP_FLAGS_DRV_MODE && res != XDP_FLAGS_SKB_MODE)
+    if (attachxdp(prog, ifidx, 0, &cmd))
     {
-        fprintf(stderr, "Error attaching XDP program :: %s (%d)\n", strerror(res), res);
-
         return EXIT_FAILURE;
     }
+
+    // Retrieve BPF maps.
+    filtersmap = findmapfd(prog, "filters_map");
+    statsmap = findmapfd(prog, "stats_map");
 
     // Check for valid maps.
     if (filtersmap < 0)
@@ -578,7 +543,7 @@ int main(int argc, char *argv[])
     }
 
     // Detach XDP program.
-    attachxdp(ifidx, -1, &cmd);
+    attachxdp(prog, ifidx, 1, &cmd);
 
     // Add spacing.
     fprintf(stdout, "\n");

@@ -12,6 +12,8 @@
 #include <linux/bpf_common.h>
 
 #include <bpf_helpers.h>
+#include <xdp/xdp_helpers.h>
+#include <xdp/prog_dispatcher.h>
 
 #include "xdpfw.h"
 
@@ -28,53 +30,59 @@
 #define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
 #endif
 
-struct bpf_map_def SEC("maps") filters_map = 
+struct 
 {
-    .type = BPF_MAP_TYPE_ARRAY,
-    .key_size = sizeof(__u32),
-    .value_size = sizeof(struct filter),
-    .max_entries = MAX_FILTERS
-};
+	__uint(priority, 10);
+	__uint(XDP_PASS, 1);
+} XDP_RUN_CONFIG(xdp_prog_main);
 
-struct bpf_map_def SEC("maps") stats_map =
+struct 
 {
-    .type = BPF_MAP_TYPE_PERCPU_ARRAY,
-    .key_size = sizeof(__u32),
-    .value_size = sizeof(struct stats),
-    .max_entries = 1
-};
+	__uint(type, BPF_MAP_TYPE_ARRAY);
+	__uint(max_entries, MAX_FILTERS);
+	__type(key, __u32);
+	__type(value, struct filter);
+} filters_map SEC(".maps");
 
-struct bpf_map_def SEC("maps") ip_stats_map =
+struct 
 {
-    .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(__u32),
-    .value_size = sizeof(struct ip_stats),
-    .max_entries = MAX_TRACK_IPS
-};
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uint(max_entries, 1);
+	__type(key, __u32);
+	__type(value, struct stats);
+} stats_map SEC(".maps");
 
-struct bpf_map_def SEC("maps") ip_blacklist_map =
+struct 
 {
-    .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(__u32),
-    .value_size = sizeof(__u64),
-    .max_entries = MAX_TRACK_IPS
-};
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+	__uint(max_entries, MAX_TRACK_IPS);
+	__type(key, __u32);
+	__type(value, struct ip_stats);
+} ip_stats_map SEC(".maps");
 
-struct bpf_map_def SEC("maps") ip6_stats_map =
+struct 
 {
-    .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(__u128),
-    .value_size = sizeof(struct ip_stats),
-    .max_entries = MAX_TRACK_IPS
-};
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+	__uint(max_entries, MAX_TRACK_IPS);
+	__type(key, __u32);
+	__type(value, __u64);
+} ip_blacklist_map SEC(".maps");
 
-struct bpf_map_def SEC("maps") ip6_blacklist_map =
+struct 
 {
-    .type = BPF_MAP_TYPE_LRU_HASH,
-    .key_size = sizeof(__u128),
-    .value_size = sizeof(__u64),
-    .max_entries = MAX_TRACK_IPS
-};
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+	__uint(max_entries, MAX_TRACK_IPS);
+	__type(key, __u128);
+	__type(value, struct ip_stats);
+} ip6_stats_map SEC(".maps");
+
+struct 
+{
+	__uint(type, BPF_MAP_TYPE_LRU_HASH);
+	__uint(max_entries, MAX_TRACK_IPS);
+	__type(key, __u128);
+	__type(value, __u64);
+} ip6_blacklist_map SEC(".maps");
 
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
@@ -634,3 +642,5 @@ int xdp_prog_main(struct xdp_md *ctx)
 }
 
 char _license[] SEC("license") = "GPL";
+
+__uint(xsk_prog_version, XDP_DISPATCHER_VERSION) SEC(XDP_METADATA_SECTION);
