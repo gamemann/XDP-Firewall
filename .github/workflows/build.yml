@@ -23,6 +23,8 @@ jobs:
       run: sudo apt install -y libconfig-dev 
     - name: Install LLVM
       run: sudo apt install -y llvm
+    - name: Install LibXDP Depedencies
+      run: sudo apt install -y libpcap-dev m4 gcc-multilib linux-tools-$(uname -r)
     - name: Make project
       run: make
     - name: Install project
