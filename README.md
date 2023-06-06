@@ -125,13 +125,13 @@ filters = (
 ```
 
 ## Building & Installation
-Before building, ensure the `libconfig-dev` package is installed along with necessary building tools such as `llvm`, `clang`, and `libelf-dev`. For Debian/Ubuntu, you can install this with the following as root:
+Before building, ensure the following packages are installed. These packages are installed via `apt` (Ubuntu, Debian, etc.), but there should be similar package names in other package managers.
 
 ```bash
 # Install dependencies.
 apt install -y libconfig-dev llvm clang libelf-dev build-essential
 
-# Install dependencies for building LibXDP.
+# Install dependencies for building LibXDP and LibBPF.
 apt install -y libpcap-dev m4 gcc-multilib
 
 # You need tools for your kernel since we need BPFTool. If this doesn't work, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
@@ -147,11 +147,21 @@ git clone --recursive https://github.com/gamemann/XDP-Firewall.git
 # Change directory to repository.
 cd XDP-Firewall
 
-# Build project and install as root via Sudo.
+# Build XDP-Tools and install LibXDP & LibBPF to /usr/include.
+# Warning - This command uses Sudo for root access! 
+# Feel free to remove sudo from the Makefile and execute as root otherwise.
+make libxdp
+
+# Build main project and install as root via Sudo.
 make && sudo make install
 ```
 
 ## Notes
+### Move To LibXDP
+On **June 6th, 2023**, support for [LibXDP](https://github.com/xdp-project/xdp-tools/tree/master/lib/libxdp) from [XDP Tools](https://github.com/xdp-project/xdp-tools) was added. This requires additional packages and tools to install and use with this XDP firewall as noted above.
+
+If you're having issues with LibXDP, you may go back to commit [b54c466](https://github.com/gamemann/XDP-Firewall/commit/b54c46638d32306ec27aecc69a830283aef17e61) to use an older version of LibBPF that has worked for years for this XDP firewall.
+
 ### BPF For/While Loop Support
 This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
 
