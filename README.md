@@ -129,13 +129,13 @@ Before building, ensure the following packages are installed. These packages are
 
 ```bash
 # Install dependencies.
-apt install -y libconfig-dev llvm clang libelf-dev build-essential
+sudo apt install -y libconfig-dev llvm clang libelf-dev build-essential
 
 # Install dependencies for building LibXDP and LibBPF.
-apt install -y libpcap-dev m4 gcc-multilib
+sudo apt install -y libpcap-dev m4 gcc-multilib
 
 # You need tools for your kernel since we need BPFTool. If this doesn't work, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
-apt install -y linux-tools-$(uname -r)
+sudo apt install -y linux-tools-$(uname -r)
 ```
 
 You can use `git` and `make` to build this project. The following should work:
