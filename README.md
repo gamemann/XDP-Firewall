@@ -129,7 +129,13 @@ Before building, ensure the `libconfig-dev` package is installed along with nece
 
 ```bash
 # Install dependencies.
-apt-get install libconfig-dev llvm clang libelf-dev build-essential -y
+apt install -y libconfig-dev llvm clang libelf-dev build-essential
+
+# Install dependencies for building LibXDP.
+apt install -y libpcap-dev m4 gcc-multilib
+
+# You need tools for your kernel since we need BPFTool. If this doesn't work, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
+apt install -y linux-tools-$(uname -r)
 ```
 
 You can use `git` and `make` to build this project. The following should work:
