@@ -46,7 +46,7 @@ XDPPROGOBJ = xdpfw_kern.o
 OBJS = $(BUILDDIR)/$(CONFIGOBJ) $(BUILDDIR)/$(CMDLINEOBJ)
 
 # LD flags and includes.
-LDFLAGS += -lconfig -lelf -lz -lxdp
+LDFLAGS += -lconfig -lelf -lz
 INCS = -I $(LIBBPFSRC)
 INCS += -I /usr/include -I /usr/local/include
 
