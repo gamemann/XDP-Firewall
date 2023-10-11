@@ -25,6 +25,8 @@ jobs:
       run: sudo apt install -y llvm
     - name: Install LibXDP Depedencies
       run: sudo apt install -y libpcap-dev m4 gcc-multilib linux-tools-$(uname -r)
+    - name: Make and install LibXDP
+      run: make libxdp
     - name: Make project
       run: make
     - name: Install project
