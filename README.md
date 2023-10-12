@@ -173,6 +173,11 @@ git checkout b54c466
 make && sudo make install
 ```
 
+### Issues On Ubuntu 20.04
+If you have issues on Ubuntu 20.04 or earlier, please refer to the reply on [this](https://github.com/gamemann/XDP-Firewall/issues/41#issuecomment-1758701008) issue.
+
+Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux kernel 5.15 or above.
+
 ### BPF For/While Loop Support
 This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
 
