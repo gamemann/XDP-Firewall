@@ -43,7 +43,7 @@ void signalHndl(int tmp)
 */
 void updatefilters(struct config *cfg)
 {
-    // Loop through all filters and delete the map.
+    // Loop through all filters and delete the map. We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
     for (__u8 i = 0; i < MAX_FILTERS; i++)
     {
         __u32 key = i;
@@ -60,8 +60,16 @@ void updatefilters(struct config *cfg)
             break;
         }
 
+        // Create value array (max CPUs in size) since we're using a per CPU map.
+        struct filter filter[MAX_CPUS];
+
+        for (int j = 0; j < MAX_CPUS; j++)
+        {
+            filter[j] = cfg->filters[i];
+        }
+
         // Attempt to update BPF map.
-        if (bpf_map_update_elem(filtersmap, &i, &cfg->filters[i], BPF_ANY) == -1)
+        if (bpf_map_update_elem(filtersmap, &i, &filter, BPF_ANY) == -1)
         {
             fprintf(stderr, "Error updating BPF item #%d\n", i);
         }

@@ -29,7 +29,7 @@ struct
 
 struct 
 {
-    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
     __uint(max_entries, MAX_FILTERS);
     __type(key, __u32);
     __type(value, struct filter);
