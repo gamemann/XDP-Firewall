@@ -19,13 +19,12 @@ LIBBPFDIR = $(XDPTOOLSDIR)/lib/libbpf
 LIBBPFSRC = $(LIBBPFDIR)/src
 
 # LibBPF objects.
-LIBBPFOBJS = $(LIBBPFSRC)/staticobjs/bpf_prog_linfo.o $(LIBBPFSRC)/staticobjs/bpf.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/btf_dump.o $(LIBBPFSRC)/staticobjs/btf.o $(LIBBPFSRC)/staticobjs/elf.o 
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/gen_loader.o  $(LIBBPFSRC)/staticobjs/hashmap.o $(LIBBPFSRC)/staticobjs/libbpf_errno.o  
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/libbpf_probes.o $(LIBBPFSRC)/staticobjs/libbpf.o $(LIBBPFSRC)/staticobjs/linker.o  
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/netlink.o $(LIBBPFSRC)/staticobjs/nlattr.o $(LIBBPFSRC)/staticobjs/relo_core.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/ringbuf.o $(LIBBPFSRC)/staticobjs/str_error.o $(LIBBPFSRC)/staticobjs/strset.o 
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/usdt.o $(LIBBPFSRC)/staticobjs/zip.o
+LIBBPFOBJS = $(LIBBPFSRC)/staticobjs/bpf_prog_linfo.o $(LIBBPFSRC)/staticobjs/bpf.o $(LIBBPFSRC)/staticobjs/btf_dump.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/btf.o $(LIBBPFSRC)/staticobjs/gen_loader.o $(LIBBPFSRC)/staticobjs/hashmap.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/libbpf_errno.o $(LIBBPFSRC)/staticobjs/libbpf_probes.o $(LIBBPFSRC)/staticobjs/libbpf.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/linker.o $(LIBBPFSRC)/staticobjs/netlink.o $(LIBBPFSRC)/staticobjs/nlattr.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/relo_core.o $(LIBBPFSRC)/staticobjs/ringbuf.o $(LIBBPFSRC)/staticobjs/str_error.o
+LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/strset.o $(LIBBPFSRC)/staticobjs/usdt.o $(LIBBPFSRC)/staticobjs/zip.o
 
 # LibXDP objects.
 # To Do: Figure out why static objects produces errors relating to unreferenced functions with dispatcher.
