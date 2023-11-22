@@ -72,7 +72,7 @@ utils:
 
 # LibXDP chain.
 libxdp:
-	$(MAKE) -C $(XDPTOOLSDIR)
+	$(MAKE) -C $(XDPTOOLSDIR) libxdp
 	sudo $(MAKE) -C $(LIBBPFSRC) install
 	sudo $(MAKE) -C $(LIBXDPDIR) install
 
