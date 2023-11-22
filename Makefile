@@ -71,7 +71,7 @@ utils:
 	$(CC) -O2 -c -o $(BUILDDIR)/$(CONFIGOBJ) $(SRCDIR)/$(CONFIGSRC)
 	$(CC) -O2 -c -o $(BUILDDIR)/$(CMDLINEOBJ) $(SRCDIR)/$(CMDLINESRC)
 
-# LibXDP chain.
+# LibXDP chain. We need to install objects here since our program relies on installed object files and such.
 libxdp:
 	$(MAKE) -C $(XDPTOOLSDIR) libxdp
 	sudo $(MAKE) -C $(LIBBPFSRC) install
