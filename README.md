@@ -178,7 +178,7 @@ If you have issues on Ubuntu 20.04 or earlier, please refer to the reply on [thi
 
 Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux kernel 5.15 or above.
 
-### BPF For/While Loop Support
+### BPF For/While Loop Support + Performance Notes
 This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
 
 ```vim
@@ -194,7 +194,12 @@ libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
 
 It looks like BPF while/for loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
 
-**NOTE** - Due to the use of loops inside this XDP program, it's likely performance won't be as fast as XDP programs that use BPF map lookups directly. This firewall was designed to be as flexible as possible in regards to configuration. Therefore, in that case, we can't really use BPF maps via key lookup unless if we insert **many** entries inside of the maps themselves which is less than ideal for how much configuration we allow.
+#### Performance With `For` Loops
+Due to the usage of a [`for` loop](https://github.com/gamemann/XDP-Firewall/blob/master/src/xdpfw_kern.c#L330) inside the XDP program that handles looping through all filtering rules inside of a BPF array map, performance will be impacted depending on how many filtering rules you have configured (ultimately, the firewall **doesn't scale** that well). This firewall was designed to be as flexible as possible regarding configuration and is most effective when configured to add malicious source IPs to the block map for a certain amount of time which are then dropped at the beginning of the XDP program for the best performance.
+
+Unfortunately, we can't really eliminate the `for` loop with the current amount of flexibility we allow (especially minimum/maximum TTL, packet lengths, IDs, etc.), unless if we were to create more BPF maps and insert many more entries which would result in a lot more memory consumed and isn't ideal at all. If we were to remove flexibility, the best approach would be to store filtering rules inside a hashed BPF map using the packet's destination IP/port as the entry's key in my opinion (this would then eliminate flexibility related to being able to specify a filtering rule to match against a single destination IP without a port, unless if we implemented multiple BPF map lookups inside the XDP program which would then impact performance). However, there are currently no plans to switch to this format due to the amount of flexibility lost and also not having the time on my side (if somebody else creates a PR to implement this, I'd be willing to have a separate branch with the new functionality for others to use if the current branch isn't working out for their needs).
+
+The firewall is still decent at filtering non-spoofed attacks, especially when a block time is specified so that malicious IPs are filtered at the beginning of the program for some time.
 
 ### Error Related To Toolchain Hardening
 As stated in issue [#38](https://github.com/gamemann/XDP-Firewall/issues/38) by [g00g1](https://github.com/g00g1), if you have toolchain hardening enabled, you may receive the following error when compiling.
