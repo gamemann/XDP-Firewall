@@ -128,7 +128,7 @@ struct filter
     struct tcpopts tcpopts;
     struct udpopts udpopts;
     struct icmpopts icmpopts;
-};
+} __attribute__((__aligned__(8)));
 
 struct stats
 {
