@@ -14,6 +14,8 @@ With that said, reasons for a host's network configuration not supporting XDP's 
 
 I hope this project helps existing network engineers/programmers interested in utilizing XDP or anybody interested in getting into those fields! (D)DoS mitigation/prevention is such an important part of Cyber Security and understanding the concept of networking and packet flow on a low-medium level would certainly help those who are pursuing a career in the field 🙂
 
+![Demo](./images/demo.gif)
+
 ## Command Line Usage
 The following command line arguments are supported:
 
