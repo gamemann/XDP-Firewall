@@ -593,47 +593,52 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         goto matched;
     }
+
+    if (stats)
+    {
+        stats->passed++;
+    }
             
     return XDP_PASS;
 
     matched:
-        if (action == 0)
+    if (action == 0)
+    {
+        #ifdef DEBUG
+        //bpf_printk("Matched with protocol %d and sAddr %lu.\n", iph->protocol, iph->saddr);
+        #endif
+
+        // Before dropping, update the blacklist map.
+        if (blocktime > 0)
         {
-            #ifdef DEBUG
-            //bpf_printk("Matched with protocol %d and sAddr %lu.\n", iph->protocol, iph->saddr);
-            #endif
-
-            // Before dropping, update the blacklist map.
-            if (blocktime > 0)
+            __u64 newTime = now + (blocktime * 1000000000);
+            
+            if (iph6)
             {
-                __u64 newTime = now + (blocktime * 1000000000);
-                
-                if (iph6)
-                {
-                    bpf_map_update_elem(&ip6_blacklist_map, &srcip6, &newTime, BPF_ANY);
-                }
-                else if (iph)
-                {
-                    bpf_map_update_elem(&ip_blacklist_map, &iph->saddr, &newTime, BPF_ANY);
-                }
+                bpf_map_update_elem(&ip6_blacklist_map, &srcip6, &newTime, BPF_ANY);
             }
-
-            if (stats)
+            else if (iph)
             {
-                stats->dropped++;
-            }
-
-            return XDP_DROP;
-        }
-        else
-        {
-            if (stats)
-            {
-                stats->allowed++;
+                bpf_map_update_elem(&ip_blacklist_map, &iph->saddr, &newTime, BPF_ANY);
             }
         }
 
-        return XDP_PASS;
+        if (stats)
+        {
+            stats->dropped++;
+        }
+
+        return XDP_DROP;
+    }
+    else
+    {
+        if (stats)
+        {
+            stats->allowed++;
+        }
+    }
+
+    return XDP_PASS;
 }
 
 char _license[] SEC("license") = "GPL";

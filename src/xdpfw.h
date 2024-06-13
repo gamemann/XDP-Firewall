@@ -135,6 +135,7 @@ struct stats
 {
     __u64 allowed;
     __u64 dropped;
+    __u64 passed;
 };
 
 struct ip_stats
