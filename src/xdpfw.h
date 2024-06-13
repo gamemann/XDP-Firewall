@@ -6,6 +6,7 @@
 #define MAX_FILTERS 80
 #define MAX_TRACK_IPS 100000
 #define MAX_CPUS 256
+#define NANO_TO_SEC 1000000000
 
 #ifdef __BPF__
 #define likely(x) __builtin_expect(!!(x), 1)

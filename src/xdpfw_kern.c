@@ -202,7 +202,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     if (ip_stats)
     {
         // Check for reset.
-        if ((now - ip_stats->tracking) > 1000000000)
+        if ((now - ip_stats->tracking) > NANO_TO_SEC)
         {
             ip_stats->pps = 0;
             ip_stats->bps = 0;
