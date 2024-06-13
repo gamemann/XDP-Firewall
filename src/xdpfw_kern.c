@@ -86,7 +86,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct ethhdr *eth = data;
 
     // Check if the ethernet header is valid.
-    if (eth + 1 > (struct ethhdr *)data_end)
+    if (unlikely(eth + 1 > (struct ethhdr *)data_end))
     {
         return XDP_DROP;
     }
