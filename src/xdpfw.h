@@ -141,5 +141,5 @@ struct ip_stats
 {
     __u64 pps;
     __u64 bps;
-    __u64 tracking;
+    __u64 next_update;
 };

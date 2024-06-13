@@ -199,31 +199,35 @@ int xdp_prog_main(struct xdp_md *ctx)
         ip_stats = bpf_map_lookup_elem(&ip_stats_map, &iph->saddr);
     }
     
+    __u16 pkt_len = data_end - data;
+    
     if (ip_stats)
     {
-        // Check for reset.
-        if ((now - ip_stats->tracking) > NANO_TO_SEC)
+        // Check for next update.
+        if (now > ip_stats->next_update)
         {
-            ip_stats->pps = 0;
-            ip_stats->bps = 0;
-            ip_stats->tracking = now;
+            ip_stats->pps = 1;
+            ip_stats->bps = pkt_len;
+            ip_stats->next_update = now + NANO_TO_SEC;
+        }
+        else
+        {
+            // Increment PPS and BPS using built-in functions.
+            __sync_fetch_and_add(&ip_stats->pps, 1);
+            __sync_fetch_and_add(&ip_stats->bps, pkt_len);
         }
 
-        // Increment PPS and BPS using built-in functions.
-        __sync_fetch_and_add(&ip_stats->pps, 1);
-        __sync_fetch_and_add(&ip_stats->bps, ctx->data_end - ctx->data);
-        
         pps = ip_stats->pps;
         bps = ip_stats->bps;
     }
     else
     {
         // Create new entry.
-        struct ip_stats new;
+        struct ip_stats new = {0};
 
         new.pps = 1;
-        new.bps = ctx->data_end - ctx->data;
-        new.tracking = now;
+        new.bps = pkt_len;
+        new.next_update = now + NANO_TO_SEC;
 
         pps = new.pps;
         bps = new.bps;
