@@ -257,7 +257,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 tcph = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
 
                 // Check TCP header.
-                if (tcph + 1 > (struct tcphdr *)data_end)
+                if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
                 {
                     return XDP_DROP;
                 }
@@ -269,7 +269,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 udph = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
 
                 // Check TCP header.
-                if (udph + 1 > (struct udphdr *)data_end)
+                if (unlikely(udph + 1 > (struct udphdr *)data_end))
                 {
                     return XDP_DROP;
                 }
@@ -281,7 +281,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 icmp6h = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
 
                 // Check ICMPv6 header.
-                if (icmp6h + 1 > (struct icmp6hdr *)data_end)
+                if (unlikely(icmp6h + 1 > (struct icmp6hdr *)data_end))
                 {
                     return XDP_DROP;
                 }
@@ -298,7 +298,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 tcph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
 
                 // Check TCP header.
-                if (tcph + 1 > (struct tcphdr *)data_end)
+                if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
                 {
                     return XDP_DROP;
                 }
@@ -310,7 +310,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 udph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
 
                 // Check TCP header.
-                if (udph + 1 > (struct udphdr *)data_end)
+                if (unlikely(udph + 1 > (struct udphdr *)data_end))
                 {
                     return XDP_DROP;
                 }
@@ -322,7 +322,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 icmph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
 
                 // Check ICMP header.
-                if (icmph + 1 > (struct icmphdr *)data_end)
+                if (unlikely(icmph + 1 > (struct icmphdr *)data_end))
                 {
                     return XDP_DROP;
                 }
