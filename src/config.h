@@ -9,6 +9,7 @@ struct config
     char *interface;
     __u16 updatetime;
     unsigned int nostats : 1;
+    int stdout_update_time;
     struct filter filters[MAX_FILTERS];
 };
 

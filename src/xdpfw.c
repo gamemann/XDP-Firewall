@@ -322,9 +322,10 @@ int main(int argc, char *argv[])
     // Check for list option.
     if (cmd.list)
     {
-        fprintf(stdout, "Details:\n");
+        fprintf(stdout, "Current Settings:\n");
         fprintf(stdout, "Interface Name => %s\n", cfg.interface);
         fprintf(stdout, "Update Time => %d\n", cfg.updatetime);
+        fprintf(stdout, "Stdout Update Time => %d\n\n", cfg.stdout_update_time);
 
         for (uint16_t i = 0; i < MAX_FILTERS; i++)
         {

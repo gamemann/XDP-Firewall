@@ -611,7 +611,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         // Before dropping, update the blacklist map.
         if (blocktime > 0)
         {
-            __u64 newTime = now + (blocktime * 1000000000);
+            __u64 newTime = now + (blocktime * NANO_TO_SEC);
             
             if (iph6)
             {

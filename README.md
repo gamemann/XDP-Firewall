@@ -36,6 +36,7 @@ As of this time, I am not aware of any NIC manufacturers that will be able to of
 * `interface` => The interface for the XDP program to attach to.
 * `updatetime` => How often to update the config and filtering rules. Leaving this at 0 disables auto-updating.
 * `nostats` => If true, no accepted/blocked packet statistics will be displayed in `stdout`.
+* `stdout_update_time` => The amount of time in milliseconds to update `stdout` with counters. Default is set to `1000` (one second).
 
 ### Filters
 Config option `filters` is an array. Each filter includes the following options:

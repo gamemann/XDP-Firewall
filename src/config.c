@@ -23,6 +23,7 @@ void setcfgdefaults(struct config *cfg)
     cfg->updatetime = 0;
     cfg->interface = "eth0";
     cfg->nostats = 0;
+    cfg->stdout_update_time = 1000;
 
     for (__u16 i = 0; i < MAX_FILTERS; i++)
     {
@@ -158,16 +159,18 @@ int readcfg(struct config *cfg)
     // Get auto update time.
     int updatetime;
 
-    if (!config_lookup_int(&conf, "updatetime", &updatetime))
+    if (config_lookup_int(&conf, "updatetime", &updatetime) == CONFIG_TRUE)
     {
-        fprintf(stderr, "Error from LibConfig when reading 'updatetime' setting - %s\n\n", config_error_text(&conf));
-        
-        config_destroy(&conf);
-
-        return 1;    
+        cfg->updatetime = updatetime;
     }
 
-    cfg->updatetime = updatetime;
+    // Get stdout update time.
+    int stdout_update_time;
+
+    if (config_lookup_int(&conf, "stdout_update_time", &stdout_update_time) == CONFIG_TRUE)
+    {
+        cfg->stdout_update_time = stdout_update_time;
+    }
 
     // Get no stats.
     int nostats;
