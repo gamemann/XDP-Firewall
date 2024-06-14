@@ -8,6 +8,17 @@
 #define MAX_CPUS 256
 #define NANO_TO_SEC 1000000000
 
+#define __u128 __uint128_t
+
+// Additional options for XDP program.
+//#define DEBUG
+
+// Feel free to comment this out if you don't want the `blocked` entry on the stats map to be incremented every single time a packet is dropped from the source IP being on the blocked map. Commenting this line out should increase performance when blocking malicious traffic.
+#define DOSTATSONBLOCKMAP
+
+// When this is defined, a check will occur inside the IPv4 and IPv6 filters. For IPv6 packets, if no IPv6 source/destination IP addresses are set, but there is an IPv4 address, it will ignore the filter. The same goes for IPv4, if there is no IPv4 source/destination IP addresses set, if an IPv6 address is set, it will ignore the filter.
+#define ALLOWSINGLEIPV4V6
+
 #ifdef __BPF__
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
@@ -22,13 +33,6 @@
 #define htonl(x) (x)
 #define ntohl(x) (x)
 #endif
-
-#define __u128 __uint128_t
-
-// Additional options for XDP program.
-//#define DEBUG
-//#define DOSTATSONBLOCKMAP   // Feel free to comment this out if you don't want the `blocked` entry on the stats map to be incremented every single time a packet is dropped from the source IP being on the blocked map. Commenting this line out should increase performance when blocking malicious traffic.
-#define ALLOWSINGLEIPV4V6 // When this is defined, a check will occur inside the IPv4 and IPv6 filters. For IPv6 packets, if no IPv6 source/destination IP addresses are set, but there is an IPv4 address, it will ignore the filter. The same goes for IPv4, if there is no IPv4 source/destination IP addresses set, if an IPv6 address is set, it will ignore the filter.
 #endif
 
 struct tcpopts
