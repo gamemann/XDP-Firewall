@@ -21,7 +21,7 @@ FILE *file;
 void setcfgdefaults(struct config *cfg)
 {
     cfg->updatetime = 0;
-    cfg->interface = "eth0";
+    cfg->interface = NULL;
     cfg->nostats = 0;
     cfg->stdout_update_time = 1000;
 
