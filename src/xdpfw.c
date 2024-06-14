@@ -472,8 +472,9 @@ int main(int argc, char *argv[])
 
     // Create last updated variable.
     time_t lastupdatecheck = time(NULL);
-    time_t statslastupdated = time(NULL);
     time_t lastupdated = time(NULL);
+
+    unsigned int sleep_time = cfg.stdout_update_time * 1000;
 
     while (cont)
     {
@@ -510,7 +511,7 @@ int main(int argc, char *argv[])
         }
 
         // Update stats.
-        if ((curTime - statslastupdated) > 2 && !cfg.nostats)
+        if (!cfg.nostats)
         {
             __u32 key = 0;
             struct stats stats[MAX_CPUS];
@@ -546,11 +547,9 @@ int main(int argc, char *argv[])
 
             fflush(stdout);
             fprintf(stdout, "\rAllowed: %llu | Dropped: %llu | Passed: %llu", allowed, dropped, passed);
-        
-            statslastupdated = time(NULL);
         }
 
-        usleep(500);
+        usleep(sleep_time);
     }
 
     // Detach XDP program.

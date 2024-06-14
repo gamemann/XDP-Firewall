@@ -34,8 +34,8 @@ As of this time, I am not aware of any NIC manufacturers that will be able to of
 ## Configuration File Options
 ### Main
 * `interface` => The interface for the XDP program to attach to.
-* `updatetime` => How often to update the config and filtering rules. Leaving this at 0 disables auto-updating.
-* `nostats` => If true, no accepted/blocked packet statistics will be displayed in `stdout`.
+* `update_time` => How often to update the config and filtering rules. Leaving this at 0 disables auto-updating.
+* `no_stats` => If true, no accepted/blocked packet statistics will be displayed in `stdout`.
 * `stdout_update_time` => The amount of time in milliseconds to update `stdout` with counters. Default is set to `1000` (one second).
 
 ### Filters
@@ -43,10 +43,10 @@ Config option `filters` is an array. Each filter includes the following options:
 
 * `enabled` => If true, this rule is enabled.
 * `action` => What action to perform against the packet if matched. 0 = Block. 1 = Allow.
-* `srcip` => The source IP address the packet must match (e.g. 10.50.0.3).
-* `dstip` => The destination IP address the packet must match (e.g. 10.50.0.4).
-* `srcip6` => The source IPv6 address the packet must match (e.g. fe80::18c4:dfff:fe70:d8a6).
-* `dstip6` => The destination IPv6 address the packet must match (e.g. fe80::ac21:14ff:fe4b:3a6d).
+* `src_ip` => The source IP address the packet must match (e.g. 10.50.0.3).
+* `dst_ip` => The destination IP address the packet must match (e.g. 10.50.0.4).
+* `src_ip6` => The source IPv6 address the packet must match (e.g. fe80::18c4:dfff:fe70:d8a6).
+* `dst_ip6` => The destination IPv6 address the packet must match (e.g. fe80::ac21:14ff:fe4b:3a6d).
 * `min_ttl` => The minimum TTL (time to live) the packet must match.
 * `max_ttl` => The maximum TTL (time to live) the packet must match.
 * `max_len` => The maximum packet length the packet must match. This includes the entire frame (ethernet header, IP header, L4 header, and data).
@@ -54,7 +54,7 @@ Config option `filters` is an array. Each filter includes the following options:
 * `tos` => The TOS (type of service) the packet must match.
 * `pps` => The maximum packets per second a source IP can send before matching.
 * `bps` => The maximum amount of bytes per second a source IP can send before matching.
-* `blocktime` => The time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
+* `block_time` => The time in seconds to block the source IP if the rule matches and the action is block (0). Default value is `1`.
 
 #### TCP Options
 TCP options exist in the main filter array and start with `tcp_`. Please see below.
@@ -94,7 +94,7 @@ Here's an example of a config:
 
 ```squidconf
 interface = "ens18";
-updatetime = 15;
+update_time = 15;
 
 filters = (
     {
@@ -122,7 +122,7 @@ filters = (
     {
         enabled = true,
         action = 0,
-        srcip = "10.50.0.4"
+        src_ip = "10.50.0.4"
     }
 );
 ```
