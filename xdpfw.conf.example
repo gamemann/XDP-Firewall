@@ -1,5 +1,6 @@
 interface = "ens18";
 updatetime = 15;
+stdout_update_time = 1000;
 
 filters = (
     {
