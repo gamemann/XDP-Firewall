@@ -47,7 +47,7 @@ The following table quickly explains the data types used within the configuratio
 | interface | string | `NULL` | The network interface name to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
 | update_time | int | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
-| stdout_update_time | int | 1000 | How often to update `stdout` when displaying packet counters in milliseconds. |
+| stdout_update_time | int | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
 | filters | Array of Filter Object(s) | `NULL` | An array of filters to use with the XDP Firewall. |
 
 ### Filter Object
