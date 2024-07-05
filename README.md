@@ -36,37 +36,39 @@ The following table quickly explains the data types used within the configuratio
 | Name | Size (Bytes) | Description |
 | ---- | ---- | ----------- |
 | bool | 1 | A simple `true` or `false` field. |
+| byte | 1 | A number from `0` to `255`. |
 | string | N/A | An array of characters with no known size (values should be within quotes, `""`). |
-| int | 4 | A number from `-2147483648` to `2147483647`. |
-| int64 | 8 | A number from `-9223372036854775808` to `9223372036854775807`. |
+| uint | 4 | A number from `0` to `4294967295`. |
+| ulong | 8 | A number from `0` to `18446744073709551615 `. |
+| ushort | 2 | A number from `0` to `65535`. |
 | NULL | N/A | No address/value; Empty or 0. |
 
 ### Main
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | interface | string | `NULL` | The network interface name to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
-| update_time | int | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
+| update_time | uint | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
-| stdout_update_time | int | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
+| stdout_update_time | uint | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
 | filters | Array of Filter Object(s) | `NULL` | An array of filters to use with the XDP Firewall. |
 
 ### Filter Object
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | enabled | bool | `false` | Whether the rule is enabled or not. |
-| action | int | `0` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
-| block_time | int | `1` | The amount of seconds to block the source IP for if matched. |
+| action | uint | `0` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
+| block_time | uint | `1` | The amount of seconds to block the source IP for if matched. |
 | src_ip | string | `NULL` | The source IPv4 address to match (e.g. `10.50.0.3`). |
 | dst_ip | string | `NULL` | The destination IPv4 address to match (e.g. `10.50.0.4`) |
 | src_ip6 | string | `NULL` | The source IPv6 address to match (e.g. `fe80::18c4:dfff:fe70:d8a6`). |
 | dst_ip6 | string | `NULL` | The destination IPv6 address to match (e.g. `fe80::ac21:14ff:fe4b:3a6d`). |
-| min_ttl | int | `NULL` | The minimum TTL (time-to-live) to match. |
-| max_ttl | int | `NULL` | The maximum TTL (time-to-live) to match. |
-| min_len | int | `NULL` | The minimum packet length to match (includes the entire packet including the ethernet header and payload). |
-| max_len | int | `NULL` | The maximum packet length to match (includes the entire packet including the ethernet header and payload). |
-| tos | int | `NULL` | The ToS (type-of-service) to match. |
-| pps | int64 | `NULL` | Matches if this threshold of packets per second is exceeded for a source IP. |
-| bps | int64 | `NULL` | Matches if this threshold of bytes per second is exceeded for a source IP. |
+| min_ttl | byte | `NULL` | The minimum TTL (time-to-live) to match. |
+| max_ttl | byte | `NULL` | The maximum TTL (time-to-live) to match. |
+| min_len | ushort | `NULL` | The minimum packet length to match (includes the entire packet including the ethernet header and payload). |
+| max_len | ushort | `NULL` | The maximum packet length to match (includes the entire packet including the ethernet header and payload). |
+| tos | byte | `NULL` | The ToS (type-of-service) to match. |
+| pps | ulong | `NULL` | Matches if this threshold of packets per second is exceeded for a source IP. |
+| bps | ulong | `NULL` | Matches if this threshold of bytes per second is exceeded for a source IP. |
 
 #### TCP Options
 You may additionally specified TCP header options for a filter rule which start with `tcp_`.
@@ -74,8 +76,8 @@ You may additionally specified TCP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | tcp_enabled | bool | `false` | Whether to enable TCP on this filter rule. |
-| tcp_sport | int | `NULL` | The TCP source port to match. |
-| tcp_dport | int | `NULL` | The TCP destination port to match. |
+| tcp_sport | ushort | `NULL` | The TCP source port to match. |
+| tcp_dport | ushort | `NULL` | The TCP destination port to match. |
 | tcp_syn | bool | `false` | Matches if the TCP SYN flag is set. |
 | tcp_ack | bool | `false` | Matches if the TCP ACK flag is set. |
 | tcp_rst | bool | `false` | Matches if the TCP RST flag is set. |
@@ -91,8 +93,8 @@ You may additionally specified UDP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | udp_enabled | bool | `false` | Whether to enable UDP on this filter rule. |
-| udp_sport | int | `NULL` | The UDP source port to match. |
-| udp_dport | int | `NULL` | The UDP destination port to match. |
+| udp_sport | ushort | `NULL` | The UDP source port to match. |
+| udp_dport | ushort | `NULL` | The UDP destination port to match. |
 
 #### ICMP Options
 You may additionally specified UDP header options for a filter rule which start with `icmp_`.
@@ -100,8 +102,8 @@ You may additionally specified UDP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | icmp_enabled | bool | `false` | Whether to enable ICMP on this filter rule. |
-| icmp_code | int | `NULL` | The ICMP code to match. |
-| icmp_type | int | `NULL` | The ICMP type to match. |
+| icmp_code | byte | `NULL` | The ICMP code to match. |
+| icmp_type | byte | `NULL` | The ICMP type to match. |
 
 #### Notes
 * All settings within a filter rule other than `enabled` and `action` are **not** required. This means you do not have to define them within your config.
