@@ -216,14 +216,19 @@ There is a possibility I may make this firewall stateful in the future *when* I 
 
 You may also be interested in this awesome project called [FastNetMon](https://github.com/pavel-odintsov/fastnetmon)!
 
-## Other XDP Project(s)
-I just wanted to share other project(s) I've made using XDP for those interested.
+## My Other XDP Projects
+I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 
 ### [XDP Forwarding](https://github.com/gamemann/XDP-Forwarding)
-This XDP project performs basic layer 3/4 forwarding using source port mapping similar to IPTables/NFTables. This is one of my newer projects and still a work in progress. I also feel the code is a lot neater in the XDP Forwarding project.
+This project performs basic layer 3/4 forwarding using source port mapping similar to IPTables/NFTables and utilizes XDP.
 
 ### [Kilimanjaro](https://github.com/gamemann/Kilimanjaro)
-This is a complex packet processing/forwarding/dropping project I made for a gaming community I was a part of that utilizes XDP, AF_XDP, and the IPIP network protocol. I no longer work on the project, but the source code should be very helpful to other XDP developers, especially when it comes to manipulating packets inside of XDP and such.
+This is a complex packet processing/forwarding/dropping project I made for a gaming community I was a part of that utilizes XDP, AF_XDP, and the IPIP network protocol. I no longer work on/maintain the project, but the source code may be very helpful to other XDP developers, especially when it comes to manipulating packets inside of XDP and such.
+
+### [Packet Batch (AF_XDP)](https://github.com/Packet-Batch/PB-AF-XDP)
+An application that utilizes fast [AF_XDP](https://docs.kernel.org/networking/af_xdp.html) Linux sockets to generate and send network packets. This is used for penetration testing including [Denial of Service](https://www.cloudflare.com/learning/ddos/glossary/denial-of-service/) (DoS), network monitoring, and more!
+
+While this application doesn't utilize native XDP or (e)BPF, I do feel it should be mentioned here. AF_XDP sockets are very fast and often used with raw XDP programs via the `bpf_redirect_map()` function call (also see my [XDP Stats](https://github.com/gamemann/XDP-Stats) project which calculates stats in raw XDP and AF_XDP programs).
 
 ## Credits
 * [Christian Deacon](https://github.com/gamemann) - Creator.
