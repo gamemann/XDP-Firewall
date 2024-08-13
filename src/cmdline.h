@@ -10,4 +10,4 @@ struct cmdline
     unsigned int help : 1;
 };
 
-void parsecommandline(struct cmdline *cmd, int argc, char *argv[]);
+void ParseCommandLine(struct cmdline *cmd, int argc, char *argv[]);

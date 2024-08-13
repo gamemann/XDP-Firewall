@@ -58,8 +58,8 @@ The following table quickly explains the data types used within the configuratio
 | enabled | bool | `false` | Whether the rule is enabled or not. |
 | action | uint | `0` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
 | block_time | uint | `1` | The amount of seconds to block the source IP for if matched. |
-| src_ip | string | `NULL` | The source IPv4 address to match (e.g. `10.50.0.3`). |
-| dst_ip | string | `NULL` | The destination IPv4 address to match (e.g. `10.50.0.4`) |
+| src_ip | string | `NULL` | The source IPv4 address to match (e.g. `10.50.0.3`). CIDRs are also supported (e.g. `10.50.0.0/24`)! |
+| dst_ip | string | `NULL` | The destination IPv4 address to match (e.g. `10.50.0.4`). CIDRs are also supported (e.g. `10.50.0.0/24`)! |
 | src_ip6 | string | `NULL` | The source IPv6 address to match (e.g. `fe80::18c4:dfff:fe70:d8a6`). |
 | dst_ip6 | string | `NULL` | The destination IPv6 address to match (e.g. `fe80::ac21:14ff:fe4b:3a6d`). |
 | min_ttl | byte | `NULL` | The minimum TTL (time-to-live) to match. |

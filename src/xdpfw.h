@@ -101,11 +101,14 @@ struct filter
 
     __u8 action;
 
-    __u32 srcip;
-    __u32 dstip;
+    __u32 src_ip;
+    __u8 src_cidr;
 
-    __u32 srcip6[4];
-    __u32 dstip6[4];
+    __u32 dst_ip;
+    __u8 dst_cidr;
+
+    __u32 src_ip6[4];
+    __u32 dst_ip6[4];
 
     unsigned int do_min_ttl : 1;
     __u8 min_ttl;

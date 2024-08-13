@@ -16,6 +16,7 @@
 #include <xdp/prog_dispatcher.h>
 
 #include "xdpfw.h"
+#include "xdp_utils.h"
 
 #ifndef memcpy
 #define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
@@ -103,7 +104,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Initialize IP headers.
     struct iphdr *iph = NULL;
     struct ipv6hdr *iph6 = NULL;
-    __u128 srcip6 = 0;
+    __u128 src_ip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
     if (eth->h_proto == htons(ETH_P_IPV6))
@@ -115,7 +116,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             return XDP_DROP;
         }
 
-        memcpy(&srcip6, &iph6->saddr.in6_u.u6_addr32, sizeof(srcip6));
+        memcpy(&src_ip6, &iph6->saddr.in6_u.u6_addr32, sizeof(src_ip6));
     }
     else
     {
@@ -144,7 +145,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     if (iph6)
     {
-        blocked = bpf_map_lookup_elem(&ip6_blacklist_map, &srcip6);
+        blocked = bpf_map_lookup_elem(&ip6_blacklist_map, &src_ip6);
     }
     else if (iph)
     {
@@ -162,7 +163,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             // Remove element from map.
             if (iph6)
             {
-                bpf_map_delete_elem(&ip6_blacklist_map, &srcip6);
+                bpf_map_delete_elem(&ip6_blacklist_map, &src_ip6);
             }
             else if (iph)
             {
@@ -192,7 +193,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     
     if (iph6)
     {
-        ip_stats = bpf_map_lookup_elem(&ip6_stats_map, &srcip6);
+        ip_stats = bpf_map_lookup_elem(&ip6_stats_map, &src_ip6);
     }
     else if (iph)
     {
@@ -234,7 +235,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         if (iph6)
         {
-            bpf_map_update_elem(&ip6_stats_map, &srcip6, &new, BPF_ANY);
+            bpf_map_update_elem(&ip6_stats_map, &src_ip6, &new, BPF_ANY);
         }
         else if (iph)
         {
@@ -353,19 +354,19 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (iph6)
         {
             // Source address.
-            if (filter->srcip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->srcip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->srcip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->srcip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->srcip6[3]))
+            if (filter->src_ip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->src_ip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->src_ip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->src_ip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->src_ip6[3]))
             {
                 continue;
             }
 
             // Destination address.
-            if (filter->dstip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dstip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->dstip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dstip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->dstip6[3]))
+            if (filter->dst_ip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dst_ip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->dst_ip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dst_ip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->dst_ip6[3]))
             {
                 continue;
             }
 
             #ifdef ALLOWSINGLEIPV4V6
-            if (filter->srcip != 0 || filter->dstip != 0)
+            if (filter->src_ip != 0 || filter->dst_ip != 0)
             {
                 continue;
             }
@@ -398,19 +399,35 @@ int xdp_prog_main(struct xdp_md *ctx)
         else if (iph)
         {
             // Source address.
-            if (filter->srcip && iph->saddr != filter->srcip)
+            if (filter->src_ip)
             {
-                continue;
+                if (filter->src_cidr == 32 && iph->saddr != filter->src_ip)
+                {
+                    continue;
+                }
+
+                if (!IsIpInRange(iph->saddr, filter->src_ip, filter->src_cidr))
+                {
+                    continue;
+                }
             }
 
             // Destination address.
-            if (filter->dstip != 0 && iph->daddr != filter->dstip)
+            if (filter->dst_ip)
             {
-                continue;
+                if (filter->dst_cidr == 32 && iph->daddr != filter->dst_ip)
+                {
+                    continue;
+                }
+                
+                if (!IsIpInRange(iph->daddr, filter->dst_ip, filter->dst_cidr))
+                {
+                    continue;
+                }
             }
 
             #ifdef ALLOWSINGLEIPV4V6
-            if ((filter->srcip6[0] != 0 || filter->srcip6[1] != 0 || filter->srcip6[2] != 0 || filter->srcip6[3] != 0) || (filter->dstip6[0] != 0 || filter->dstip6[1] != 0 || filter->dstip6[2] != 0 || filter->dstip6[3] != 0))
+            if ((filter->src_ip6[0] != 0 || filter->src_ip6[1] != 0 || filter->src_ip6[2] != 0 || filter->src_ip6[3] != 0) || (filter->dst_ip6[0] != 0 || filter->dst_ip6[1] != 0 || filter->dst_ip6[2] != 0 || filter->dst_ip6[3] != 0))
             {
                 continue;
             }
@@ -615,7 +632,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             
             if (iph6)
             {
-                bpf_map_update_elem(&ip6_blacklist_map, &srcip6, &newTime, BPF_ANY);
+                bpf_map_update_elem(&ip6_blacklist_map, &src_ip6, &newTime, BPF_ANY);
             }
             else if (iph)
             {

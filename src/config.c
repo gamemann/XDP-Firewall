@@ -8,6 +8,7 @@
 
 #include "xdpfw.h"
 #include "config.h"
+#include "utils.h"
 
 FILE *file;
 
@@ -18,7 +19,7 @@ FILE *file;
  * 
  * @return Void
 */
-void setcfgdefaults(struct config *cfg)
+void SetCfgDefaults(struct config *cfg)
 {
     cfg->updatetime = 0;
     cfg->interface = NULL;
@@ -30,13 +31,13 @@ void setcfgdefaults(struct config *cfg)
         cfg->filters[i].id = 0;
         cfg->filters[i].enabled = 0;
         cfg->filters[i].action = 0;
-        cfg->filters[i].srcip = 0;
-        cfg->filters[i].dstip = 0;
+        cfg->filters[i].src_ip = 0;
+        cfg->filters[i].dst_ip = 0;
 
         for (__u8 j = 0; j < 4; j++)
         {
-            cfg->filters[i].srcip6[j] = 0;
-            cfg->filters[i].dstip6[j] = 0;
+            cfg->filters[i].src_ip6[j] = 0;
+            cfg->filters[i].dst_ip6[j] = 0;
         }
 
         cfg->filters[i].do_min_len = 0;
@@ -91,7 +92,7 @@ void setcfgdefaults(struct config *cfg)
  * 
  * @return 0 on success or 1 on error.
 */
-int opencfg(const char *filename)
+int OpenCfg(const char *filename)
 {
     // Close any existing files.
     if (file != NULL)
@@ -118,7 +119,7 @@ int opencfg(const char *filename)
  * 
  * @return 0 on success or 1/-1 on error.
 */
-int readcfg(struct config *cfg)
+int ReadCfg(struct config *cfg)
 {
     // Not sure why this would be set to NULL after checking for it in OpenConfig(), but just for safety.
     if (file == NULL)
@@ -232,7 +233,10 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_string(filter, "src_ip", &sip))
         {
-            cfg->filters[i].srcip = inet_addr(sip);
+            struct ip ip = ParseIp(sip);
+
+            cfg->filters[i].src_ip = ip.ip;
+            cfg->filters[i].src_cidr = ip.cidr;
         }
 
         // Destination IP (not required).
@@ -240,7 +244,10 @@ int readcfg(struct config *cfg)
 
         if (config_setting_lookup_string(filter, "dst_ip", &dip))
         {
-            cfg->filters[i].dstip = inet_addr(dip);
+            struct ip ip = ParseIp(dip);
+
+            cfg->filters[i].dst_ip = ip.ip;
+            cfg->filters[i].dst_cidr = ip.cidr;
         }
 
         // Source IP (IPv6) (not required).
@@ -254,7 +261,7 @@ int readcfg(struct config *cfg)
 
             for (__u8 j = 0; j < 4; j++)
             {
-                cfg->filters[i].srcip6[j] = in.__in6_u.__u6_addr32[j];
+                cfg->filters[i].src_ip6[j] = in.__in6_u.__u6_addr32[j];
             }
         }
 
@@ -269,7 +276,7 @@ int readcfg(struct config *cfg)
 
             for (__u8 j = 0; j < 4; j++)
             {
-                cfg->filters[i].dstip6[j] = in.__in6_u.__u6_addr32[j];
+                cfg->filters[i].dst_ip6[j] = in.__in6_u.__u6_addr32[j];
             }
         }
 

@@ -23,13 +23,14 @@
 #include "xdpfw.h"
 #include "config.h"
 #include "cmdline.h"
+#include "xdp_utils.h"
 
 // Other variables.
 static __u8 cont = 1;
 static int filtersmap = -1;
 static int statsmap = -1;
 
-void signalHndl(int tmp)
+void SignalHndl(int tmp)
 {
     cont = 0;
 }
@@ -41,7 +42,7 @@ void signalHndl(int tmp)
  * 
  * @return Void
 */
-void updatefilters(struct config *cfg)
+void UpdateFilters(struct config *cfg)
 {
     // Loop through all filters and delete the map. We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
     for (__u8 i = 0; i < MAX_FILTERS; i++)
@@ -84,17 +85,17 @@ void updatefilters(struct config *cfg)
  * 
  * @return 0 on success or -1 on error.
 */
-int updateconfig(struct config *cfg, char *cfgfile)
+int UpdateConfig(struct config *cfg, char *cfgfile)
 {
     // Open config file.
-    if (opencfg(cfgfile) != 0)
+    if (OpenCfg(cfgfile) != 0)
     {
         fprintf(stderr, "Error opening filters file: %s\n", cfgfile);
         
         return -1;
     }
 
-    setcfgdefaults(cfg);
+    SetCfgDefaults(cfg);
 
     for (__u16 i = 0; i < MAX_FILTERS; i++)
     {
@@ -102,7 +103,7 @@ int updateconfig(struct config *cfg, char *cfgfile)
     }
 
     // Read config and check for errors.
-    if (readcfg(cfg) != 0)
+    if (ReadCfg(cfg) != 0)
     {
         fprintf(stderr, "Error reading filters file.\n");
 
@@ -120,7 +121,7 @@ int updateconfig(struct config *cfg, char *cfgfile)
  * 
  * @return The map's FD.
 */
-int findmapfd(struct xdp_program *prog, const char *mapname)
+int FindMapFd(struct xdp_program *prog, const char *mapname)
 {
     int fd = -1;
 
@@ -155,7 +156,7 @@ int findmapfd(struct xdp_program *prog, const char *mapname)
  * 
  * @return XDP program structure (pointer) or NULL.
 */
-struct xdp_program *loadbpfobj(const char *filename)
+struct xdp_program *LoadBpfObj(const char *filename)
 {
     struct xdp_program *prog = xdp_program__open_file(filename, "xdp_prog", NULL);
 
@@ -178,7 +179,7 @@ struct xdp_program *loadbpfobj(const char *filename)
  * 
  * @return 0 on success and 1 on error.
  */
-int attachxdp(struct xdp_program *prog, int ifidx, __u8 detach, struct cmdline *cmd)
+int AttachXdp(struct xdp_program *prog, int ifidx, __u8 detach, struct cmdline *cmd)
 {
     int err;
 
@@ -267,6 +268,7 @@ int attachxdp(struct xdp_program *prog, int ifidx, __u8 detach, struct cmdline *
 }
 
 struct stat conf_stat;
+
 int main(int argc, char *argv[])
 {
     // Parse the command line.
@@ -278,7 +280,7 @@ int main(int argc, char *argv[])
         .offload = 0
     };
 
-    parsecommandline(&cmd, argc, argv);
+    ParseCommandLine(&cmd, argc, argv);
 
     // Check for help menu.
     if (cmd.help)
@@ -314,10 +316,10 @@ int main(int argc, char *argv[])
     // Initialize config.
     struct config cfg = {0};
 
-    setcfgdefaults(&cfg);
+    SetCfgDefaults(&cfg);
 
     // Update config.
-    updateconfig(&cfg, cmd.cfgfile);
+    UpdateConfig(&cfg, cmd.cfgfile);
 
     // Check for list option.
     if (cmd.list)
@@ -329,7 +331,9 @@ int main(int argc, char *argv[])
 
         for (uint16_t i = 0; i < MAX_FILTERS; i++)
         {
-            if (cfg.filters[i].id < 1)
+            struct filter *filter = &cfg.filters[i];
+
+            if (filter->id < 1)
             {
                 break;
             }
@@ -337,24 +341,26 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Filter #%d:\n", (i + 1));
 
             // Main.
-            fprintf(stdout, "\tID => %d\n", cfg.filters[i].id);
-            fprintf(stdout, "\tEnabled => %d\n", cfg.filters[i].enabled);
-            fprintf(stdout, "\tAction => %d (0 = Block, 1 = Allow).\n\n", cfg.filters[i].action);
+            fprintf(stdout, "\tID => %d\n", filter->id);
+            fprintf(stdout, "\tEnabled => %d\n", filter->enabled);
+            fprintf(stdout, "\tAction => %d (0 = Block, 1 = Allow).\n\n", filter->action);
 
             // IP Options.
             fprintf(stdout, "\tIP Options\n");
 
             // IP addresses require additional code for string printing.
             struct sockaddr_in sin;
-            sin.sin_addr.s_addr = cfg.filters[i].srcip;
+            sin.sin_addr.s_addr = filter->src_ip;
             fprintf(stdout, "\t\tSource IPv4 => %s\n", inet_ntoa(sin.sin_addr));
+            fprintf(stdout, "\t\tSource CIDR => %d\n", filter->src_cidr);
 
             struct sockaddr_in din;
-            din.sin_addr.s_addr = cfg.filters[i].dstip;
+            din.sin_addr.s_addr = filter->dst_ip;
             fprintf(stdout, "\t\tDestination IPv4 => %s\n", inet_ntoa(din.sin_addr));
+            fprintf(stdout, "\t\tDestination CIDR => %d\n", filter->dst_cidr);
 
             struct in6_addr sin6;
-            memcpy(&sin6, &cfg.filters[i].srcip6, sizeof(sin6));
+            memcpy(&sin6, &filter->src_ip6, sizeof(sin6));
             
             char srcipv6[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, &sin6, srcipv6, sizeof(srcipv6));
@@ -362,7 +368,7 @@ int main(int argc, char *argv[])
             fprintf(stdout, "\t\tSource IPv6 => %s\n", srcipv6);
 
             struct in6_addr din6;
-            memcpy(&din6, &cfg.filters[i].dstip6, sizeof(din6));
+            memcpy(&din6, &filter->dst_ip6, sizeof(din6));
 
             char dstipv6[INET6_ADDRSTRLEN];
             inet_ntop(AF_INET6, &din6, dstipv6, sizeof(dstipv6));
@@ -370,40 +376,40 @@ int main(int argc, char *argv[])
             fprintf(stdout, "\t\tDestination IPv6 => %s\n", dstipv6);
 
             // Other IP header information.
-            fprintf(stdout, "\t\tMax Length => %d\n", cfg.filters[i].max_len);
-            fprintf(stdout, "\t\tMin Length => %d\n", cfg.filters[i].min_len);
-            fprintf(stdout, "\t\tMax TTL => %d\n", cfg.filters[i].max_ttl);
-            fprintf(stdout, "\t\tMin TTL => %d\n", cfg.filters[i].min_ttl);
-            fprintf(stdout, "\t\tTOS => %d\n", cfg.filters[i].tos);
-            fprintf(stdout, "\t\tPPS => %llu\n", cfg.filters[i].pps);
-            fprintf(stdout, "\t\tBPS => %llu\n", cfg.filters[i].bps);
-            fprintf(stdout, "\t\tBlock Time => %llu\n\n", cfg.filters[i].blocktime);
+            fprintf(stdout, "\t\tMax Length => %d\n", filter->max_len);
+            fprintf(stdout, "\t\tMin Length => %d\n", filter->min_len);
+            fprintf(stdout, "\t\tMax TTL => %d\n", filter->max_ttl);
+            fprintf(stdout, "\t\tMin TTL => %d\n", filter->min_ttl);
+            fprintf(stdout, "\t\tTOS => %d\n", filter->tos);
+            fprintf(stdout, "\t\tPPS => %llu\n", filter->pps);
+            fprintf(stdout, "\t\tBPS => %llu\n", filter->bps);
+            fprintf(stdout, "\t\tBlock Time => %llu\n\n", filter->blocktime);
 
             // TCP Options.
             fprintf(stdout, "\tTCP Options\n");
-            fprintf(stdout, "\t\tTCP Enabled => %d\n", cfg.filters[i].tcpopts.enabled);
-            fprintf(stdout, "\t\tTCP Source Port => %d\n", cfg.filters[i].tcpopts.sport);
-            fprintf(stdout, "\t\tTCP Destination Port => %d\n", cfg.filters[i].tcpopts.dport);
-            fprintf(stdout, "\t\tTCP URG Flag => %d\n", cfg.filters[i].tcpopts.urg);
-            fprintf(stdout, "\t\tTCP ACK Flag => %d\n", cfg.filters[i].tcpopts.ack);
-            fprintf(stdout, "\t\tTCP RST Flag => %d\n", cfg.filters[i].tcpopts.rst);
-            fprintf(stdout, "\t\tTCP PSH Flag => %d\n", cfg.filters[i].tcpopts.psh);
-            fprintf(stdout, "\t\tTCP SYN Flag => %d\n", cfg.filters[i].tcpopts.syn);
-            fprintf(stdout, "\t\tTCP FIN Flag => %d\n", cfg.filters[i].tcpopts.fin);
-            fprintf(stdout, "\t\tTCP ECE Flag => %d\n", cfg.filters[i].tcpopts.ece);
-            fprintf(stdout, "\t\tTCP CWR Flag => %d\n\n", cfg.filters[i].tcpopts.cwr);
+            fprintf(stdout, "\t\tTCP Enabled => %d\n", filter->tcpopts.enabled);
+            fprintf(stdout, "\t\tTCP Source Port => %d\n", filter->tcpopts.sport);
+            fprintf(stdout, "\t\tTCP Destination Port => %d\n", filter->tcpopts.dport);
+            fprintf(stdout, "\t\tTCP URG Flag => %d\n", filter->tcpopts.urg);
+            fprintf(stdout, "\t\tTCP ACK Flag => %d\n", filter->tcpopts.ack);
+            fprintf(stdout, "\t\tTCP RST Flag => %d\n", filter->tcpopts.rst);
+            fprintf(stdout, "\t\tTCP PSH Flag => %d\n", filter->tcpopts.psh);
+            fprintf(stdout, "\t\tTCP SYN Flag => %d\n", filter->tcpopts.syn);
+            fprintf(stdout, "\t\tTCP FIN Flag => %d\n", filter->tcpopts.fin);
+            fprintf(stdout, "\t\tTCP ECE Flag => %d\n", filter->tcpopts.ece);
+            fprintf(stdout, "\t\tTCP CWR Flag => %d\n\n", filter->tcpopts.cwr);
 
             // UDP Options.
             fprintf(stdout, "\tUDP Options\n");
-            fprintf(stdout, "\t\tUDP Enabled => %d\n", cfg.filters[i].udpopts.enabled);
-            fprintf(stdout, "\t\tUDP Source Port => %d\n", cfg.filters[i].udpopts.sport);
-            fprintf(stdout, "\t\tUDP Destination Port => %d\n\n", cfg.filters[i].udpopts.dport);
+            fprintf(stdout, "\t\tUDP Enabled => %d\n", filter->udpopts.enabled);
+            fprintf(stdout, "\t\tUDP Source Port => %d\n", filter->udpopts.sport);
+            fprintf(stdout, "\t\tUDP Destination Port => %d\n\n", filter->udpopts.dport);
 
             // ICMP Options.
             fprintf(stdout, "\tICMP Options\n");
-            fprintf(stdout, "\t\tICMP Enabled => %d\n", cfg.filters[i].icmpopts.enabled);
-            fprintf(stdout, "\t\tICMP Code => %d\n", cfg.filters[i].icmpopts.code);
-            fprintf(stdout, "\t\tICMP Type => %d\n", cfg.filters[i].icmpopts.type);
+            fprintf(stdout, "\t\tICMP Enabled => %d\n", filter->icmpopts.enabled);
+            fprintf(stdout, "\t\tICMP Code => %d\n", filter->icmpopts.code);
+            fprintf(stdout, "\t\tICMP Type => %d\n", filter->icmpopts.type);
 
             fprintf(stdout, "\n\n");
         }
@@ -425,7 +431,7 @@ int main(int argc, char *argv[])
     const char *filename = "/etc/xdpfw/xdpfw_kern.o";
 
     // Load BPF object.
-    struct xdp_program *prog = loadbpfobj(filename);
+    struct xdp_program *prog = LoadBpfObj(filename);
 
     if (prog == NULL)
     {
@@ -435,14 +441,14 @@ int main(int argc, char *argv[])
     }
     
     // Attach XDP program.
-    if (attachxdp(prog, ifidx, 0, &cmd))
+    if (AttachXdp(prog, ifidx, 0, &cmd))
     {
         return EXIT_FAILURE;
     }
 
     // Retrieve BPF maps.
-    filtersmap = findmapfd(prog, "filters_map");
-    statsmap = findmapfd(prog, "stats_map");
+    filtersmap = FindMapFd(prog, "filters_map");
+    statsmap = FindMapFd(prog, "stats_map");
 
     // Check for valid maps.
     if (filtersmap < 0)
@@ -460,10 +466,10 @@ int main(int argc, char *argv[])
     }
 
     // Update BPF maps.
-    updatefilters(&cfg);
+    UpdateFilters(&cfg);
 
     // Signal.
-    signal(SIGINT, signalHndl);
+    signal(SIGINT, SignalHndl);
 
     // Receive CPU count for stats map parsing.
     int cpus = get_nprocs_conf();
@@ -492,15 +498,15 @@ int main(int argc, char *argv[])
         {
             // Check if config file have been modified
             if (stat(cmd.cfgfile, &conf_stat) == 0 && conf_stat.st_mtime > lastupdated) {
-                // Memleak fix for strdup() in updateconfig()
+                // Memleak fix for strdup() in UpdateConfig()
                 // Before updating it again, we need to free the old return value
                 free(cfg.interface);
 
                 // Update config.
-                updateconfig(&cfg, cmd.cfgfile);
+                UpdateConfig(&cfg, cmd.cfgfile);
 
                 // Update BPF maps.
-                updatefilters(&cfg);
+                UpdateFilters(&cfg);
 
                 // Update timer
                 lastupdated = time(NULL);
@@ -553,7 +559,7 @@ int main(int argc, char *argv[])
     }
 
     // Detach XDP program.
-    attachxdp(prog, ifidx, 1, &cmd);
+    AttachXdp(prog, ifidx, 1, &cmd);
 
     // Add spacing.
     fprintf(stdout, "\n");

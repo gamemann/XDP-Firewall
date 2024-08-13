@@ -22,7 +22,7 @@ const struct option opts[] =
  * 
  * @return Void
 */
-void parsecommandline(struct cmdline *cmd, int argc, char *argv[])
+void ParseCommandLine(struct cmdline *cmd, int argc, char *argv[])
 {
     int c;
 
