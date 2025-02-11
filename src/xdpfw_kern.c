@@ -231,19 +231,15 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Update client stats (PPS/BPS).
     __u64 pps = 0;
     __u64 bps = 0;
-
-    struct ip_stats *ip_stats = NULL;
     
     if (iph6)
     {
-        UpdateIp6Stats(&pps, &bps, &ip_stats, &src_ip6, src_port, protocol, pkt_len, now);
+        UpdateIp6Stats(&pps, &bps, &src_ip6, src_port, protocol, pkt_len, now);
     }
     else if (iph)
     {
-        UpdateIpStats(&pps, &bps, &ip_stats, iph->saddr, src_port, protocol, pkt_len, now);
+        UpdateIpStats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
     }
-
-    bpf_printk("PPS => %llu. BPS => %llu.\n", pps, bps);
     
     for (__u8 i = 0; i < MAX_FILTERS; i++)
     {
