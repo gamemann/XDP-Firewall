@@ -28,7 +28,7 @@ static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, __u32 ip, __u1
 
     struct ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
 #else
-    struct ip_stats *ip_stats* = bpf_map_lookup_elem(&ip_stats_map, &ip);
+    struct ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &ip);
 #endif
 
     if (ip_stats)
