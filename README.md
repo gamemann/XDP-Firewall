@@ -239,6 +239,13 @@ There is a possibility I may make this firewall stateful in the future *when* I 
 
 You may also be interested in this awesome project called [FastNetMon](https://github.com/pavel-odintsov/fastnetmon)!
 
+### Rate Limits
+By default, client stats including packets and bytes per second are calculated per *partial* flow (source IP/port and protocol). This is useful if you want to specify connection-specific rate limits inside of your filtering rules using the `pps` and `bps` settings. However, if you want to calculate client stats using only the source IP, you may comment out [this](https://github.com/gamemann/XDP-Firewall/blob/master/src/xdpfw.h#L25) line.
+
+```C
+//#define USE_FLOW_RL
+```
+
 ## My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 

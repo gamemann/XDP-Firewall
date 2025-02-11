@@ -8,73 +8,13 @@
 #include <linux/in.h>
 #include <stdatomic.h>
 
-#include <linux/bpf.h>
-#include <linux/bpf_common.h>
+#include <xdp/helpers.h>
 
-#include <bpf_helpers.h>
-#include <xdp/xdp_helpers.h>
-#include <xdp/prog_dispatcher.h>
+#include <xdpfw.h>
 
-#include "xdpfw.h"
-#include "xdp_utils.h"
-
-#ifndef memcpy
-#define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
-#endif
-
-struct 
-{
-    __uint(priority, 10);
-    __uint(XDP_PASS, 1);
-} XDP_RUN_CONFIG(xdp_prog_main);
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, MAX_FILTERS);
-    __type(key, __u32);
-    __type(value, struct filter);
-} filters_map SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, 1);
-    __type(key, __u32);
-    __type(value, struct stats);
-} stats_map SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, MAX_TRACK_IPS);
-    __type(key, __u32);
-    __type(value, struct ip_stats);
-} ip_stats_map SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, MAX_TRACK_IPS);
-    __type(key, __u32);
-    __type(value, __u64);
-} ip_blacklist_map SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, MAX_TRACK_IPS);
-    __type(key, __u128);
-    __type(value, struct ip_stats);
-} ip6_stats_map SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, MAX_TRACK_IPS);
-    __type(key, __u128);
-    __type(value, __u64);
-} ip6_blacklist_map SEC(".maps");
+#include <xdp/maps.h>
+#include <xdp/rl.h>
+#include <xdp/utils.h>
 
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
@@ -154,10 +94,6 @@ int xdp_prog_main(struct xdp_md *ctx)
     
     if (blocked != NULL && *blocked > 0)
     {
-        #ifdef DEBUG
-        bpf_printk("Checking for blocked packet... Block time %llu.\n", *blocked);
-        #endif
-
         if (now > *blocked)
         {
             // Remove element from map.
@@ -172,85 +108,35 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         else
         {
-            #ifdef DOSTATSONBLOCKMAP
+#ifdef DOSTATSONBLOCKMAP
             // Increase blocked stats entry.
             if (stats)
             {
                 stats->dropped++;
             }
-            #endif
+#endif
 
             // They're still blocked. Drop the packet.
             return XDP_DROP;
         }
     }
 
-    // Update IP stats (PPS/BPS).
-    __u64 pps = 0;
-    __u64 bps = 0;
-
-    struct ip_stats *ip_stats = NULL;
-    
-    if (iph6)
-    {
-        ip_stats = bpf_map_lookup_elem(&ip6_stats_map, &src_ip6);
-    }
-    else if (iph)
-    {
-        ip_stats = bpf_map_lookup_elem(&ip_stats_map, &iph->saddr);
-    }
-    
+    // Retrieve total packet length.
     __u16 pkt_len = data_end - data;
-    
-    if (ip_stats)
-    {
-        // Check for next update.
-        if (now > ip_stats->next_update)
-        {
-            ip_stats->pps = 1;
-            ip_stats->bps = pkt_len;
-            ip_stats->next_update = now + NANO_TO_SEC;
-        }
-        else
-        {
-            // Increment PPS and BPS using built-in functions.
-            __sync_fetch_and_add(&ip_stats->pps, 1);
-            __sync_fetch_and_add(&ip_stats->bps, pkt_len);
-        }
 
-        pps = ip_stats->pps;
-        bps = ip_stats->bps;
-    }
-    else
-    {
-        // Create new entry.
-        struct ip_stats new = {0};
-
-        new.pps = 1;
-        new.bps = pkt_len;
-        new.next_update = now + NANO_TO_SEC;
-
-        pps = new.pps;
-        bps = new.bps;
-
-        if (iph6)
-        {
-            bpf_map_update_elem(&ip6_stats_map, &src_ip6, &new, BPF_ANY);
-        }
-        else if (iph)
-        {
-            bpf_map_update_elem(&ip_stats_map, &iph->saddr, &new, BPF_ANY);
-        } 
-    }
-
+    // Parse layer-4 headers and determine source port and protocol.
     struct tcphdr *tcph = NULL;
     struct udphdr *udph = NULL;
     struct icmphdr *icmph = NULL;
     struct icmp6hdr *icmp6h = NULL;
+
+    __u16 src_port = 0;
+    __u8 protocol = 0;
     
-    // Check protocol.
     if (iph6)
     {
+        protocol = iph6->nexthdr;
+
         switch (iph6->nexthdr)
         {
             case IPPROTO_TCP:
@@ -263,6 +149,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                     return XDP_DROP;
                 }
 
+                src_port = tcph->source;
+
                 break;
 
             case IPPROTO_UDP:
@@ -274,6 +162,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 {
                     return XDP_DROP;
                 }
+
+                src_port = udph->source;
 
                 break;
 
@@ -292,6 +182,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
     else if (iph)
     {
+        protocol = iph->protocol;
+
         switch (iph->protocol)
         {
             case IPPROTO_TCP:
@@ -304,6 +196,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                     return XDP_DROP;
                 }
 
+                src_port = tcph->source;
+
                 break;
 
             case IPPROTO_UDP:
@@ -315,6 +209,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 {
                     return XDP_DROP;
                 }
+
+                src_port = udph->source;
 
                 break;
 
@@ -331,6 +227,23 @@ int xdp_prog_main(struct xdp_md *ctx)
                 break;
         }
     }
+
+    // Update client stats (PPS/BPS).
+    __u64 pps = 0;
+    __u64 bps = 0;
+
+    struct ip_stats *ip_stats = NULL;
+    
+    if (iph6)
+    {
+        UpdateIp6Stats(&pps, &bps, &ip_stats, &src_ip6, src_port, protocol, pkt_len, now);
+    }
+    else if (iph)
+    {
+        UpdateIpStats(&pps, &bps, &ip_stats, iph->saddr, src_port, protocol, pkt_len, now);
+    }
+
+    bpf_printk("PPS => %llu. BPS => %llu.\n", pps, bps);
     
     for (__u8 i = 0; i < MAX_FILTERS; i++)
     {
@@ -365,12 +278,12 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-            #ifdef ALLOWSINGLEIPV4V6
+#ifdef ALLOWSINGLEIPV4V6
             if (filter->src_ip != 0 || filter->dst_ip != 0)
             {
                 continue;
             }
-            #endif
+#endif
 
             // Max TTL length.
             if (filter->do_max_ttl && filter->max_ttl > iph6->hop_limit)
@@ -426,12 +339,12 @@ int xdp_prog_main(struct xdp_md *ctx)
                 }
             }
 
-            #ifdef ALLOWSINGLEIPV4V6
+#ifdef ALLOWSINGLEIPV4V6
             if ((filter->src_ip6[0] != 0 || filter->src_ip6[1] != 0 || filter->src_ip6[2] != 0 || filter->src_ip6[3] != 0) || (filter->dst_ip6[0] != 0 || filter->dst_ip6[1] != 0 || filter->dst_ip6[2] != 0 || filter->dst_ip6[3] != 0))
             {
                 continue;
             }
-            #endif
+#endif
 
             // TOS.
             if (filter->do_tos && filter->tos != iph->tos)
@@ -601,10 +514,6 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         
         // Matched.
-        #ifdef DEBUG
-        bpf_printk("Matched rule ID #%d.\n", filter->id);
-        #endif
-        
         action = filter->action;
         blocktime = filter->blocktime;
 
@@ -621,10 +530,6 @@ int xdp_prog_main(struct xdp_md *ctx)
     matched:
     if (action == 0)
     {
-        #ifdef DEBUG
-        //bpf_printk("Matched with protocol %d and sAddr %lu.\n", iph->protocol, iph->saddr);
-        #endif
-
         // Before dropping, update the blacklist map.
         if (blocktime > 0)
         {

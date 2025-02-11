@@ -20,10 +20,9 @@
 #include <libbpf.h>
 #include <xdp/libxdp.h>
 
-#include "xdpfw.h"
-#include "config.h"
-#include "cmdline.h"
-#include "xdp_utils.h"
+#include <xdpfw.h>
+#include <config.h>
+#include <cmdline.h>
 
 // Other variables.
 static __u8 cont = 1;

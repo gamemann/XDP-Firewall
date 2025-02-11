@@ -1,6 +1,13 @@
 #pragma once
 
-#include "xdpfw.h"
+#include <xdpfw.h>
+
+#include <xdp/maps.h>
+#include <xdp/helpers.h>
+
+#ifndef memcpy
+#define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
+#endif
 
 /**
  * Checks if an IP is within a specific CIDR range.
