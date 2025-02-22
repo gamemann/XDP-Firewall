@@ -246,6 +246,25 @@ By default, client stats including packets and bytes per second are calculated p
 //#define USE_FLOW_RL
 ```
 
+### Error While Loading Shared Libraries
+If you receive an error similar to the one below when running the program, make sure you have LibXDP globally installed onto your system via [XDP Tools](https://github.com/xdp-project/xdp-tools). You can execute `make libxdp` to install both LibXDP and LibBPF onto your system.
+
+```bash
+./xdpfw: error while loading shared libraries: libxdp.so.1: cannot open shared object file: No such file or directory
+```
+
+If you don't want to have LibXDP installed on your system after building the program, you can set the `LIBBPF_LIBXDP_STATIC` environmental variable to `1` while building the project with `make`. This will link all of the LibBPF and LibXDP object files while building the loader so you shouldn't need LibXDP installed globally.
+
+For example:
+
+```bash
+# Build with LibBPF and LibXDP object files linked directly from modules/xdp-tools directories.
+LIBBPF_LIBXDP_STATIC=1 make
+
+# Install onto system.
+sudo make install
+```
+
 ## My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 
