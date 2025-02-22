@@ -43,7 +43,7 @@ void SignalHndl(int tmp)
  * 
  * @return Void
 */
-void UpdateFilters(struct config *cfg)
+void UpdateFilters(config__t *cfg)
 {
     // Loop through all filters and delete the map. We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
     for (u8 i = 0; i < MAX_FILTERS; i++)
@@ -63,7 +63,7 @@ void UpdateFilters(struct config *cfg)
         }
 
         // Create value array (max CPUs in size) since we're using a per CPU map.
-        struct filter filter[MAX_CPUS];
+        filter_t filter[MAX_CPUS];
 
         for (int j = 0; j < MAX_CPUS; j++)
         {
@@ -86,7 +86,7 @@ void UpdateFilters(struct config *cfg)
  * 
  * @return 0 on success or -1 on error.
 */
-int UpdateConfig(struct config *cfg, char *cfgfile)
+int UpdateConfig(config__t *cfg, char *cfgfile)
 {
     // Open config file.
     if (OpenCfg(cfgfile) != 0)
@@ -180,7 +180,7 @@ struct xdp_program *LoadBpfObj(const char *filename)
  * 
  * @return 0 on success and 1 on error.
  */
-int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, struct cmdline *cmd)
+int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
 {
     int err;
 
@@ -273,7 +273,7 @@ struct stat conf_stat;
 int main(int argc, char *argv[])
 {
     // Parse the command line.
-    struct cmdline cmd = 
+    cmdline_t cmd = 
     {
         .cfgfile = "/etc/xdpfw/xdpfw.conf",
         .help = 0,
@@ -315,7 +315,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize config.
-    struct config cfg = {0};
+    config__t cfg = {0};
 
     SetCfgDefaults(&cfg);
 
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 
         for (uint16_t i = 0; i < MAX_FILTERS; i++)
         {
-            struct filter *filter = &cfg.filters[i];
+            filter_t *filter = &cfg.filters[i];
 
             if (filter->id < 1)
             {
@@ -521,12 +521,12 @@ int main(int argc, char *argv[])
         if (!cfg.nostats)
         {
             u32 key = 0;
-            struct stats stats[MAX_CPUS];
+            stats_t stats[MAX_CPUS];
             //memset(stats, 0, sizeof(struct stats) * MAX_CPUS);
 
-            __u64 allowed = 0;
-            __u64 dropped = 0;
-            __u64 passed = 0;
+            u64 allowed = 0;
+            u64 dropped = 0;
+            u64 passed = 0;
             
             if (bpf_map_lookup_elem(statsmap, &key, stats) != 0)
             {

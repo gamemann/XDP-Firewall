@@ -44,7 +44,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     u8 action = 0;
-    __u64 blocktime = 1;
+    u64 blocktime = 1;
 
     // Initialize IP headers.
     struct iphdr *iph = NULL;
@@ -81,12 +81,12 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     // Get stats map.
     u32 key = 0;
-    struct stats *stats = bpf_map_lookup_elem(&stats_map, &key);
+    stats_t*stats = bpf_map_lookup_elem(&stats_map, &key);
 
-    __u64 now = bpf_ktime_get_ns();
+    u64 now = bpf_ktime_get_ns();
 
     // Check blacklist map.
-    __u64 *blocked = NULL;
+    u64 *blocked = NULL;
 
     if (iph6)
     {
@@ -234,8 +234,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Update client stats (PPS/BPS).
-    __u64 pps = 0;
-    __u64 bps = 0;
+    u64 pps = 0;
+    u64 bps = 0;
     
     if (iph6)
     {
@@ -250,7 +250,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     {
         u32 key = i;
 
-        struct filter *filter = bpf_map_lookup_elem(&filters_map, &key);
+        filter_t *filter = bpf_map_lookup_elem(&filters_map, &key);
 
         // Check if ID is above 0 (if 0, it's an invalid rule).
         if (!filter || filter->id < 1)
@@ -534,7 +534,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         // Before dropping, update the blacklist map.
         if (blocktime > 0)
         {
-            __u64 newTime = now + (blocktime * NANO_TO_SEC);
+            u64 newTime = now + (blocktime * NANO_TO_SEC);
             
             if (iph6)
             {

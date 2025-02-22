@@ -7,9 +7,9 @@
  * 
  * @return Returns an IP structure with IP and CIDR. 
 */
-struct ip ParseIp(const char *ip)
+ip_range_t ParseIpCidr(const char *ip)
 {
-    struct ip ret = {0};
+    ip_range_t ret = {0};
     ret.cidr = 32;
 
     char *token = strtok((char *) ip, "/");

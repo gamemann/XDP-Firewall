@@ -16,9 +16,9 @@ struct config
     u16 updatetime;
     unsigned int nostats : 1;
     int stdout_update_time;
-    struct filter filters[MAX_FILTERS];
-};
+    filter_t filters[MAX_FILTERS];
+} typedef config__t; // config_t is taken by libconfig -.-
 
-void SetCfgDefaults(struct config *cfg);
+void SetCfgDefaults(config__t *cfg);
 int OpenCfg(const char *filename);
-int ReadCfg(struct config *cfg);
+int ReadCfg(config__t *cfg);

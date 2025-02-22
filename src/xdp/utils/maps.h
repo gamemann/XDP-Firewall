@@ -38,7 +38,7 @@ struct
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, MAX_TRACK_IPS);
     __type(key, u32);
-    __type(value, __u64);
+    __type(value, u64);
 } ip_blacklist_map SEC(".maps");
 
 struct 
@@ -58,5 +58,5 @@ struct
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, MAX_TRACK_IPS);
     __type(key, u128);
-    __type(value, __u64);
+    __type(value, u64);
 } ip6_blacklist_map SEC(".maps");

@@ -13,17 +13,17 @@
  * 
  * @return void
 */
-static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, __u64 now)
+static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
 #ifdef USE_FLOW_RL
-    struct flow key = {0};
+    flow_t key = {0};
     key.ip = ip;
     key.port = port;
     key.protocol = protocol;
 
-    struct ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
 #else
-    struct ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &ip);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &ip);
 #endif
 
     if (ip_stats)
@@ -48,7 +48,7 @@ static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, u32 ip, u16 po
     else
     {
         // Create new entry.
-        struct ip_stats new = {0};
+        ip_stats_t new = {0};
 
         new.pps = 1;
         new.bps = pkt_len;
@@ -78,17 +78,17 @@ static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, u32 ip, u16 po
  * 
  * @return void
 */
-static __always_inline void UpdateIp6Stats(__u64 *pps, __u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, __u64 now)
+static __always_inline void UpdateIp6Stats(u64 *pps, u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
 #ifdef USE_FLOW_RL
-    struct flow6 key = {0};
+    flow6_t key = {0};
     key.ip = *ip;
     key.port = port;
     key.protocol = protocol;
 
-    struct ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
 #else
-    struct ip_stats *ip_stats = bpf_map_lookup_elem(&ip_stats_map, ip);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, ip);
 #endif
 
     if (ip_stats)
@@ -113,7 +113,7 @@ static __always_inline void UpdateIp6Stats(__u64 *pps, __u64 *bps, u128 *ip, u16
     else
     {
         // Create new entry.
-        struct ip_stats new = {0};
+        ip_stats_t new = {0};
 
         new.pps = 1;
         new.bps = pkt_len;

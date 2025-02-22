@@ -7,10 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct ip
+struct ip_range
 {
     u32 ip;
     u32 cidr;
-};
+} typedef ip_range_t;
 
-struct ip ParseIp(const char *ip);
+ip_range_t ParseIpCidr(const char *ip);

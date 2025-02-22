@@ -8,6 +8,6 @@ struct cmdline
     unsigned int time;
     unsigned int list : 1;
     unsigned int help : 1;
-};
+} typedef cmdline_t;
 
-void ParseCommandLine(struct cmdline *cmd, int argc, char *argv[]);
+void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[]);

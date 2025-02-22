@@ -2,7 +2,7 @@
 
 #include <common/int_types.h>
 
-struct tcpopts
+struct tcp_opts
 {
     unsigned int enabled : 1;
 
@@ -36,9 +36,9 @@ struct tcpopts
 
     unsigned int do_cwr : 1;
     unsigned int cwr : 1;
-};
+} typedef tcp_opts_t;
 
-struct udpopts
+struct udp_opts
 {
     unsigned int enabled : 1;
 
@@ -47,9 +47,9 @@ struct udpopts
 
     unsigned int do_dport : 1;
     u16 dport;
-};
+} typedef udp_opts_t;
 
-struct icmpopts
+struct icmp_opts
 {
     unsigned int enabled : 1;
 
@@ -58,7 +58,7 @@ struct icmpopts
 
     unsigned int do_type : 1;
     u8 type;
-};
+} typedef icmp_opts_t;
 
 struct filter
 {
@@ -93,42 +93,42 @@ struct filter
     u8 tos;
 
     unsigned int do_pps : 1;
-    __u64 pps;
+    u64 pps;
 
     unsigned int do_bps : 1;
-    __u64 bps;
+    u64 bps;
 
-    __u64 blocktime;
+    u64 blocktime;
 
-    struct tcpopts tcpopts;
-    struct udpopts udpopts;
-    struct icmpopts icmpopts;
-} __attribute__((__aligned__(8)));
+    tcp_opts_t tcpopts;
+    udp_opts_t udpopts;
+    icmp_opts_t icmpopts;
+} __attribute__((__aligned__(8))) typedef filter_t;
 
 struct stats
 {
-    __u64 allowed;
-    __u64 dropped;
-    __u64 passed;
-};
+    u64 allowed;
+    u64 dropped;
+    u64 passed;
+} typedef stats_t;
 
 struct ip_stats
 {
-    __u64 pps;
-    __u64 bps;
-    __u64 next_update;
-};
+    u64 pps;
+    u64 bps;
+    u64 next_update;
+} typedef ip_stats_t ;
 
 struct flow
 {
     u32 ip;
     u16 port;
     u8 protocol;
-};
+} typedef flow_t;
 
 struct flow6
 {
     u128 ip;
     u16 port;
     u8 protocol;
-};
+} typedef flow6_t;

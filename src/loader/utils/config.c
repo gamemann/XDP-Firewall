@@ -11,7 +11,7 @@ FILE *file;
  * 
  * @return Void
 */
-void SetCfgDefaults(struct config *cfg)
+void SetCfgDefaults(config__t *cfg)
 {
     cfg->updatetime = 0;
     cfg->interface = NULL;
@@ -111,7 +111,7 @@ int OpenCfg(const char *filename)
  * 
  * @return 0 on success or 1/-1 on error.
 */
-int ReadCfg(struct config *cfg)
+int ReadCfg(config__t *cfg)
 {
     // Not sure why this would be set to NULL after checking for it in OpenConfig(), but just for safety.
     if (file == NULL)
@@ -225,7 +225,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_string(filter, "src_ip", &sip))
         {
-            struct ip ip = ParseIp(sip);
+            ip_range_t ip = ParseIpCidr(sip);
 
             cfg->filters[i].src_ip = ip.ip;
             cfg->filters[i].src_cidr = ip.cidr;
@@ -236,7 +236,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_string(filter, "dst_ip", &dip))
         {
-            struct ip ip = ParseIp(dip);
+            ip_range_t ip = ParseIpCidr(dip);
 
             cfg->filters[i].dst_ip = ip.ip;
             cfg->filters[i].dst_cidr = ip.cidr;
