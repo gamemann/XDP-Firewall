@@ -1,16 +1,4 @@
-#pragma once
-
-#include <linux/types.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-struct ip
-{
-    __u32 ip;
-    __u32 cidr;
-};
+#include <loader/utils/helpers.h>
 
 /**
  * Parses an IP string with CIDR support. Stores IP in network byte order in ip.ip and CIDR in ip.cidr.
@@ -19,9 +7,9 @@ struct ip
  * 
  * @return Returns an IP structure with IP and CIDR. 
 */
-struct ip ParseIp(const char *ip)
+ip_range_t ParseIpCidr(const char *ip)
 {
-    struct ip ret = {0};
+    ip_range_t ret = {0};
     ret.cidr = 32;
 
     char *token = strtok((char *) ip, "/");

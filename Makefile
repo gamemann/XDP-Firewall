@@ -1,94 +1,112 @@
 CC = clang
-LLC = llc
 
-ARCH := $(shell uname -m | sed 's/x86_64/x86/')
+# Top-level directories.
+BUILD_DIR = build
+SRC_DIR = src
+MODULES_DIR = modules
 
-# Main directories.
-BUILDDIR = build
-SRCDIR = src
-MODULEDIR = modules
+# Common directories.
+COMMON_DIR = $(SRC_DIR)/common
+LOADER_DIR = $(SRC_DIR)/loader
+XDP_DIR = $(SRC_DIR)/xdp
 
-# XDP Tools directory.
-XDPTOOLSDIR = $(MODULEDIR)/xdp-tools
-XDPTOOLSHEADERS = $(XDPTOOLSDIR)/headers
+# Additional build directories.
+BUILD_LOADER_DIR = $(BUILD_DIR)/loader
+BUILD_XDP_DIR = $(BUILD_DIR)/xdp
+
+# XDP Tools directories.
+XDP_TOOLS_DIR = $(MODULES_DIR)/xdp-tools
+XDP_TOOLS_HEADERS = $(XDP_TOOLS_DIR)/headers
 
 # LibXDP and LibBPF directories.
-LIBXDPDIR = $(XDPTOOLSDIR)/lib/libxdp
+LIBXDP_DIR = $(XDP_TOOLS_DIR)/lib/libxdp
+LIBBPF_DIR = $(XDP_TOOLS_DIR)/lib/libbpf
 
-LIBBPFDIR = $(XDPTOOLSDIR)/lib/libbpf
-LIBBPFSRC = $(LIBBPFDIR)/src
+LIBBPF_SRC = $(LIBBPF_DIR)/src
 
-# LibBPF objects.
-LIBBPFOBJS = $(LIBBPFSRC)/staticobjs/bpf_prog_linfo.o $(LIBBPFSRC)/staticobjs/bpf.o $(LIBBPFSRC)/staticobjs/btf_dump.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/btf.o $(LIBBPFSRC)/staticobjs/gen_loader.o $(LIBBPFSRC)/staticobjs/hashmap.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/libbpf_errno.o $(LIBBPFSRC)/staticobjs/libbpf_probes.o $(LIBBPFSRC)/staticobjs/libbpf.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/linker.o $(LIBBPFSRC)/staticobjs/netlink.o $(LIBBPFSRC)/staticobjs/nlattr.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/relo_core.o $(LIBBPFSRC)/staticobjs/ringbuf.o $(LIBBPFSRC)/staticobjs/str_error.o
-LIBBPFOBJS += $(LIBBPFSRC)/staticobjs/strset.o $(LIBBPFSRC)/staticobjs/usdt.o $(LIBBPFSRC)/staticobjs/zip.o
+# Loader directories.
+LOADER_SRC = loader.c
+LOADER_OUT = xdpfw
 
-# LibXDP objects.
-# To Do: Figure out why static objects produces errors relating to unreferenced functions with dispatcher.
-LIBXDPOBJS = $(LIBXDPDIR)/sharedobjs/xsk.o $(LIBXDPDIR)/sharedobjs/libxdp.o
+LOADER_UTILS_DIR = $(LOADER_DIR)/utils
 
-# Main program's objects.
-CONFIGSRC = config.c
-CONFIGOBJ = config.o
-CMDLINESRC = cmdline.c
-CMDLINEOBJ = cmdline.o
+# Loader utils.
+LOADER_UTILS_CONFIG_SRC = config.c
+LOADER_UTILS_CONFIG_OBJ = config.o
 
-XDPFWSRC = xdpfw.c
-XDPFWOUT = xdpfw
+LOADER_UTILS_CMDLINE_SRC = cmdline.c
+LOADER_UTILS_CMDLINE_OBJ = cmdline.o
 
-XDPPROGSRC = xdpfw_kern.c
-XDPPROGLL = xdpfw_kern.ll
-XDPPROGOBJ = xdpfw_kern.o
+LOADER_UTILS_HELPERS_SRC = helpers.c
+LOADER_UTILS_HELPERS_OBJ = helpers.o
 
-OBJS = $(BUILDDIR)/$(CONFIGOBJ) $(BUILDDIR)/$(CMDLINEOBJ)
+# Loader objects.
+LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
 
-# LD flags and includes.
-LDFLAGS += -lconfig -lelf -lz
-INCS = -I $(SRCDIR) -I $(LIBBPFSRC)
-INCS += -I /usr/include -I /usr/local/include
+# XDP directories.
+XDP_SRC = prog.c
+XDP_OBJ = xdp_prog.o
 
-# All chain.
-all: xdpfw xdpfw_filter utils
+XDP_UTILS_DIR = $(XDP_DIR)/utils
 
-# User space application chain.
-xdpfw: utils libxdp $(OBJS)
-	mkdir -p $(BUILDDIR)/
-	$(CC) $(LDFLAGS) $(INCS) -o $(BUILDDIR)/$(XDPFWOUT) $(LIBBPFOBJS) $(LIBXDPOBJS) $(OBJS) $(SRCDIR)/$(XDPFWSRC)
+# XDP utils.
+XDP_UTILS_HELPERS_SRC = helpers.c
+XDP_UTILS_HELPERS_OBJ = helpers.o
 
-# XDP program chain.
-xdpfw_filter:
-	mkdir -p $(BUILDDIR)/
-	$(CC) $(INCS) -D__BPF__ -D __BPF_TRACING__ -Wno-unused-value -Wno-pointer-sign -Wno-compare-distinct-pointer-types -O2 -emit-llvm -c -g -o $(BUILDDIR)/$(XDPPROGLL) $(SRCDIR)/$(XDPPROGSRC)
-	$(LLC) -march=bpf -filetype=obj -o $(BUILDDIR)/$(XDPPROGOBJ) $(BUILDDIR)/$(XDPPROGLL)
-	
-# Utils chain.
-utils:
-	mkdir -p $(BUILDDIR)/
-	$(CC) $(INCS) -O2 -c -o $(BUILDDIR)/$(CONFIGOBJ) $(SRCDIR)/$(CONFIGSRC)
-	$(CC) $(INCS) -O2 -c -o $(BUILDDIR)/$(CMDLINEOBJ) $(SRCDIR)/$(CMDLINESRC)
+XDP_UTILS_RL_SRC = rl.c 
+XDP_UTILS_RL_OBJ = rl.o
+
+# Includes.
+INCS = -I $(SRC_DIR) -I $(LIBBPF_SRC) -I /usr/include -I /usr/local/include
+
+# Flags.
+FLAGS = -O2 -g
+FLAGS_LOADER = -lconfig -lelf -lz -lbpf -lxdp
+
+# All chains.
+all: loader xdp
+
+# Loader program.
+loader: libxdp loader_utils
+	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_LOADER_DIR)/$(LOADER_OUT) $(LOADER_OBJS) $(LOADER_DIR)/$(LOADER_SRC)
+
+loader_utils: loader_utils_config loader_utils_cmdline loader_utils_helpers
+
+loader_utils_config:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_CONFIG_SRC)
+
+loader_utils_cmdline:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_CMDLINE_SRC)
+
+loader_utils_helpers:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_HELPERS_SRC)
+
+# XDP program.
+xdp:
+	$(CC) $(INCS) $(FLAGS) -target bpf -c -o $(BUILD_XDP_DIR)/$(XDP_OBJ) $(XDP_DIR)/$(XDP_SRC)
 
 # LibXDP chain. We need to install objects here since our program relies on installed object files and such.
 libxdp:
-	$(MAKE) -C $(XDPTOOLSDIR) libxdp
-	sudo $(MAKE) -C $(LIBBPFSRC) install
-	sudo $(MAKE) -C $(LIBXDPDIR) install
+	$(MAKE) -C $(XDP_TOOLS_DIR) libxdp
+	sudo $(MAKE) -C $(LIBBPF_SRC) install
+	sudo $(MAKE) -C $(LIBXDP_DIR) install
 
-# Clean chain.
 clean:
-	$(MAKE) -C $(LIBBPFSRC) clean
-	$(MAKE) -C $(XDPTOOLSDIR) clean
-	rm -f $(BUILDDIR)/*.o $(BUILDDIR)/*.bc
-	rm -f $(BUILDDIR)/$(XDPFWOUT)
+	$(MAKE) -C $(XDP_TOOLS_DIR) clean
+	$(MAKE) -C $(LIBBPF_SRC) clean
+	
+	find $(BUILD_DIR) -type f ! -name ".*" -exec rm -f {} +
+	find $(BUILD_LOADER_DIR) -type f ! -name ".*" -exec rm -f {} +
+	find $(BUILD_XDP_DIR) -type f ! -name ".*" -exec rm -f {} +
 
-# Install chain.
 install:
 	mkdir -p /etc/xdpfw/
 	cp -n xdpfw.conf.example /etc/xdpfw/xdpfw.conf
-	cp $(BUILDDIR)/$(XDPPROGOBJ) /etc/xdpfw/$(XDPPROGOBJ)
-	cp $(BUILDDIR)/$(XDPFWOUT) /usr/bin/$(XDPFWOUT)
+
+	cp -f $(BUILD_LOADER_DIR)/$(LOADER_OUT) /usr/bin
+	cp -f $(BUILD_XDP_DIR)/$(XDP_OBJ) /etc/xdpfw
+
 	cp -n other/xdpfw.service /etc/systemd/system/
-.PHONY: libxdp all
+
+.PHONY: all libxdp
 .DEFAULT: all

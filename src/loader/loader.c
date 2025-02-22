@@ -20,12 +20,14 @@
 #include <libbpf.h>
 #include <xdp/libxdp.h>
 
-#include <xdpfw.h>
-#include <config.h>
-#include <cmdline.h>
+#include  <common/all.h>
+
+#include <loader/utils/cmdline.h>
+#include <loader/utils/config.h>
+#include <loader/utils/helpers.h>
 
 // Other variables.
-static __u8 cont = 1;
+static u8 cont = 1;
 static int filtersmap = -1;
 static int statsmap = -1;
 
@@ -41,18 +43,18 @@ void SignalHndl(int tmp)
  * 
  * @return Void
 */
-void UpdateFilters(struct config *cfg)
+void UpdateFilters(config__t *cfg)
 {
     // Loop through all filters and delete the map. We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
-    for (__u8 i = 0; i < MAX_FILTERS; i++)
+    for (u8 i = 0; i < MAX_FILTERS; i++)
     {
-        __u32 key = i;
+        u32 key = i;
 
         bpf_map_delete_elem(filtersmap, &key);
     }
 
     // Add a filter to the filter maps.
-    for (__u32 i = 0; i < MAX_FILTERS; i++)
+    for (u32 i = 0; i < MAX_FILTERS; i++)
     {
         // Check if we have a valid ID.
         if (cfg->filters[i].id < 1)
@@ -61,7 +63,7 @@ void UpdateFilters(struct config *cfg)
         }
 
         // Create value array (max CPUs in size) since we're using a per CPU map.
-        struct filter filter[MAX_CPUS];
+        filter_t filter[MAX_CPUS];
 
         for (int j = 0; j < MAX_CPUS; j++)
         {
@@ -84,7 +86,7 @@ void UpdateFilters(struct config *cfg)
  * 
  * @return 0 on success or -1 on error.
 */
-int UpdateConfig(struct config *cfg, char *cfgfile)
+int UpdateConfig(config__t *cfg, char *cfgfile)
 {
     // Open config file.
     if (OpenCfg(cfgfile) != 0)
@@ -96,7 +98,7 @@ int UpdateConfig(struct config *cfg, char *cfgfile)
 
     SetCfgDefaults(cfg);
 
-    for (__u16 i = 0; i < MAX_FILTERS; i++)
+    for (u16 i = 0; i < MAX_FILTERS; i++)
     {
         cfg->filters[i] = (struct filter) {0};
     }
@@ -178,11 +180,11 @@ struct xdp_program *LoadBpfObj(const char *filename)
  * 
  * @return 0 on success and 1 on error.
  */
-int AttachXdp(struct xdp_program *prog, int ifidx, __u8 detach, struct cmdline *cmd)
+int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
 {
     int err;
 
-    __u32 mode = XDP_MODE_NATIVE;
+    u32 mode = XDP_MODE_NATIVE;
     char *smode;
 
     smode = "DRV/native";
@@ -199,7 +201,7 @@ int AttachXdp(struct xdp_program *prog, int ifidx, __u8 detach, struct cmdline *
         mode = XDP_MODE_SKB;
     }
 
-    __u8 exit = 0;
+    u8 exit = 0;
 
     while (!exit)
     {
@@ -271,7 +273,7 @@ struct stat conf_stat;
 int main(int argc, char *argv[])
 {
     // Parse the command line.
-    struct cmdline cmd = 
+    cmdline_t cmd = 
     {
         .cfgfile = "/etc/xdpfw/xdpfw.conf",
         .help = 0,
@@ -313,7 +315,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize config.
-    struct config cfg = {0};
+    config__t cfg = {0};
 
     SetCfgDefaults(&cfg);
 
@@ -330,7 +332,7 @@ int main(int argc, char *argv[])
 
         for (uint16_t i = 0; i < MAX_FILTERS; i++)
         {
-            struct filter *filter = &cfg.filters[i];
+            filter_t *filter = &cfg.filters[i];
 
             if (filter->id < 1)
             {
@@ -427,7 +429,7 @@ int main(int argc, char *argv[])
     }
 
     // XDP variables.
-    const char *filename = "/etc/xdpfw/xdpfw_kern.o";
+    const char *filename = "/etc/xdpfw/xdp_prog.o";
 
     // Load BPF object.
     struct xdp_program *prog = LoadBpfObj(filename);
@@ -518,13 +520,13 @@ int main(int argc, char *argv[])
         // Update stats.
         if (!cfg.nostats)
         {
-            __u32 key = 0;
-            struct stats stats[MAX_CPUS];
+            u32 key = 0;
+            stats_t stats[MAX_CPUS];
             //memset(stats, 0, sizeof(struct stats) * MAX_CPUS);
 
-            __u64 allowed = 0;
-            __u64 dropped = 0;
-            __u64 passed = 0;
+            u64 allowed = 0;
+            u64 dropped = 0;
+            u64 passed = 0;
             
             if (bpf_map_lookup_elem(statsmap, &key, stats) != 0)
             {
