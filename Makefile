@@ -27,16 +27,12 @@ LIBBPF_DIR = $(XDP_TOOLS_DIR)/lib/libbpf
 LIBBPF_SRC = $(LIBBPF_DIR)/src
 
 # LibBPF objects.
-LIBBPF_OBJS = $(LIBBPF_SRC)/staticobjs/bpf_prog_linfo.o $(LIBBPF_SRC)/staticobjs/bpf.o $(LIBBPF_SRC)/staticobjs/btf_dump.o
-LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/btf.o $(LIBBPF_SRC)/staticobjs/gen_loader.o $(LIBBPF_SRC)/staticobjs/hashmap.o
-LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/libbpf_errno.o $(LIBBPF_SRC)/staticobjs/libbpf_probes.o $(LIBBPF_SRC)/staticobjs/libbpf.o
-LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/linker.o $(LIBBPF_SRC)/staticobjs/netlink.o $(LIBBPF_SRC)/staticobjs/nlattr.o
-LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/relo_core.o $(LIBBPF_SRC)/staticobjs/ringbuf.o $(LIBBPF_SRC)/staticobjs/str_error.o
-LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/strset.o $(LIBBPF_SRC)/staticobjs/usdt.o $(LIBBPF_SRC)/staticobjs/zip.o
+LIBBPF_OBJS := $(addprefix $(LIBBPF_SRC)/staticobjs/, $(notdir $(wildcard $(LIBBPF_SRC)/staticobjs/*.o)))
 
 # LibXDP objects.
 # To Do: Figure out why static objects produces errors relating to unreferenced functions with dispatcher.
-LIBXDP_OBJS = $(LIBXDP_DIR)/sharedobjs/xsk.o $(LIBXDP_DIR)/sharedobjs/libxdp.o
+# Note: Not sure why shared objects are acting like static objects here where we can link while building and then don't require them at runtime, etc.
+LIBXDP_OBJS = $(addprefix $(LIBXDP_DIR)/sharedobjs/, $(notdir $(wildcard $(LIBXDP_DIR)/sharedobjs/*.o)))
 
 # Loader directories.
 LOADER_SRC = prog.c
@@ -89,7 +85,7 @@ endif
 all: loader xdp
 
 # Loader program.
-loader: libxdp loader_utils
+loader: loader_utils
 	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_LOADER_DIR)/$(LOADER_OUT) $(LOADER_OBJS) $(LOADER_DIR)/$(LOADER_SRC)
 
 loader_utils: loader_utils_config loader_utils_cmdline loader_utils_helpers
