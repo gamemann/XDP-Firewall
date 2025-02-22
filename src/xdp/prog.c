@@ -107,7 +107,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         else
         {
-#ifdef DOSTATSONBLOCKMAP
+#ifdef DO_STATS_ON_BLOCK_MAP
             // Increase blocked stats entry.
             if (stats)
             {
@@ -273,7 +273,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-#ifdef ALLOWSINGLEIPV4V6
+#ifdef ALLOW_SINGLE_IP_V4_V6
             if (filter->src_ip != 0 || filter->dst_ip != 0)
             {
                 continue;
@@ -334,7 +334,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 }
             }
 
-#ifdef ALLOWSINGLEIPV4V6
+#ifdef ALLOW_SINGLE_IP_V4_V6
             if ((filter->src_ip6[0] != 0 || filter->src_ip6[1] != 0 || filter->src_ip6[2] != 0 || filter->src_ip6[3] != 0) || (filter->dst_ip6[0] != 0 || filter->dst_ip6[1] != 0 || filter->dst_ip6[2] != 0 || filter->dst_ip6[3] != 0))
             {
                 continue;
