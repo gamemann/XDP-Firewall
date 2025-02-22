@@ -39,7 +39,7 @@ LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/strset.o $(LIBBPF_SRC)/staticobjs/usdt.o
 LIBXDP_OBJS = $(LIBXDP_DIR)/sharedobjs/xsk.o $(LIBXDP_DIR)/sharedobjs/libxdp.o
 
 # Loader directories.
-LOADER_SRC = loader.c
+LOADER_SRC = prog.c
 LOADER_OUT = xdpfw
 
 LOADER_UTILS_DIR = $(LOADER_DIR)/utils
