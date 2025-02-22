@@ -1,5 +1,7 @@
 CC = clang
 
+LIBBPF_LIBXDP_STATIC ?= 0
+
 # Top-level directories.
 BUILD_DIR = build
 SRC_DIR = src
@@ -24,6 +26,18 @@ LIBBPF_DIR = $(XDP_TOOLS_DIR)/lib/libbpf
 
 LIBBPF_SRC = $(LIBBPF_DIR)/src
 
+# LibBPF objects.
+LIBBPF_OBJS = $(LIBBPF_SRC)/staticobjs/bpf_prog_linfo.o $(LIBBPF_SRC)/staticobjs/bpf.o $(LIBBPF_SRC)/staticobjs/btf_dump.o
+LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/btf.o $(LIBBPF_SRC)/staticobjs/gen_loader.o $(LIBBPF_SRC)/staticobjs/hashmap.o
+LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/libbpf_errno.o $(LIBBPF_SRC)/staticobjs/libbpf_probes.o $(LIBBPF_SRC)/staticobjs/libbpf.o
+LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/linker.o $(LIBBPF_SRC)/staticobjs/netlink.o $(LIBBPF_SRC)/staticobjs/nlattr.o
+LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/relo_core.o $(LIBBPF_SRC)/staticobjs/ringbuf.o $(LIBBPF_SRC)/staticobjs/str_error.o
+LIBBPF_OBJS += $(LIBBPF_SRC)/staticobjs/strset.o $(LIBBPF_SRC)/staticobjs/usdt.o $(LIBBPF_SRC)/staticobjs/zip.o
+
+# LibXDP objects.
+# To Do: Figure out why static objects produces errors relating to unreferenced functions with dispatcher.
+LIBXDP_OBJS = $(LIBXDP_DIR)/sharedobjs/xsk.o $(LIBXDP_DIR)/sharedobjs/libxdp.o
+
 # Loader directories.
 LOADER_SRC = loader.c
 LOADER_OUT = xdpfw
@@ -43,6 +57,10 @@ LOADER_UTILS_HELPERS_OBJ = helpers.o
 # Loader objects.
 LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
 
+ifeq ($(LIBBPF_LIBXDP_STATIC), 1)
+	LOADER_OBJS := $(LIBBPF_OBJS) $(LIBXDP_OBJS) $(LOADER_OBJS)
+endif
+
 # XDP directories.
 XDP_SRC = prog.c
 XDP_OBJ = xdp_prog.o
@@ -61,7 +79,11 @@ INCS = -I $(SRC_DIR) -I $(LIBBPF_SRC) -I /usr/include -I /usr/local/include
 
 # Flags.
 FLAGS = -O2 -g
-FLAGS_LOADER = -lconfig -lelf -lz -lbpf -lxdp
+FLAGS_LOADER = -lconfig -lelf -lz
+
+ifeq ($(LIBBPF_LIBXDP_STATIC), 0)
+	FLAGS_LOADER += -lbpf -lxdp
+endif
 
 # All chains.
 all: loader xdp
