@@ -1,13 +1,19 @@
 #pragma once
 
+#include <common/all.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <libconfig.h>
+#include <string.h>
 #include <linux/types.h>
 
-#include "xdpfw.h"
+#include <arpa/inet.h>
 
 struct config
 {
     char *interface;
-    __u16 updatetime;
+    u16 updatetime;
     unsigned int nostats : 1;
     int stdout_update_time;
     struct filter filters[MAX_FILTERS];

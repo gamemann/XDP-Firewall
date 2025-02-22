@@ -1,16 +1,4 @@
-#pragma once
-
-#include <linux/types.h>
-#include <string.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-struct ip
-{
-    __u32 ip;
-    __u32 cidr;
-};
+#include <loader/utils/helpers.h>
 
 /**
  * Parses an IP string with CIDR support. Stores IP in network byte order in ip.ip and CIDR in ip.cidr.

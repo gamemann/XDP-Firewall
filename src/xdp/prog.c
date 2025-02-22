@@ -8,13 +8,12 @@
 #include <linux/in.h>
 #include <stdatomic.h>
 
-#include <xdp/helpers.h>
+#include <common/all.h>
 
-#include <xdpfw.h>
+#include <xdp/utils/rl.h>
+#include <xdp/utils/helpers.h>
 
-#include <xdp/maps.h>
-#include <xdp/rl.h>
-#include <xdp/utils.h>
+#include <xdp/utils/maps.h>
 
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
@@ -38,13 +37,13 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    __u8 action = 0;
+    u8 action = 0;
     __u64 blocktime = 1;
 
     // Initialize IP headers.
     struct iphdr *iph = NULL;
     struct ipv6hdr *iph6 = NULL;
-    __u128 src_ip6 = 0;
+    u128 src_ip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
     if (eth->h_proto == htons(ETH_P_IPV6))
@@ -75,7 +74,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Get stats map.
-    __u32 key = 0;
+    u32 key = 0;
     struct stats *stats = bpf_map_lookup_elem(&stats_map, &key);
 
     __u64 now = bpf_ktime_get_ns();
@@ -122,7 +121,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Retrieve total packet length.
-    __u16 pkt_len = data_end - data;
+    u16 pkt_len = data_end - data;
 
     // Parse layer-4 headers and determine source port and protocol.
     struct tcphdr *tcph = NULL;
@@ -130,8 +129,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct icmphdr *icmph = NULL;
     struct icmp6hdr *icmp6h = NULL;
 
-    __u16 src_port = 0;
-    __u8 protocol = 0;
+    u16 src_port = 0;
+    u8 protocol = 0;
     
     if (iph6)
     {
@@ -241,9 +240,9 @@ int xdp_prog_main(struct xdp_md *ctx)
         UpdateIpStats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
     }
     
-    for (__u8 i = 0; i < MAX_FILTERS; i++)
+    for (u8 i = 0; i < MAX_FILTERS; i++)
     {
-        __u32 key = i;
+        u32 key = i;
 
         struct filter *filter = bpf_map_lookup_elem(&filters_map, &key);
 

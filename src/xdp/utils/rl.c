@@ -1,9 +1,4 @@
-#pragma once
-
-#include <xdpfw.h>
-
-#include <xdp/maps.h>
-#include <xdp/helpers.h>
+#include <xdp/utils/rl.h>
 
 /**
  * Updates IPv4 client stats.
@@ -18,7 +13,7 @@
  * 
  * @return void
 */
-static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, __u32 ip, __u16 port, __u8 protocol, __u16 pkt_len, __u64 now)
+static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, __u64 now)
 {
 #ifdef USE_FLOW_RL
     struct flow key = {0};
@@ -83,7 +78,7 @@ static __always_inline void UpdateIpStats(__u64 *pps, __u64 *bps, __u32 ip, __u1
  * 
  * @return void
 */
-static __always_inline void UpdateIp6Stats(__u64 *pps, __u64 *bps, __u128 *ip, __u16 port, __u8 protocol, __u16 pkt_len, __u64 now)
+static __always_inline void UpdateIp6Stats(__u64 *pps, __u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, __u64 now)
 {
 #ifdef USE_FLOW_RL
     struct flow6 key = {0};

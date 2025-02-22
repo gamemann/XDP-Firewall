@@ -1,13 +1,4 @@
-#pragma once
-
-#include <xdpfw.h>
-
-#include <xdp/maps.h>
-#include <xdp/helpers.h>
-
-#ifndef memcpy
-#define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
-#endif
+#include <xdp/utils/helpers.h>
 
 /**
  * Checks if an IP is within a specific CIDR range.
@@ -18,7 +9,7 @@
  * 
  * @return 1 on yes, 0 on no.
 */
-static __always_inline __u8 IsIpInRange(__u32 src_ip, __u32 net_ip, __u8 cidr)
+static __always_inline u8 IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr)
 {
     return !((src_ip ^ net_ip) & htonl(0xFFFFFFFFu << (32 - cidr)));
 }
