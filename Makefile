@@ -27,7 +27,7 @@ LIBBPF_DIR = $(XDP_TOOLS_DIR)/lib/libbpf
 LIBBPF_SRC = $(LIBBPF_DIR)/src
 
 # LibBPF objects.
-LIBBPF_OBJS := $(addprefix $(LIBBPF_SRC)/staticobjs/, $(notdir $(wildcard $(LIBBPF_SRC)/staticobjs/*.o)))
+LIBBPF_OBJS = $(addprefix $(LIBBPF_SRC)/staticobjs/, $(notdir $(wildcard $(LIBBPF_SRC)/staticobjs/*.o)))
 
 # LibXDP objects.
 # To Do: Figure out why static objects produces errors relating to unreferenced functions with dispatcher.
@@ -60,15 +60,6 @@ endif
 # XDP directories.
 XDP_SRC = prog.c
 XDP_OBJ = xdp_prog.o
-
-XDP_UTILS_DIR = $(XDP_DIR)/utils
-
-# XDP utils.
-XDP_UTILS_HELPERS_SRC = helpers.c
-XDP_UTILS_HELPERS_OBJ = helpers.o
-
-XDP_UTILS_RL_SRC = rl.c 
-XDP_UTILS_RL_OBJ = rl.o
 
 # Includes.
 INCS = -I $(SRC_DIR) -I $(LIBBPF_SRC) -I /usr/include -I /usr/local/include
