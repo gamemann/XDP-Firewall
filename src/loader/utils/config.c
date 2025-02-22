@@ -1,14 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <libconfig.h>
-#include <string.h>
-#include <linux/types.h>
+#include <loader/utils/config.h>
 
-#include <arpa/inet.h>
-
-#include <xdpfw.h>
-#include <config.h>
-#include <utils.h>
+#include <loader/utils/helpers.h>
 
 FILE *file;
 
@@ -19,14 +11,14 @@ FILE *file;
  * 
  * @return Void
 */
-void SetCfgDefaults(struct config *cfg)
+void SetCfgDefaults(config__t *cfg)
 {
     cfg->updatetime = 0;
     cfg->interface = NULL;
     cfg->nostats = 0;
     cfg->stdout_update_time = 1000;
 
-    for (__u16 i = 0; i < MAX_FILTERS; i++)
+    for (u16 i = 0; i < MAX_FILTERS; i++)
     {
         cfg->filters[i].id = 0;
         cfg->filters[i].enabled = 0;
@@ -34,7 +26,7 @@ void SetCfgDefaults(struct config *cfg)
         cfg->filters[i].src_ip = 0;
         cfg->filters[i].dst_ip = 0;
 
-        for (__u8 j = 0; j < 4; j++)
+        for (u8 j = 0; j < 4; j++)
         {
             cfg->filters[i].src_ip6[j] = 0;
             cfg->filters[i].dst_ip6[j] = 0;
@@ -119,7 +111,7 @@ int OpenCfg(const char *filename)
  * 
  * @return 0 on success or 1/-1 on error.
 */
-int ReadCfg(struct config *cfg)
+int ReadCfg(config__t *cfg)
 {
     // Not sure why this would be set to NULL after checking for it in OpenConfig(), but just for safety.
     if (file == NULL)
@@ -197,7 +189,7 @@ int ReadCfg(struct config *cfg)
     // Set filter count.
     int filters = 0;
 
-    for (__u8 i = 0; i < config_setting_length(setting); i++)
+    for (u8 i = 0; i < config_setting_length(setting); i++)
     {
         config_setting_t* filter = config_setting_get_elem(setting, i);
 
@@ -233,7 +225,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_string(filter, "src_ip", &sip))
         {
-            struct ip ip = ParseIp(sip);
+            ip_range_t ip = ParseIpCidr(sip);
 
             cfg->filters[i].src_ip = ip.ip;
             cfg->filters[i].src_cidr = ip.cidr;
@@ -244,7 +236,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_string(filter, "dst_ip", &dip))
         {
-            struct ip ip = ParseIp(dip);
+            ip_range_t ip = ParseIpCidr(dip);
 
             cfg->filters[i].dst_ip = ip.ip;
             cfg->filters[i].dst_cidr = ip.cidr;
@@ -259,7 +251,7 @@ int ReadCfg(struct config *cfg)
 
             inet_pton(AF_INET6, sip6, &in);
 
-            for (__u8 j = 0; j < 4; j++)
+            for (u8 j = 0; j < 4; j++)
             {
                 cfg->filters[i].src_ip6[j] = in.__in6_u.__u6_addr32[j];
             }
@@ -274,7 +266,7 @@ int ReadCfg(struct config *cfg)
 
             inet_pton(AF_INET6, dip6, &in);
 
-            for (__u8 j = 0; j < 4; j++)
+            for (u8 j = 0; j < 4; j++)
             {
                 cfg->filters[i].dst_ip6[j] = in.__in6_u.__u6_addr32[j];
             }
@@ -285,7 +277,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "min_ttl", &min_ttl))
         {
-            cfg->filters[i].min_ttl = (__u8)min_ttl;
+            cfg->filters[i].min_ttl = (u8)min_ttl;
             cfg->filters[i].do_min_ttl = 1;
         }
 
@@ -294,7 +286,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "max_ttl", &max_ttl))
         {
-            cfg->filters[i].max_ttl = (__u8)max_ttl;
+            cfg->filters[i].max_ttl = (u8)max_ttl;
             cfg->filters[i].do_max_ttl = 1;
         }
 
@@ -321,7 +313,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "tos", &tos))
         {
-            cfg->filters[i].tos = (__u8)tos;
+            cfg->filters[i].tos = (u8)tos;
             cfg->filters[i].do_tos = 1;
         }
 
@@ -369,7 +361,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "tcp_sport", &tcpsport))
         {
-            cfg->filters[i].tcpopts.sport = (__u16)tcpsport;
+            cfg->filters[i].tcpopts.sport = (u16)tcpsport;
             cfg->filters[i].tcpopts.do_sport = 1;
         }
 
@@ -378,7 +370,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "tcp_dport", &tcpdport))
         {
-            cfg->filters[i].tcpopts.dport = (__u16)tcpdport;
+            cfg->filters[i].tcpopts.dport = (u16)tcpdport;
             cfg->filters[i].tcpopts.do_dport = 1;
         }
 
@@ -469,7 +461,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "udp_sport", &udpsport))
         {
-            cfg->filters[i].udpopts.sport = (__u16)udpsport;
+            cfg->filters[i].udpopts.sport = (u16)udpsport;
             cfg->filters[i].udpopts.do_sport = 1;
         }
 
@@ -478,7 +470,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int64(filter, "udp_dport", &udpdport))
         {
-            cfg->filters[i].udpopts.dport = (__u16)udpdport;
+            cfg->filters[i].udpopts.dport = (u16)udpdport;
             cfg->filters[i].udpopts.do_dport = 1;
         }
 
@@ -496,7 +488,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "icmp_code", &icmpcode))
         {
-            cfg->filters[i].icmpopts.code = (__u8)icmpcode;
+            cfg->filters[i].icmpopts.code = (u8)icmpcode;
             cfg->filters[i].icmpopts.do_code = 1;
         }
 
@@ -505,7 +497,7 @@ int ReadCfg(struct config *cfg)
 
         if (config_setting_lookup_int(filter, "icmp_type", &icmptype))
         {
-            cfg->filters[i].icmpopts.type = (__u8)icmptype;
+            cfg->filters[i].icmpopts.type = (u8)icmptype;
             cfg->filters[i].icmpopts.do_type = 1;
         }
 

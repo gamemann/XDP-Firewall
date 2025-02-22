@@ -8,13 +8,18 @@
 #include <linux/in.h>
 #include <stdatomic.h>
 
-#include <xdp/helpers.h>
+#include <common/all.h>
 
-#include <xdpfw.h>
+#include <xdp/utils/rl.h>
+#include <xdp/utils/helpers.h>
 
-#include <xdp/maps.h>
-#include <xdp/rl.h>
-#include <xdp/utils.h>
+#include <xdp/utils/maps.h>
+
+struct 
+{
+    __uint(priority, 10);
+    __uint(XDP_PASS, 1);
+} XDP_RUN_CONFIG(xdp_prog_main);
 
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
@@ -38,13 +43,13 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    __u8 action = 0;
-    __u64 blocktime = 1;
+    u8 action = 0;
+    u64 blocktime = 1;
 
     // Initialize IP headers.
     struct iphdr *iph = NULL;
     struct ipv6hdr *iph6 = NULL;
-    __u128 src_ip6 = 0;
+    u128 src_ip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
     if (eth->h_proto == htons(ETH_P_IPV6))
@@ -75,13 +80,13 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Get stats map.
-    __u32 key = 0;
-    struct stats *stats = bpf_map_lookup_elem(&stats_map, &key);
+    u32 key = 0;
+    stats_t*stats = bpf_map_lookup_elem(&stats_map, &key);
 
-    __u64 now = bpf_ktime_get_ns();
+    u64 now = bpf_ktime_get_ns();
 
     // Check blacklist map.
-    __u64 *blocked = NULL;
+    u64 *blocked = NULL;
 
     if (iph6)
     {
@@ -108,7 +113,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         else
         {
-#ifdef DOSTATSONBLOCKMAP
+#ifdef DO_STATS_ON_BLOCK_MAP
             // Increase blocked stats entry.
             if (stats)
             {
@@ -122,7 +127,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Retrieve total packet length.
-    __u16 pkt_len = data_end - data;
+    u16 pkt_len = data_end - data;
 
     // Parse layer-4 headers and determine source port and protocol.
     struct tcphdr *tcph = NULL;
@@ -130,8 +135,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct icmphdr *icmph = NULL;
     struct icmp6hdr *icmp6h = NULL;
 
-    __u16 src_port = 0;
-    __u8 protocol = 0;
+    u16 src_port = 0;
+    u8 protocol = 0;
     
     if (iph6)
     {
@@ -229,8 +234,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Update client stats (PPS/BPS).
-    __u64 pps = 0;
-    __u64 bps = 0;
+    u64 pps = 0;
+    u64 bps = 0;
     
     if (iph6)
     {
@@ -241,11 +246,11 @@ int xdp_prog_main(struct xdp_md *ctx)
         UpdateIpStats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
     }
     
-    for (__u8 i = 0; i < MAX_FILTERS; i++)
+    for (u8 i = 0; i < MAX_FILTERS; i++)
     {
-        __u32 key = i;
+        u32 key = i;
 
-        struct filter *filter = bpf_map_lookup_elem(&filters_map, &key);
+        filter_t *filter = bpf_map_lookup_elem(&filters_map, &key);
 
         // Check if ID is above 0 (if 0, it's an invalid rule).
         if (!filter || filter->id < 1)
@@ -274,7 +279,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-#ifdef ALLOWSINGLEIPV4V6
+#ifdef ALLOW_SINGLE_IP_V4_V6
             if (filter->src_ip != 0 || filter->dst_ip != 0)
             {
                 continue;
@@ -335,7 +340,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 }
             }
 
-#ifdef ALLOWSINGLEIPV4V6
+#ifdef ALLOW_SINGLE_IP_V4_V6
             if ((filter->src_ip6[0] != 0 || filter->src_ip6[1] != 0 || filter->src_ip6[2] != 0 || filter->src_ip6[3] != 0) || (filter->dst_ip6[0] != 0 || filter->dst_ip6[1] != 0 || filter->dst_ip6[2] != 0 || filter->dst_ip6[3] != 0))
             {
                 continue;
@@ -529,7 +534,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         // Before dropping, update the blacklist map.
         if (blocktime > 0)
         {
-            __u64 newTime = now + (blocktime * NANO_TO_SEC);
+            u64 newTime = now + (blocktime * NANO_TO_SEC);
             
             if (iph6)
             {
