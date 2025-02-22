@@ -15,6 +15,12 @@
 
 #include <xdp/utils/maps.h>
 
+struct 
+{
+    __uint(priority, 10);
+    __uint(XDP_PASS, 1);
+} XDP_RUN_CONFIG(xdp_prog_main);
+
 SEC("xdp_prog")
 int xdp_prog_main(struct xdp_md *ctx)
 {

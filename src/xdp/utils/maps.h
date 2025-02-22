@@ -7,12 +7,6 @@
 
 struct 
 {
-    __uint(priority, 10);
-    __uint(XDP_PASS, 1);
-} XDP_RUN_CONFIG(xdp_prog_main);
-
-struct 
-{
     __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
     __uint(max_entries, MAX_FILTERS);
     __type(key, u32);
