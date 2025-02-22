@@ -35,4 +35,4 @@ jobs:
       uses: actions/upload-artifact@master
       with:
         name: build-output
-        path: build/xdpfw
+        path: build/loader/xdpfw
