@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+
 struct cmdline
 {
     char *cfgfile;
