@@ -17,7 +17,7 @@ const struct option opts[] =
  * @param cmd A pointer to the cmdline structure.
  * 
  * @return Void
-*/
+ */
 void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
 {
     int c;

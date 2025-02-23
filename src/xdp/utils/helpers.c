@@ -8,8 +8,8 @@
  * @param cidr The CIDR range.
  * 
  * @return 1 on yes, 0 on no.
-*/
-static __always_inline u8 IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr)
+ */
+static __always_inline int IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr)
 {
     return !((src_ip ^ net_ip) & htonl(0xFFFFFFFFu << (32 - cidr)));
 }

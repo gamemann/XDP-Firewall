@@ -10,7 +10,11 @@
 struct ip_range
 {
     u32 ip;
-    u32 cidr;
+    u8 cidr;
 } typedef ip_range_t;
 
-ip_range_t ParseIpCidr(const char *ip);
+extern int cont;
+
+void PrintHelpMenu();
+void SignalHndl(int code);
+ip_range_t ParseIpCidr(const char* ip);

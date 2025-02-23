@@ -10,6 +10,8 @@
 
 #include <arpa/inet.h>
 
+#define CONFIG_DEFAULT_PATH "/etc/xdpfw/xdpfw.conf"
+
 struct config
 {
     char *interface;
@@ -19,6 +21,9 @@ struct config
     filter_t filters[MAX_FILTERS];
 } typedef config__t; // config_t is taken by libconfig -.-
 
+int LoadConfig(config__t *cfg, char *cfg_file);
 void SetCfgDefaults(config__t *cfg);
+void PrintConfig(config__t* cfg);
+
 int OpenCfg(const char *filename);
 int ReadCfg(config__t *cfg);
