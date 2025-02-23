@@ -111,17 +111,14 @@ xdp:
 # LibXDP chain. We need to install objects here since our program relies on installed object files and such.
 libxdp:
 	$(MAKE) -C $(XDP_TOOLS_DIR) libxdp
+
+libxdp_install:
 	sudo $(MAKE) -C $(LIBBPF_SRC) install
 	sudo $(MAKE) -C $(LIBXDP_DIR) install
 
 libxdp_clean:
 	$(MAKE) -C $(XDP_TOOLS_DIR) clean
 	$(MAKE) -C $(LIBBPF_SRC) clean
-
-clean:	
-	find $(BUILD_DIR) -type f ! -name ".*" -exec rm -f {} +
-	find $(BUILD_LOADER_DIR) -type f ! -name ".*" -exec rm -f {} +
-	find $(BUILD_XDP_DIR) -type f ! -name ".*" -exec rm -f {} +
 
 install:
 	mkdir -p $(ETC_DIR)
@@ -131,6 +128,11 @@ install:
 
 	cp -f $(BUILD_LOADER_DIR)/$(LOADER_OUT) /usr/bin
 	cp -f $(BUILD_XDP_DIR)/$(XDP_OBJ) $(ETC_DIR)
+
+clean:	
+	find $(BUILD_DIR) -type f ! -name ".*" -exec rm -f {} +
+	find $(BUILD_LOADER_DIR) -type f ! -name ".*" -exec rm -f {} +
+	find $(BUILD_XDP_DIR) -type f ! -name ".*" -exec rm -f {} +
 
 .PHONY: all libxdp
 .DEFAULT: all
