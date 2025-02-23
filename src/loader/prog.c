@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h>
 #include <time.h>
+
+#include <signal.h>
 
 #include <sys/resource.h>
 #include <sys/sysinfo.h>
@@ -172,11 +173,15 @@ int main(int argc, char *argv[])
         usleep(sleep_time);
     }
 
-    // Detach XDP program.
-    AttachXdp(prog, ifidx, 1, &cmd);
-
-    // Add spacing.
     fprintf(stdout, "\n");
+
+    // Detach XDP program.
+    if (AttachXdp(prog, ifidx, 1, &cmd))
+    {
+        fprintf(stderr, "Failed to detach XDP program from interface '%s'.\n", cfg.interface);
+    }
+
+    fprintf(stdout, "Cleaned up and exiting...\n");
 
     // Exit program successfully.
     return EXIT_SUCCESS;
