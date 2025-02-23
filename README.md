@@ -97,7 +97,11 @@ Offloading your XDP/BPF program to your system's NIC allows for the fastest pack
 
 As of this time, I am not aware of any NIC manufacturers that will be able to offload this firewall completely to the NIC due to its BPF complexity. To be honest, in the current networking age, I believe it's best to leave offloaded programs to BPF map lookups and minimum packet inspection. For example, a BPF blacklist map lookup for malicious source IPs or ports. However, XDP is still very new and I would imagine we're going to see these limitations loosened or lifted in the next upcoming years. This is why I added support for offload mode on this firewall. 
 
-## Configuration File Options
+## Configuration
+By default, the configuration file path is `/etc/xdpfw/xdpfw.conf`. This path may be altered with the `-c --config` CLI arguments detailed above.
+
+The [`libconfig`](https://hyperrealm.github.io/libconfig/libconfig_manual.html) library and syntax is used when parsing the config file.
+
 ### Data Types
 The following table quickly explains the data types used within the configuration documentation below (known data types which are not used within the configuration below will **not** be listed).
 
@@ -178,8 +182,8 @@ You may additionally specified UDP header options for a filter rule which start 
 * When a filter rule's setting is set (not `NULL`), but doesn't match the packet, the program moves onto the next filter rule. Therefore, all of the filter rule's settings that are set must match the packet in order to perform the action specified. Think of it as something like `if src_ip == "10.50.0.3" and udp_dport == 27015: action`. 
 * As of right now, you can specify up to 60 total filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Forwarding/tree/master/patches) README from my XDP Forwarding project.
 
-## Configuration Example
-Here's an example of a config:
+### Example
+Here's a config example:
 
 ```squidconf
 interface = "ens18";
