@@ -30,6 +30,6 @@
 
 static __always_inline int IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr);
 
-// NOTE: We include the C source file below because we can't link object files which includes the function logic into the main XDP program because we need to ensure the function is always inlined for performance which doesn't work with linked objects.
+// The source file is included directly below instead of compiled and linked as an object because when linking, there is no guarantee the compiler will inline the function (which is crucial for performance).
 // More Info: https://stackoverflow.com/questions/24289599/always-inline-does-not-work-when-function-is-implemented-in-different-file
 #include "helpers.c"
