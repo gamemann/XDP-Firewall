@@ -87,7 +87,7 @@ int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
         mode = XDP_MODE_SKB;
     }
 
-    u8 exit = 0;
+    int exit = 0;
 
     while (!exit)
     {
@@ -147,7 +147,10 @@ int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
         return EXIT_FAILURE;
     }
 
-    fprintf(stdout, "Loaded XDP program on mode %s.\n", smode);
+    if (detach < 1)
+    {
+        fprintf(stdout, "Loaded XDP program on mode %s.\n", smode);
+    }
 
     return EXIT_SUCCESS;
 }
