@@ -4,7 +4,7 @@
 #include <libbpf.h>
 #include <xdp/libxdp.h>
 
-#include  <common/all.h>
+#include <common/all.h>
 
 #include <loader/utils/cmdline.h>
 #include <loader/utils/config.h>

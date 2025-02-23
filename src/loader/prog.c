@@ -22,6 +22,8 @@ struct stat conf_stat;
 
 int main(int argc, char *argv[])
 {
+    int ret;
+
     // Parse the command line.
     cmdline_t cmd = {0};
     cmd.cfgfile = CONFIG_DEFAULT_PATH;
@@ -41,7 +43,7 @@ int main(int argc, char *argv[])
 
     if (setrlimit(RLIMIT_MEMLOCK, &rl)) 
     {
-        fprintf(stderr, "Error setting rlimit. Please make sure this program is ran as root!\n");
+        fprintf(stderr, "[ERROR] Failed to raise rlimit. Please make sure this program is ran as root!\n");
 
         return EXIT_FAILURE;
     }
@@ -52,7 +54,12 @@ int main(int argc, char *argv[])
     SetCfgDefaults(&cfg);
 
     // Load config.
-    LoadConfig(&cfg, cmd.cfgfile);
+    if ((ret = LoadConfig(&cfg, cmd.cfgfile)) != 0)
+    {
+        fprintf(stderr, "[ERROR] Failed to load config from file system (%s)(%d).\n", cmd.cfgfile, ret);
+
+        return EXIT_FAILURE;
+    }
 
     // Check for list option.
     if (cmd.list)
@@ -67,7 +74,7 @@ int main(int argc, char *argv[])
 
     if (ifidx < 0)
     {
-        fprintf(stderr, "Error finding device %s.\n", cfg.interface);
+        fprintf(stderr, "[ERROR] Failed to retrieve index of interface '%s'.\n", cfg.interface);
 
         return EXIT_FAILURE;
     }
@@ -77,15 +84,15 @@ int main(int argc, char *argv[])
 
     if (prog == NULL)
     {
-        fprintf(stderr, "Error loading eBPF object file. File name => %s.\n", XDP_OBJ_PATH);
+        fprintf(stderr, "[ERROR] Failed to load eBPF object file. Object path => %s.\n", XDP_OBJ_PATH);
 
         return EXIT_FAILURE;
     }
     
     // Attach XDP program.
-    if (AttachXdp(prog, ifidx, 0, &cmd))
+    if ((ret = AttachXdp(prog, ifidx, 0, &cmd)) != 0)
     {
-        fprintf(stderr, "Error attaching XDP program.\n");
+        fprintf(stderr, "[ERROR] Failed to attach XDP program to interface '%s' (%d).\n", cfg.interface, ret);
 
         return EXIT_FAILURE;
     }
@@ -96,7 +103,7 @@ int main(int argc, char *argv[])
     // Check for valid maps.
     if (filters_map < 0)
     {
-        fprintf(stderr, "Error finding 'filters_map' BPF map.\n");
+        fprintf(stderr, "[ERROR] Failed to find 'filters_map' BPF map.\n");
 
         return EXIT_FAILURE;
     }
@@ -105,7 +112,7 @@ int main(int argc, char *argv[])
 
     if (stats_map < 0)
     {
-        fprintf(stderr, "Error finding 'stats_map' BPF map.\n");
+        fprintf(stderr, "[ERROR] Failed to find 'stats_map' BPF map.\n");
 
         return EXIT_FAILURE;
     }
@@ -148,7 +155,10 @@ int main(int argc, char *argv[])
                 free(cfg.interface);
 
                 // Update config.
-                LoadConfig(&cfg, cmd.cfgfile);
+                if ((ret = LoadConfig(&cfg, cmd.cfgfile)) != 0)
+                {
+                    fprintf(stderr, "[WARNING] Failed to load config after update check (%d)\n", ret);
+                }
 
                 // Update BPF maps.
                 UpdateFilters(filters_map, &cfg);
@@ -166,7 +176,7 @@ int main(int argc, char *argv[])
         {
             if (CalculateStats(stats_map, cpus))
             {
-                fprintf(stderr, "Error calculating packet stats. Stats map FD => %d.\n", stats_map);
+                fprintf(stderr, "[WARNING] Failed to calculate packet stats. Stats map FD => %d.\n", stats_map);
             }
         }
 
@@ -178,7 +188,9 @@ int main(int argc, char *argv[])
     // Detach XDP program.
     if (AttachXdp(prog, ifidx, 1, &cmd))
     {
-        fprintf(stderr, "Failed to detach XDP program from interface '%s'.\n", cfg.interface);
+        fprintf(stderr, "[ERROR] Failed to detach XDP program from interface '%s'.\n", cfg.interface);
+
+        return EXIT_FAILURE;
     }
 
     fprintf(stdout, "Cleaned up and exiting...\n");

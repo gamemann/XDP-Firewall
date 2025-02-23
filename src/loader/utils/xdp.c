@@ -166,6 +166,7 @@ int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
 void UpdateFilters(int filters_map, config__t *cfg)
 {
     int i;
+    int ret;
 
     // Loop through all filters and delete the map. We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
     for (i = 0; i < MAX_FILTERS; i++)
@@ -194,9 +195,9 @@ void UpdateFilters(int filters_map, config__t *cfg)
         }
 
         // Attempt to update BPF map.
-        if (bpf_map_update_elem(filters_map, &i, &filter, BPF_ANY) == -1)
+        if ((ret = bpf_map_update_elem(filters_map, &i, &filter, BPF_ANY)) != 0)
         {
-            fprintf(stderr, "Error updating BPF item #%d\n", i);
+            fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d).\n", i, ret);
         }
     }
 }
