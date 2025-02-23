@@ -113,8 +113,8 @@ libxdp:
 	$(MAKE) -C $(XDP_TOOLS_DIR) libxdp
 
 libxdp_install:
-	sudo $(MAKE) -C $(LIBBPF_SRC) install
-	sudo $(MAKE) -C $(LIBXDP_DIR) install
+	$(MAKE) -C $(LIBBPF_SRC) install
+	$(MAKE) -C $(LIBXDP_DIR) install
 
 libxdp_clean:
 	$(MAKE) -C $(XDP_TOOLS_DIR) clean
