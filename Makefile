@@ -12,6 +12,8 @@ COMMON_DIR = $(SRC_DIR)/common
 LOADER_DIR = $(SRC_DIR)/loader
 XDP_DIR = $(SRC_DIR)/xdp
 
+ETC_DIR = /etc/xdpfw
+
 # Additional build directories.
 BUILD_LOADER_DIR = $(BUILD_DIR)/loader
 BUILD_XDP_DIR = $(BUILD_DIR)/xdp
@@ -112,22 +114,23 @@ libxdp:
 	sudo $(MAKE) -C $(LIBBPF_SRC) install
 	sudo $(MAKE) -C $(LIBXDP_DIR) install
 
-clean:
+libxdp_clean:
 	$(MAKE) -C $(XDP_TOOLS_DIR) clean
 	$(MAKE) -C $(LIBBPF_SRC) clean
-	
+
+clean:	
 	find $(BUILD_DIR) -type f ! -name ".*" -exec rm -f {} +
 	find $(BUILD_LOADER_DIR) -type f ! -name ".*" -exec rm -f {} +
 	find $(BUILD_XDP_DIR) -type f ! -name ".*" -exec rm -f {} +
 
 install:
-	mkdir -p /etc/xdpfw/
-	cp -n xdpfw.conf.example /etc/xdpfw/xdpfw.conf
-
-	cp -f $(BUILD_LOADER_DIR)/$(LOADER_OUT) /usr/bin
-	cp -f $(BUILD_XDP_DIR)/$(XDP_OBJ) /etc/xdpfw
+	mkdir -p $(ETC_DIR)
+	cp -n xdpfw.conf.example $(ETC_DIR)/xdpfw.conf
 
 	cp -n other/xdpfw.service /etc/systemd/system/
+
+	cp -f $(BUILD_LOADER_DIR)/$(LOADER_OUT) /usr/bin
+	cp -f $(BUILD_XDP_DIR)/$(XDP_OBJ) $(ETC_DIR)
 
 .PHONY: all libxdp
 .DEFAULT: all
