@@ -246,7 +246,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         UpdateIpStats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
     }
     
-    for (u8 i = 0; i < MAX_FILTERS; i++)
+    for (int i = 0; i < MAX_FILTERS; i++)
     {
         u32 key = i;
 

@@ -28,7 +28,7 @@
 #define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
 #endif
 
-static __always_inline u8 IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr);
+static __always_inline int IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr);
 
 // NOTE: We include the C source file below because we can't link object files which includes the function logic into the main XDP program because we need to ensure the function is always inlined for performance which doesn't work with linked objects.
 // More Info: https://stackoverflow.com/questions/24289599/always-inline-does-not-work-when-function-is-implemented-in-different-file

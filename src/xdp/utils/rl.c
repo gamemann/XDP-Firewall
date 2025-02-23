@@ -12,7 +12,7 @@
  * @param now The current time since boot in nanoseconds.alignas
  * 
  * @return void
-*/
+ */
 static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
 #ifdef USE_FLOW_RL
@@ -77,7 +77,7 @@ static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, 
  * @param now The current time since boot in nanoseconds.alignas
  * 
  * @return void
-*/
+ */
 static __always_inline void UpdateIp6Stats(u64 *pps, u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
 #ifdef USE_FLOW_RL
