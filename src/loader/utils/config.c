@@ -550,9 +550,10 @@ void PrintConfig(config__t* cfg)
     fprintf(stdout, "\tGeneral Settings\n");
     fprintf(stdout, "\t\tInterface Name => %s\n", cfg->interface);
     fprintf(stdout, "\t\tUpdate Time => %d\n", cfg->updatetime);
-    fprintf(stdout, "\t\tStdout Update Time => %d\n\n", cfg->stdout_update_time);
+    fprintf(stdout, "\t\tStdout Update Time => %d\n", cfg->stdout_update_time);
+    fprintf(stdout, "\t\tNo Stats => %d\n\n", cfg->nostats);
 
-    fprintf(stdout, "\tFiltes\n");
+    fprintf(stdout, "\tFilters\n");
 
     for (int i = 0; i < MAX_FILTERS; i++)
     {

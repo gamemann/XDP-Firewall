@@ -18,7 +18,6 @@
 #include <loader/utils/helpers.h>
 
 int cont = 1;
-struct stat conf_stat;
 
 int main(int argc, char *argv[])
 {
@@ -74,7 +73,7 @@ int main(int argc, char *argv[])
 
     if (ifidx < 0)
     {
-        fprintf(stderr, "[ERROR] Failed to retrieve index of interface '%s'.\n", cfg.interface);
+        fprintf(stderr, "[ERROR] Failed to retrieve index of network interface '%s'.\n", cfg.interface);
 
         return EXIT_FAILURE;
     }
@@ -122,6 +121,7 @@ int main(int argc, char *argv[])
 
     // Signal.
     signal(SIGINT, SignalHndl);
+    signal(SIGTERM, SignalHndl);
 
     // Receive CPU count for stats map parsing.
     int cpus = get_nprocs_conf();
@@ -133,6 +133,8 @@ int main(int argc, char *argv[])
     time_t last_config_check = time(NULL);
 
     unsigned int sleep_time = cfg.stdout_update_time * 1000;
+
+    struct stat conf_stat;
 
     while (cont)
     {
