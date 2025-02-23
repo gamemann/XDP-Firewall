@@ -64,6 +64,7 @@ void UpdateFilters(config__t *cfg)
 
         // Create value array (max CPUs in size) since we're using a per CPU map.
         filter_t filter[MAX_CPUS];
+        memset(filter, 0, sizeof(filter));
 
         for (int j = 0; j < MAX_CPUS; j++)
         {
@@ -79,14 +80,14 @@ void UpdateFilters(config__t *cfg)
 }
 
 /**
- * Retrieves an update from the config.
+ * Loads the config on the file system.
  * 
  * @param cfg A pointer to the config structure.
  * @param cfgfile The path to the config file.
  * 
  * @return 0 on success or -1 on error.
 */
-int UpdateConfig(config__t *cfg, char *cfgfile)
+int LoadConfig(config__t *cfg, char *cfgfile)
 {
     // Open config file.
     if (OpenCfg(cfgfile) != 0)
@@ -98,10 +99,7 @@ int UpdateConfig(config__t *cfg, char *cfgfile)
 
     SetCfgDefaults(cfg);
 
-    for (u16 i = 0; i < MAX_FILTERS; i++)
-    {
-        cfg->filters[i] = (struct filter) {0};
-    }
+    memset(cfg->filters, 0, sizeof(cfg->filters));
 
     // Read config and check for errors.
     if (ReadCfg(cfg) != 0)
@@ -320,7 +318,7 @@ int main(int argc, char *argv[])
     SetCfgDefaults(&cfg);
 
     // Update config.
-    UpdateConfig(&cfg, cmd.cfgfile);
+    LoadConfig(&cfg, cmd.cfgfile);
 
     // Check for list option.
     if (cmd.list)
@@ -499,12 +497,12 @@ int main(int argc, char *argv[])
         {
             // Check if config file have been modified
             if (stat(cmd.cfgfile, &conf_stat) == 0 && conf_stat.st_mtime > lastupdated) {
-                // Memleak fix for strdup() in UpdateConfig()
+                // Memleak fix for strdup() in LoadConfig()
                 // Before updating it again, we need to free the old return value
                 free(cfg.interface);
 
                 // Update config.
-                UpdateConfig(&cfg, cmd.cfgfile);
+                LoadConfig(&cfg, cmd.cfgfile);
 
                 // Update BPF maps.
                 UpdateFilters(&cfg);
@@ -521,8 +519,9 @@ int main(int argc, char *argv[])
         if (!cfg.nostats)
         {
             u32 key = 0;
+
             stats_t stats[MAX_CPUS];
-            //memset(stats, 0, sizeof(struct stats) * MAX_CPUS);
+            memset(stats, 0, sizeof(stats));
 
             u64 allowed = 0;
             u64 dropped = 0;
