@@ -2,7 +2,40 @@
 
 #include <loader/utils/helpers.h>
 
-FILE *file;
+static FILE *file;
+
+/**
+ * Loads the config from the file system.
+ * 
+ * @param cfg A pointer to the config structure.
+ * @param cfg_file The path to the config file.
+ * 
+ * @return 0 on success or -1 on error.
+ */
+int LoadConfig(config__t *cfg, char *cfg_file)
+{
+    // Open config file.
+    if (OpenCfg(cfg_file) != 0)
+    {
+        fprintf(stderr, "Error opening filters file: %s\n", cfg_file);
+        
+        return -1;
+    }
+
+    SetCfgDefaults(cfg);
+
+    memset(cfg->filters, 0, sizeof(cfg->filters));
+
+    // Read config and check for errors.
+    if (ReadCfg(cfg) != 0)
+    {
+        fprintf(stderr, "Error reading filters file.\n");
+
+        return -1;
+    }
+
+    return 0;
+}
 
 /**
  * Sets the config structure's default values.
@@ -10,7 +43,7 @@ FILE *file;
  * @param cfg A pointer to the config structure.
  * 
  * @return Void
-*/
+ */
 void SetCfgDefaults(config__t *cfg)
 {
     cfg->updatetime = 0;
@@ -18,7 +51,7 @@ void SetCfgDefaults(config__t *cfg)
     cfg->nostats = 0;
     cfg->stdout_update_time = 1000;
 
-    for (u16 i = 0; i < MAX_FILTERS; i++)
+    for (int i = 0; i < MAX_FILTERS; i++)
     {
         cfg->filters[i].id = 0;
         cfg->filters[i].enabled = 0;
@@ -26,7 +59,7 @@ void SetCfgDefaults(config__t *cfg)
         cfg->filters[i].src_ip = 0;
         cfg->filters[i].dst_ip = 0;
 
-        for (u8 j = 0; j < 4; j++)
+        for (int j = 0; j < 4; j++)
         {
             cfg->filters[i].src_ip6[j] = 0;
             cfg->filters[i].dst_ip6[j] = 0;
@@ -80,11 +113,11 @@ void SetCfgDefaults(config__t *cfg)
 /**
  * Opens the config file.
  * 
- * @param filename Path to config file.
+ * @param file_name Path to config file.
  * 
  * @return 0 on success or 1 on error.
-*/
-int OpenCfg(const char *filename)
+ */
+int OpenCfg(const char *file_name)
 {
     // Close any existing files.
     if (file != NULL)
@@ -94,7 +127,7 @@ int OpenCfg(const char *filename)
         file = NULL;
     }
 
-    file = fopen(filename, "r");
+    file = fopen(file_name, "r");
 
     if (file == NULL)
     {
@@ -110,7 +143,7 @@ int OpenCfg(const char *filename)
  * @param cfg A pointer to the config structure.
  * 
  * @return 0 on success or 1/-1 on error.
-*/
+ */
 int ReadCfg(config__t *cfg)
 {
     // Not sure why this would be set to NULL after checking for it in OpenConfig(), but just for safety.
@@ -189,7 +222,7 @@ int ReadCfg(config__t *cfg)
     // Set filter count.
     int filters = 0;
 
-    for (u8 i = 0; i < config_setting_length(setting); i++)
+    for (int i = 0; i < config_setting_length(setting); i++)
     {
         config_setting_t* filter = config_setting_get_elem(setting, i);
 
@@ -251,10 +284,7 @@ int ReadCfg(config__t *cfg)
 
             inet_pton(AF_INET6, sip6, &in);
 
-            for (u8 j = 0; j < 4; j++)
-            {
-                cfg->filters[i].src_ip6[j] = in.__in6_u.__u6_addr32[j];
-            }
+            memcpy(cfg->filters[i].src_ip6, in.__in6_u.__u6_addr32, 4);
         }
 
         // Destination IP (IPv6) (not required).
@@ -266,10 +296,7 @@ int ReadCfg(config__t *cfg)
 
             inet_pton(AF_INET6, dip6, &in);
 
-            for (u8 j = 0; j < 4; j++)
-            {
-                cfg->filters[i].dst_ip6[j] = in.__in6_u.__u6_addr32[j];
-            }
+            memcpy(cfg->filters[i].dst_ip6, in.__in6_u.__u6_addr32, 4);
         }
 
         // Minimum TTL (not required).
@@ -508,4 +535,104 @@ int ReadCfg(config__t *cfg)
     config_destroy(&conf);
 
     return 0;
+}
+
+/**
+ * Prints config settings.
+ * 
+ * @param cfg A pointer to the config structure.
+ * 
+ * @return void
+ */
+void PrintConfig(config__t* cfg)
+{
+    fprintf(stdout, "Current Settings:\n");
+    fprintf(stdout, "Interface Name => %s\n", cfg->interface);
+    fprintf(stdout, "Update Time => %d\n", cfg->updatetime);
+    fprintf(stdout, "Stdout Update Time => %d\n\n", cfg->stdout_update_time);
+
+    for (int i = 0; i < MAX_FILTERS; i++)
+    {
+        filter_t *filter = &cfg->filters[i];
+
+        if (filter->id < 1)
+        {
+            break;
+        }
+
+        fprintf(stdout, "Filter #%d:\n", (i + 1));
+
+        // Main.
+        fprintf(stdout, "\tID => %d\n", filter->id);
+        fprintf(stdout, "\tEnabled => %d\n", filter->enabled);
+        fprintf(stdout, "\tAction => %d (0 = Block, 1 = Allow).\n\n", filter->action);
+
+        // IP Options.
+        fprintf(stdout, "\tIP Options\n");
+
+        // IP addresses require additional code for string printing.
+        struct sockaddr_in sin;
+        sin.sin_addr.s_addr = filter->src_ip;
+        fprintf(stdout, "\t\tSource IPv4 => %s\n", inet_ntoa(sin.sin_addr));
+        fprintf(stdout, "\t\tSource CIDR => %d\n", filter->src_cidr);
+
+        struct sockaddr_in din;
+        din.sin_addr.s_addr = filter->dst_ip;
+        fprintf(stdout, "\t\tDestination IPv4 => %s\n", inet_ntoa(din.sin_addr));
+        fprintf(stdout, "\t\tDestination CIDR => %d\n", filter->dst_cidr);
+
+        struct in6_addr sin6;
+        memcpy(&sin6, &filter->src_ip6, sizeof(sin6));
+        
+        char srcipv6[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &sin6, srcipv6, sizeof(srcipv6));
+
+        fprintf(stdout, "\t\tSource IPv6 => %s\n", srcipv6);
+
+        struct in6_addr din6;
+        memcpy(&din6, &filter->dst_ip6, sizeof(din6));
+
+        char dstipv6[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &din6, dstipv6, sizeof(dstipv6));
+
+        fprintf(stdout, "\t\tDestination IPv6 => %s\n", dstipv6);
+
+        // Other IP header information.
+        fprintf(stdout, "\t\tMax Length => %d\n", filter->max_len);
+        fprintf(stdout, "\t\tMin Length => %d\n", filter->min_len);
+        fprintf(stdout, "\t\tMax TTL => %d\n", filter->max_ttl);
+        fprintf(stdout, "\t\tMin TTL => %d\n", filter->min_ttl);
+        fprintf(stdout, "\t\tTOS => %d\n", filter->tos);
+        fprintf(stdout, "\t\tPPS => %llu\n", filter->pps);
+        fprintf(stdout, "\t\tBPS => %llu\n", filter->bps);
+        fprintf(stdout, "\t\tBlock Time => %llu\n\n", filter->blocktime);
+
+        // TCP Options.
+        fprintf(stdout, "\tTCP Options\n");
+        fprintf(stdout, "\t\tTCP Enabled => %d\n", filter->tcpopts.enabled);
+        fprintf(stdout, "\t\tTCP Source Port => %d\n", filter->tcpopts.sport);
+        fprintf(stdout, "\t\tTCP Destination Port => %d\n", filter->tcpopts.dport);
+        fprintf(stdout, "\t\tTCP URG Flag => %d\n", filter->tcpopts.urg);
+        fprintf(stdout, "\t\tTCP ACK Flag => %d\n", filter->tcpopts.ack);
+        fprintf(stdout, "\t\tTCP RST Flag => %d\n", filter->tcpopts.rst);
+        fprintf(stdout, "\t\tTCP PSH Flag => %d\n", filter->tcpopts.psh);
+        fprintf(stdout, "\t\tTCP SYN Flag => %d\n", filter->tcpopts.syn);
+        fprintf(stdout, "\t\tTCP FIN Flag => %d\n", filter->tcpopts.fin);
+        fprintf(stdout, "\t\tTCP ECE Flag => %d\n", filter->tcpopts.ece);
+        fprintf(stdout, "\t\tTCP CWR Flag => %d\n\n", filter->tcpopts.cwr);
+
+        // UDP Options.
+        fprintf(stdout, "\tUDP Options\n");
+        fprintf(stdout, "\t\tUDP Enabled => %d\n", filter->udpopts.enabled);
+        fprintf(stdout, "\t\tUDP Source Port => %d\n", filter->udpopts.sport);
+        fprintf(stdout, "\t\tUDP Destination Port => %d\n\n", filter->udpopts.dport);
+
+        // ICMP Options.
+        fprintf(stdout, "\tICMP Options\n");
+        fprintf(stdout, "\t\tICMP Enabled => %d\n", filter->icmpopts.enabled);
+        fprintf(stdout, "\t\tICMP Code => %d\n", filter->icmpopts.code);
+        fprintf(stdout, "\t\tICMP Type => %d\n", filter->icmpopts.type);
+
+        fprintf(stdout, "\n\n");
+    }
 }
