@@ -31,7 +31,7 @@ int CalculateStats(int stats_map, int cpus)
         // Therefore, before accessing stats[i], make sure the pointer to the specific CPU ID is not NULL.
         if (&stats[i] == NULL)
         {
-            fprintf(stderr, "Stats array at CPU ID #%d is NULL! Skipping...\n", i);
+            fprintf(stderr, "[WARNING] Stats array at CPU ID #%d is NULL! Skipping...\n", i);
 
             continue;
         }

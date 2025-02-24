@@ -149,7 +149,7 @@ int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
 
     if (detach < 1)
     {
-        fprintf(stdout, "Loaded XDP program on mode %s.\n", smode);
+        fprintf(stdout, "Loaded XDP program on mode %s...\n", smode);
     }
 
     return EXIT_SUCCESS;
@@ -194,7 +194,7 @@ void UpdateFilters(int filters_map, config__t *cfg)
         // Attempt to update BPF map.
         if ((ret = bpf_map_update_elem(filters_map, &i, &filter, BPF_ANY)) != 0)
         {
-            fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d).\n", i, ret);
+            fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d)...\n", i, ret);
         }
     }
 }
