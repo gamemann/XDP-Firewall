@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --libxdp       Build and install LibXDP before building the tool."
             echo "  --no-install   Build the tool and/or LibXDP without installing them."
             echo "  --clean        Remove build files for the tool and LibXDP."
-            echo "  --no-static       Statically link LibXDP and LibBPF object files when building the tool."
+            echo "  --no-static    Do not statically link LibXDP and LibBPF object files when building the tool and rely on shared libraries (-lbpf and -lxdp flags)."
             echo "  --help         Display this help message."
 
             exit 0
