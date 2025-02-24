@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <libconfig.h>
 #include <string.h>
-#include <linux/types.h>
 
 #include <arpa/inet.h>
 

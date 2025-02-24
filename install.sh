@@ -1,15 +1,15 @@
 #!/bin/bash
-WITH_LIBXDP=0
+LIBXDP=0
 INSTALL=1
 CLEAN=0
-STATIC=0
+STATIC=1
 
 while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
         --libxdp)
-            WITH_LIBXDP=1
+            LIBXDP=1
 
             shift
             ;;
@@ -26,8 +26,8 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
 
-        --static)
-            STATIC=1
+        --no-static)
+            STATIC=0
             
             shift
             ;;
@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --libxdp       Build and install LibXDP before building the tool."
             echo "  --no-install   Build the tool and/or LibXDP without installing them."
             echo "  --clean        Remove build files for the tool and LibXDP."
-            echo "  --static       Statically link LibXDP and LibBPF object files when building the tool."
+            echo "  --no-static       Statically link LibXDP and LibBPF object files when building the tool."
             echo "  --help         Display this help message."
 
             exit 0
@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ "$CLEAN" -gt 0 ]; then
-    if [ "$WITH_LIBXDP" -gt 0 ]; then
+    if [ "$LIBXDP" -gt 0 ]; then
         echo "Cleaning LibXDP..."
 
         ./scripts/libxdp_clean.sh
@@ -67,7 +67,7 @@ if [ "$CLEAN" -gt 0 ]; then
     exit 0
 fi
 
-if [ "$WITH_LIBXDP" -gt 0 ]; then
+if [ "$LIBXDP" -gt 0 ]; then
     echo "Building LibXDP..."
 
     ./scripts/libxdp_build.sh

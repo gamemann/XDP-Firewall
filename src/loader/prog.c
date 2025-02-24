@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
                 // Update config.
                 if ((ret = LoadConfig(&cfg, cmd.cfgfile)) != 0)
                 {
-                    fprintf(stderr, "[WARNING] Failed to load config after update check (%d)\n", ret);
+                    fprintf(stderr, "[WARNING] Failed to load config after update check (%d)...\n", ret);
                 }
 
                 // Update BPF maps.
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
         {
             if (CalculateStats(stats_map, cpus))
             {
-                fprintf(stderr, "[WARNING] Failed to calculate packet stats. Stats map FD => %d.\n", stats_map);
+                fprintf(stderr, "[WARNING] Failed to calculate packet stats. Stats map FD => %d...\n", stats_map);
             }
         }
 

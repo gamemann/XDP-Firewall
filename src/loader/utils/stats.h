@@ -1,7 +1,5 @@
 #pragma once
 
-#include <bpf.h>
-#include <libbpf.h>
 #include <xdp/libxdp.h>
 
 #include <common/all.h>
