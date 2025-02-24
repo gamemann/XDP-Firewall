@@ -293,13 +293,13 @@ If you receive an error similar to the one below when running the program, make 
 ./xdpfw: error while loading shared libraries: libxdp.so.1: cannot open shared object file: No such file or directory
 ```
 
-If you don't want to have LibXDP installed on your system after building the program, you can set the `LIBBPF_LIBXDP_STATIC` environmental variable to `1` while building the project with `make` or pass the `--static` flag to the [`install.sh`](./install.sh) Bash script. This will link all of the LibBPF and LibXDP object files while building the loader so you shouldn't need LibXDP installed globally.
+If you don't want to have LibXDP installed on your system after building the program, you can set the `LIBXDP_STATIC` environmental variable to `1` while building the project with `make` or pass the `--static` flag to the [`install.sh`](./install.sh) Bash script. This will link all of the LibBPF and LibXDP object files while building the loader so you shouldn't need LibXDP installed globally.
 
 For example:
 
 ```bash
 # Build with LibBPF and LibXDP object files linked directly from modules/xdp-tools directories.
-LIBBPF_LIBXDP_STATIC=1 make
+LIBXDP_STATIC=1 make
 
 # Install onto system.
 sudo make install

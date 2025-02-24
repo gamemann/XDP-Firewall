@@ -30,7 +30,7 @@ jobs:
     - name: Install LibXDP.
       run: sudo make libxdp_install
     - name: Make project
-      run: LIBBPF_LIBXDP_STATIC=1 make
+      run: LIBXDP_STATIC=1 make
     - name: Install project
       run: sudo make install
     - name: Store build artifacts

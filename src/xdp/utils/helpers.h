@@ -3,11 +3,15 @@
 #include <common/all.h>
 
 #include <linux/bpf.h>
-#include <linux/bpf_common.h>
 
-#include <bpf_helpers.h>
 #include <xdp/xdp_helpers.h>
 #include <xdp/prog_dispatcher.h>
+
+#ifdef __LIBXDP_STATIC__
+#include <bpf_helpers.h>
+#else
+#include <bpf/bpf_helpers.h>
+#endif
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)

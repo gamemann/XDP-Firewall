@@ -1,6 +1,6 @@
 CC = clang
 
-LIBBPF_LIBXDP_STATIC ?= 0
+LIBXDP_STATIC ?= 0
 
 # Top-level directories.
 BUILD_DIR = build
@@ -61,7 +61,7 @@ LOADER_UTILS_HELPERS_OBJ = helpers.o
 # Loader objects.
 LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_STATS_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
 
-ifeq ($(LIBBPF_LIBXDP_STATIC), 1)
+ifeq ($(LIBXDP_STATIC), 1)
 	LOADER_OBJS := $(LIBBPF_OBJS) $(LIBXDP_OBJS) $(LOADER_OBJS)
 endif
 
@@ -70,13 +70,21 @@ XDP_SRC = prog.c
 XDP_OBJ = xdp_prog.o
 
 # Includes.
-INCS = -I $(SRC_DIR) -I $(LIBBPF_SRC) -I /usr/include -I /usr/local/include
+INCS = -I $(SRC_DIR)
+
+ifeq ($(LIBXDP_STATIC), 1)
+	INCS += -I $(XDP_TOOLS_HEADERS) -I $(LIBBPF_SRC)
+else
+	INCS += -I /usr/include -I /usr/local/include
+endif
 
 # Flags.
 FLAGS = -O2 -g
 FLAGS_LOADER = -lconfig -lelf -lz
 
-ifeq ($(LIBBPF_LIBXDP_STATIC), 0)
+ifeq ($(LIBXDP_STATIC), 1)
+	FLAGS += -D__LIBXDP_STATIC__
+else
 	FLAGS_LOADER += -lbpf -lxdp
 endif
 
