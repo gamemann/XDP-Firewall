@@ -58,7 +58,7 @@ Additionally, here is a list of flags you may pass to this script.
 | --libxdp | Build and install LibXDP before building the tool. |
 | --no-install | Build the tool and/or LibXDP without installing them. |
 | --clean | Remove build files for the tool and LibXDP. |
-| --static | Statically link LibXDP and LibBPF object files when building the tool. |
+| --no-static | Do *not* statically link LibXDP and LibBPF object files when building the tool. This makes the build process faster, but you may need to alter your `LD_LIBRARY_PATH` env variable before running the tool and requires LibXDP to be installed on your system already. |
 | --help | Displays help message. | 
 
 ### Without Bash Script
@@ -183,7 +183,7 @@ You may additionally specified UDP header options for a filter rule which start 
 * As of right now, you can specify up to 60 total filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Forwarding/tree/master/patches) README from my XDP Forwarding project.
 
 ### Example
-Here's a config example:
+Here's a config example.
 
 ```squidconf
 interface = "ens18";
@@ -243,7 +243,7 @@ If you have issues on Ubuntu 20.04 or earlier, please refer to the reply on [thi
 Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux kernel 5.15 or above.
 
 ### BPF For/While Loop Support + Performance Notes
-This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as:
+This project requires for/while loop support with BPF. Older kernels will not support this and output an error such as the following.
 
 ```vim
 libbpf: load bpf program failed: Invalid argument
@@ -287,25 +287,18 @@ By default, client stats including packets and bytes per second are calculated p
 ```
 
 ### Error While Loading Shared Libraries
-If you receive an error similar to the one below when running the program, make sure you have LibXDP globally installed onto your system via [XDP Tools](https://github.com/xdp-project/xdp-tools). You can execute `make libxdp` to install both LibXDP and LibBPF onto your system.
+If you receive an error similar to the one below when running the program and have built the program using the no static option, make sure you have LibXDP globally installed onto your system via [XDP Tools](https://github.com/xdp-project/xdp-tools). You can execute `make libxdp && sudo make libxdp_install` to build and install both LibXDP and LibBPF onto your system separately.
 
 ```bash
 ./xdpfw: error while loading shared libraries: libxdp.so.1: cannot open shared object file: No such file or directory
 ```
 
-If you don't want to have LibXDP installed on your system after building the program, you can set the `LIBXDP_STATIC` environmental variable to `1` while building the project with `make` or pass the `--static` flag to the [`install.sh`](./install.sh) Bash script. This will link all of the LibBPF and LibXDP object files while building the loader so you shouldn't need LibXDP installed globally.
-
-For example:
+If you still run into issues, try adding `/usr/local/lib` to your `LD_LIBRARY_PATH` since that's where LibXDP installs the shared objects from my testing. Here's an example.
 
 ```bash
-# Build with LibBPF and LibXDP object files linked directly from modules/xdp-tools directories.
-LIBXDP_STATIC=1 make
+export LD_LIBRARY_PATH=/usr/local/lib
 
-# Install onto system.
-sudo make install
-
-# Build using Bash script with static.
-./install.sh --static
+sudo xdpfw
 ```
 
 ## My Other XDP Projects

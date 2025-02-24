@@ -1,6 +1,6 @@
 CC = clang
 
-LIBXDP_STATIC ?= 0
+LIBXDP_STATIC ?= 1
 
 # Top-level directories.
 BUILD_DIR = build
@@ -70,12 +70,10 @@ XDP_SRC = prog.c
 XDP_OBJ = xdp_prog.o
 
 # Includes.
-INCS = -I $(SRC_DIR)
+INCS = -I $(SRC_DIR) -I /usr/include -I /usr/local/include
 
 ifeq ($(LIBXDP_STATIC), 1)
 	INCS += -I $(XDP_TOOLS_HEADERS) -I $(LIBBPF_SRC)
-else
-	INCS += -I /usr/include -I /usr/local/include
 endif
 
 # Flags.

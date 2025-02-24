@@ -3,7 +3,7 @@
 STATIC="$1"
 
 if [ -z "$STATIC" ]; then
-    STATIC=0
+    STATIC=1
 fi
 
 if [ -z "$ROOT" ]; then
