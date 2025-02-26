@@ -60,3 +60,11 @@ struct
     __type(key, u128);
     __type(value, u64);
 } ip6_blacklist_map SEC(".maps");
+
+#ifdef ENABLE_FILTER_LOGGING
+struct
+{
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
+    __uint(max_entries, 1 << 16);
+} filter_log_map SEC(".maps");
+#endif

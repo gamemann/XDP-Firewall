@@ -37,6 +37,35 @@ int FindMapFd(struct xdp_program *prog, const char *map_name)
 }
 
 /**
+ * Custom print function for LibBPF that doesn't print anything (silent mode).
+ * 
+ * @param level The current LibBPF log level.
+ * @param format The message format.
+ * @param args Format arguments for the message.
+ * 
+ * @return void
+ */
+static int LibBPFSilent(enum libbpf_print_level level, const char *format, va_list args)
+{
+    return 0;
+}
+
+/**
+ * Sets custom LibBPF log mode.
+ * 
+ * @param silent If 1, disables LibBPF logging entirely.
+ * 
+ * @return void
+ */
+void SetLibBPFLogMode(int silent)
+{
+    if (silent)
+    {
+        libbpf_set_print(LibBPFSilent);
+    }
+}
+
+/**
  * Loads a BPF object file.
  * 
  * @param file_name The path to the BPF object file.
@@ -60,31 +89,32 @@ struct xdp_program *LoadBpfObj(const char *file_name)
  * Attempts to attach or detach (progfd = -1) a BPF/XDP program to an interface.
  * 
  * @param prog A pointer to the XDP program structure.
+ * @param mode_used The mode being used.
  * @param ifidx The index to the interface to attach to.
  * @param detach If above 0, attempts to detach XDP program.
  * @param cmd A pointer to a cmdline struct that includes command line arguments (mostly checking for offload/HW mode set).
  * 
  * @return 0 on success and 1 on error.
  */
-int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
+int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdline_t *cmd)
 {
     int err;
 
-    u32 mode = XDP_MODE_NATIVE;
-    char *smode;
+    u32 attach_mode = XDP_MODE_NATIVE;
 
-    smode = "DRV/native";
+    *mode = "DRV/native";
 
     if (cmd->offload)
     {
-        smode = "HW/offload";
+        *mode = "HW/offload";
 
-        mode = XDP_MODE_HW;
+        attach_mode = XDP_MODE_HW;
     }
     else if (cmd->skb)
     {
-        smode = "SKB/generic";
-        mode = XDP_MODE_SKB;
+        *mode = "SKB/generic";
+        
+        attach_mode = XDP_MODE_SKB;
     }
 
     int exit = 0;
@@ -96,39 +126,35 @@ int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
 
         if (detach)
         {
-            err = xdp_program__detach(prog, ifidx, mode, 0);
+            err = xdp_program__detach(prog, ifidx, attach_mode, 0);
         }
         else
         {
-            err = xdp_program__attach(prog, ifidx, mode, 0);
+            err = xdp_program__attach(prog, ifidx, attach_mode, 0);
         }
 
         if (err)
         {
-            if (err)
-            {
-                fprintf(stderr, "Could not attach with mode %s (%s) (%d).\n", smode, strerror(-err), -err);
-            }
-
             // Decrease mode.
-            switch (mode)
+            switch (attach_mode)
             {
                 case XDP_MODE_HW:
-                    mode = XDP_MODE_NATIVE;
-                    smode = "DRV/native";
+                    attach_mode = XDP_MODE_NATIVE;
+                    *mode = "DRV/native";
 
                     break;
 
                 case XDP_MODE_NATIVE:
-                    mode = XDP_MODE_SKB;
-                    smode = "SKB/generic";
+                    attach_mode = XDP_MODE_SKB;
+                    *mode = "SKB/generic";
 
                     break;
 
                 case XDP_MODE_SKB:
                     // Exit loop.
                     exit = 1;
-                    smode = NULL;
+
+                    *mode = NULL;
                     
                     break;
             }
@@ -142,14 +168,9 @@ int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd)
     }
 
     // If exit is set to 1 or smode is NULL, it indicates full failure.
-    if (exit || smode == NULL)
+    if (exit || *mode == NULL)
     {
         return EXIT_FAILURE;
-    }
-
-    if (detach < 1)
-    {
-        fprintf(stdout, "Loaded XDP program on mode %s...\n", smode);
     }
 
     return EXIT_SUCCESS;

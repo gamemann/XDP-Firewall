@@ -9,10 +9,14 @@
 
 #include <arpa/inet.h>
 
+#include <loader/utils/helpers.h>
+
 #define CONFIG_DEFAULT_PATH "/etc/xdpfw/xdpfw.conf"
 
 struct config
 {
+    int verbose;
+    char *log_file;
     char *interface;
     u16 updatetime;
     unsigned int nostats : 1;
@@ -26,3 +30,5 @@ void PrintConfig(config__t* cfg);
 
 int OpenCfg(const char *filename);
 int ReadCfg(config__t *cfg);
+
+#include <loader/utils/logging.h>

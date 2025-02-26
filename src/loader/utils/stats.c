@@ -40,9 +40,12 @@ int CalculateStats(int stats_map, int cpus)
         dropped += stats[i].dropped;
         passed += stats[i].passed;
     }
+    
+    printf("\r\033[1;32mAllowed:\033[0m %llu  |  ", allowed);
+    printf("\033[1;31mDropped:\033[0m %llu  |  ", dropped);
+    printf("\033[1;34mPassed:\033[0m %llu", passed);
 
-    fflush(stdout);
-    fprintf(stdout, "\rAllowed: %llu | Dropped: %llu | Passed: %llu", allowed, dropped, passed);
+    fflush(stdout);    
 
     return EXIT_SUCCESS;
 }

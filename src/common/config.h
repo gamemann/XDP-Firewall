@@ -21,3 +21,7 @@
 // This allows for more precise rate limits (connection-specific instead of a single source IP).
 // I decided not to include the destination IP/port because the source IP, port, and protocol should be represent a unique connection.
 #define USE_FLOW_RL
+
+// Enables filter logging through XDP.
+// If performance is a concerned, it is best to disable this feature by commenting out the below line with //.
+#define ENABLE_FILTER_LOGGING
