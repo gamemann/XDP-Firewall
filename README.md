@@ -118,7 +118,7 @@ The following table quickly explains the data types used within the configuratio
 ### Main
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| verbose | int | `1` | The verbose level for logging (0 - 4 supported so far). |
+| verbose | int | `1` | The verbose level for logging (0 - 5 supported so far). |
 | log_file | string | `/var/log/xdpfw/xdpfw.log` | The log file location. If the string is empty (`""`), the log file is disabled. |
 | interface | string | `NULL` | The network interface name to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
 | update_time | uint | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
@@ -315,6 +315,11 @@ I recommend only enabling filter logging at this time for debugging. If you'd li
 ```
 
 I will most likely implement functionality to rate limit log messages from XDP in the future.
+
+### LibBPF Logging
+When loading the BPF/XDP program through LibXDP/LibBPF, logging is disabled unless if the `verbose` log setting is set to `5` or higher.
+
+If the tool fails to load or attach the XDP program, it is recommended you set `verbose` to 5 or above so LibXDP outputs specific warnings and errors.
 
 ## My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!

@@ -85,8 +85,18 @@ int main(int argc, char *argv[])
 
     LogMsg(&cfg, 2, 0, "Loading XDP/BPF program at '%s'...", XDP_OBJ_PATH);
 
+    // Determine custom LibBPF log level.
+    int silent = 1;
+
+    if (cfg.verbose > 4)
+    {
+        silent = 0;
+    }
+
+    SetLibBPFLogMode(silent);
+
     // Load BPF object.
-    struct xdp_program *prog = LoadBpfObj(XDP_OBJ_PATH);
+    struct xdp_program *prog = LoadBpfObj(XDP_OBJ_PATH, strict);
 
     if (prog == NULL)
     {

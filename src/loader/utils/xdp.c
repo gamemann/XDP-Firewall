@@ -37,13 +37,43 @@ int FindMapFd(struct xdp_program *prog, const char *map_name)
 }
 
 /**
+ * Custom print function for LibBPF that doesn't print anything (silent mode).
+ * 
+ * @param level The current LibBPF log level.
+ * @param format The message format.
+ * @param args Format arguments for the message.
+ * 
+ * @return void
+ */
+static int silent_libbpf_log(enum libbpf_print_level level, const char *format, va_list args)
+{
+    return 0;
+}
+
+/**
+ * Sets custom LibBPF log mode.
+ * 
+ * @param silent If 1, disables LibBPF logging entirely.
+ * 
+ * @return void
+ */
+void SetLibBPFLogMode(int silent)
+{
+    if (silent)
+    {
+        libbpf_set_print(silent_libbpf_log);
+    }
+}
+
+/**
  * Loads a BPF object file.
  * 
  * @param file_name The path to the BPF object file.
+ * @param strict Whether to enable strict mode.
  * 
  * @return XDP program structure (pointer) or NULL.
  */
-struct xdp_program *LoadBpfObj(const char *file_name)
+struct xdp_program *LoadBpfObj(const char *file_name, int strict)
 {
     struct xdp_program *prog = xdp_program__open_file(file_name, "xdp_prog", NULL);
 
