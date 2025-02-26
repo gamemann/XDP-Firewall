@@ -118,6 +118,8 @@ The following table quickly explains the data types used within the configuratio
 ### Main
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
+| verbose | int | `1` | The verbose level for logging (0 - 4 supported so far). |
+| log_file | string | `/var/log/xdpfw/xdpfw.log` | The log file location. If the string is empty (`""`), the log file is disabled. |
 | interface | string | `NULL` | The network interface name to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
 | update_time | uint | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
