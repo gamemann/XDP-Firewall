@@ -23,5 +23,5 @@
 #define USE_FLOW_RL
 
 // Enables filter logging through XDP.
-// If performance is a concerned, it is best to disable this feature by commenting out the below line with //.
+// If performance is a concern, it is best to disable this feature by commenting out the below line with //.
 #define ENABLE_FILTER_LOGGING
