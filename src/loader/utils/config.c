@@ -44,7 +44,7 @@ int LoadConfig(config__t *cfg, char *cfg_file)
  */
 void SetCfgDefaults(config__t *cfg)
 {
-    cfg->verbose = 1;
+    cfg->verbose = 2;
     cfg->log_file = strdup("/var/log/xdpfw/xdpfw.log");
     cfg->updatetime = 0;
     cfg->interface = NULL;
