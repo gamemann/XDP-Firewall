@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
     SetLibBPFLogMode(silent);
 
     // Load BPF object.
-    struct xdp_program *prog = LoadBpfObj(XDP_OBJ_PATH, strict);
+    struct xdp_program *prog = LoadBpfObj(XDP_OBJ_PATH);
 
     if (prog == NULL)
     {
