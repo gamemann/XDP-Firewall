@@ -305,6 +305,17 @@ export LD_LIBRARY_PATH=/usr/local/lib
 sudo xdpfw
 ```
 
+### Filter Logging
+This tool uses `bpf_ringbuf_reserve()` and `bpf_ringbuf_submit()` for filter match logging. At this time, there is no rate limit for the amount of log messages that may be sent. Therefore, if you're encountering a spoofed attack that is matching a filter rule with logging enabled, it will cause additional processing and disk load.
+
+I recommend only enabling filter logging at this time for debugging. If you'd like to disable filter logging entirely (which will improve performance slightly), you may comment out the `ENABLE_FILTER_LOGGING` line [here](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L27).
+
+```C
+//#define ENABLE_FILTER_LOGGING
+```
+
+I will most likely implement functionality to rate limit log messages from XDP in the future.
+
 ## My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 
