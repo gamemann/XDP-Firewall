@@ -46,9 +46,10 @@ void SetCfgDefaults(config__t *cfg)
 {
     cfg->verbose = 2;
     cfg->log_file = strdup("/var/log/xdpfw/xdpfw.log");
-    cfg->updatetime = 0;
+    cfg->update_time = 0;
     cfg->interface = NULL;
-    cfg->nostats = 0;
+    cfg->no_stats = 0;
+    cfg->stats_per_second = 0;
     cfg->stdout_update_time = 1000;
 
     for (int i = 0; i < MAX_FILTERS; i++)
@@ -214,11 +215,11 @@ int ReadCfg(config__t *cfg)
     cfg->interface = strdup(interface);
 
     // Get auto update time.
-    int updatetime;
+    int update_time;
 
-    if (config_lookup_int(&conf, "update_time", &updatetime) == CONFIG_TRUE)
+    if (config_lookup_int(&conf, "update_time", &update_time) == CONFIG_TRUE)
     {
-        cfg->updatetime = updatetime;
+        cfg->update_time = update_time;
     }
 
     // Get stdout update time.
@@ -230,11 +231,19 @@ int ReadCfg(config__t *cfg)
     }
 
     // Get no stats.
-    int nostats;
+    int no_stats;
 
-    if (config_lookup_bool(&conf, "no_stats", &nostats) == CONFIG_TRUE)
+    if (config_lookup_bool(&conf, "no_stats", &no_stats) == CONFIG_TRUE)
     {
-        cfg->nostats = nostats;
+        cfg->no_stats = no_stats;
+    }
+
+    // Stats per second.
+    int stats_per_second;
+
+    if (config_lookup_bool(&conf, "stats_per_second", &stats_per_second) == CONFIG_TRUE)
+    {
+        cfg->stats_per_second = stats_per_second;
     }
 
     // Read filters in filters_map structure.
@@ -586,9 +595,9 @@ void PrintConfig(config__t* cfg)
     fprintf(stdout, "Printing config...\n");
     fprintf(stdout, "\tGeneral Settings\n");
     fprintf(stdout, "\t\tInterface Name => %s\n", cfg->interface);
-    fprintf(stdout, "\t\tUpdate Time => %d\n", cfg->updatetime);
+    fprintf(stdout, "\t\tUpdate Time => %d\n", cfg->update_time);
     fprintf(stdout, "\t\tStdout Update Time => %d\n", cfg->stdout_update_time);
-    fprintf(stdout, "\t\tNo Stats => %d\n\n", cfg->nostats);
+    fprintf(stdout, "\t\tNo Stats => %d\n\n", cfg->no_stats);
 
     fprintf(stdout, "\tFilters\n");
 

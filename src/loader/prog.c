@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
     struct stat conf_stat;
 
     // Check if we're doing stats.
-    if (!cfg.nostats)
+    if (!cfg.no_stats)
     {
         doing_stats = 1;
     }
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
         }
 
         // Check for auto-update.
-        if (cfg.updatetime > 0 && (cur_time - last_update_check) > cfg.updatetime)
+        if (cfg.update_time > 0 && (cur_time - last_update_check) > cfg.update_time)
         {
             // Check if config file have been modified
             if (stat(cmd.cfgfile, &conf_stat) == 0 && conf_stat.st_mtime > last_config_check) {
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
                 last_config_check = time(NULL);
 
                 // Make sure we set doing stats if needed.
-                if (!cfg.nostats && !doing_stats)
+                if (!cfg.no_stats && !doing_stats)
                 {
                     doing_stats = 1;
                 }
@@ -245,9 +245,9 @@ int main(int argc, char *argv[])
         }
 
         // Calculate and display stats if enabled.
-        if (!cfg.nostats)
+        if (!cfg.no_stats)
         {
-            if (CalculateStats(stats_map, cpus))
+            if (CalculateStats(stats_map, cpus, cfg.stats_per_second))
             {
                 LogMsg(&cfg, 1, 0, "[WARNING] Failed to calculate packet stats. Stats map FD => %d...\n", stats_map);
             }

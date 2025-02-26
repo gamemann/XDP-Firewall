@@ -18,8 +18,9 @@ struct config
     int verbose;
     char *log_file;
     char *interface;
-    u16 updatetime;
-    unsigned int nostats : 1;
+    u16 update_time;
+    unsigned int no_stats : 1;
+    unsigned int stats_per_second : 1;
     int stdout_update_time;
     filter_t filters[MAX_FILTERS];
 } typedef config__t; // config_t is taken by libconfig -.-

@@ -8,4 +8,6 @@
 #include <loader/utils/config.h>
 #include <loader/utils/helpers.h>
 
-int CalculateStats(int stats_map, int cpus);
+#include <time.h>
+
+int CalculateStats(int stats_map, int cpus, int per_second);
