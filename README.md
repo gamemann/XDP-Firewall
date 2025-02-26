@@ -59,6 +59,7 @@ Additionally, here is a list of flags you may pass to this script.
 | --no-install | Build the tool and/or LibXDP without installing them. |
 | --clean | Remove build files for the tool and LibXDP. |
 | --no-static | Do *not* statically link LibXDP and LibBPF object files when building the tool. This makes the build process faster, but you may need to alter your `LD_LIBRARY_PATH` env variable before running the tool and requires LibXDP to be installed on your system already. |
+| --objdump | Dumps the XDP/BPF object file using [`llvm-objdump`](https://llvm.org/docs/CommandGuide/llvm-objdump.html) to Assemby into `objdump.asm`. |
 | --help | Displays help message. |
 
 ![Script Build Demo](./images/build_script.gif)

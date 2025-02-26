@@ -55,7 +55,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Set IPv4 and IPv6 common variables.
     if (eth->h_proto == htons(ETH_P_IPV6))
     {
-        iph6 = (data + sizeof(struct ethhdr));
+        iph6 = data + sizeof(struct ethhdr);
 
         if (unlikely(iph6 + 1 > (struct ipv6hdr *)data_end))
         {
@@ -66,7 +66,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
     else
     {
-        iph = (data + sizeof(struct ethhdr));
+        iph = data + sizeof(struct ethhdr);
 
         if (unlikely(iph + 1 > (struct iphdr *)data_end))
         {
@@ -152,7 +152,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
             case IPPROTO_TCP:
                 // Scan TCP header.
-                tcph = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
+                tcph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
 
                 // Check TCP header.
                 if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
@@ -170,7 +170,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             case IPPROTO_UDP:
                 // Scan UDP header.
-                udph = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
+                udph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
 
                 // Check TCP header.
                 if (unlikely(udph + 1 > (struct udphdr *)data_end))
@@ -188,7 +188,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             case IPPROTO_ICMPV6:
                 // Scan ICMPv6 header.
-                icmp6h = (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr));
+                icmp6h = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
 
                 // Check ICMPv6 header.
                 if (unlikely(icmp6h + 1 > (struct icmp6hdr *)data_end))
@@ -207,7 +207,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
             case IPPROTO_TCP:
                 // Scan TCP header.
-                tcph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
+                tcph = data + sizeof(struct ethhdr) + (iph->ihl * 4);
 
                 // Check TCP header.
                 if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
@@ -225,7 +225,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             case IPPROTO_UDP:
                 // Scan UDP header.
-                udph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
+                udph = data + sizeof(struct ethhdr) + (iph->ihl * 4);
 
                 // Check TCP header.
                 if (unlikely(udph + 1 > (struct udphdr *)data_end))
@@ -243,7 +243,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
             case IPPROTO_ICMP:
                 // Scan ICMP header.
-                icmph = (data + sizeof(struct ethhdr) + (iph->ihl * 4));
+                icmph = data + sizeof(struct ethhdr) + (iph->ihl * 4);
 
                 // Check ICMP header.
                 if (unlikely(icmph + 1 > (struct icmphdr *)data_end))
