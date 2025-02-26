@@ -12,7 +12,7 @@ With that said, reasons for a host's network configuration not supporting XDP's 
 
 I hope this project helps existing network engineers/programmers interested in utilizing XDP or anybody interested in getting into those fields! (D)DoS mitigation/prevention is such an important part of Cyber Security and understanding the concept of networking and packet flow on a low-medium level would certainly help those who are pursuing a career in the field 🙂
 
-![Demo](./images/demo.gif)
+![Demo Run](./images/run.gif)
 
 ## Building & Installing
 Before building, ensure the following packages are installed. These packages can be installed with `apt` on Debian-based systems (e.g. Ubuntu, etc.), but there should be similar package names in other package managers.
@@ -59,7 +59,9 @@ Additionally, here is a list of flags you may pass to this script.
 | --no-install | Build the tool and/or LibXDP without installing them. |
 | --clean | Remove build files for the tool and LibXDP. |
 | --no-static | Do *not* statically link LibXDP and LibBPF object files when building the tool. This makes the build process faster, but you may need to alter your `LD_LIBRARY_PATH` env variable before running the tool and requires LibXDP to be installed on your system already. |
-| --help | Displays help message. | 
+| --help | Displays help message. |
+
+![Script Build Demo](./images/build_script.gif)
 
 ### Without Bash Script
 If you do not want to use the Bash script above, you may use `make` to build and install this tool instead.
@@ -79,6 +81,8 @@ make
 # Warning: This command must be executed as root! `sudo` should do this for you if you have it installed and have privileges.
 sudo make install
 ```
+
+![Script Build Demo](./images/build_make.gif)
 
 ## Command Line Usage
 The following command line arguments are supported.
