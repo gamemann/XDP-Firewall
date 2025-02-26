@@ -12,5 +12,5 @@
 
 int FindMapFd(struct xdp_program *prog, const char *map_name);
 struct xdp_program *LoadBpfObj(const char *file_name);
-int AttachXdp(struct xdp_program *prog, int ifidx, u8 detach, cmdline_t *cmd);
+int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdline_t *cmd);
 void UpdateFilters(int filters_map, config__t *cfg);

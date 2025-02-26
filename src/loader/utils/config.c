@@ -46,6 +46,8 @@ int LoadConfig(config__t *cfg, char *cfg_file)
  */
 void SetCfgDefaults(config__t *cfg)
 {
+    cfg->verbose = 1;
+    cfg->log_file = strdup("/var/log/xdpfw/xdpfw.log");
     cfg->updatetime = 0;
     cfg->interface = NULL;
     cfg->nostats = 0;
@@ -166,6 +168,35 @@ int ReadCfg(config__t *cfg)
         config_destroy(&conf);
 
         return EXIT_FAILURE;
+    }
+
+    int verbose;
+
+    if (config_lookup_int(&conf, "verbose", &verbose) == CONFIG_TRUE)
+    {
+        cfg->verbose = verbose;
+    }
+
+    const char* log_file;
+
+    if (config_lookup_string(&conf, "log_file", &log_file) == CONFIG_TRUE)
+    {
+        // We must free previous value to prevent memory leak.
+        if (cfg->log_file != NULL)
+        {
+            free(cfg->log_file);
+            cfg->log_file = NULL;
+        }
+
+        if (strlen(log_file) > 0)
+        {
+            cfg->log_file = strdup(log_file);
+            
+        }
+        else
+        {
+            cfg->log_file = NULL;
+        }
     }
 
     // Get interface.

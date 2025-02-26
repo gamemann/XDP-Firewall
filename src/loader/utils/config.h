@@ -13,6 +13,8 @@
 
 struct config
 {
+    int verbose;
+    char *log_file;
     char *interface;
     u16 updatetime;
     unsigned int nostats : 1;

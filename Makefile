@@ -13,6 +13,7 @@ LOADER_DIR = $(SRC_DIR)/loader
 XDP_DIR = $(SRC_DIR)/xdp
 
 ETC_DIR = /etc/xdpfw
+LOG_DIR = /var/log/xdpfw
 
 # Additional build directories.
 BUILD_LOADER_DIR = $(BUILD_DIR)/loader
@@ -52,6 +53,9 @@ LOADER_UTILS_CMDLINE_OBJ = cmdline.o
 LOADER_UTILS_XDP_SRC = xdp.c
 LOADER_UTILS_XDP_OBJ = xdp.o
 
+LOADER_UTILS_LOGGING_SRC = logging.c
+LOADER_UTILS_LOGGING_OBJ = logging.o
+
 LOADER_UTILS_STATS_SRC = stats.c
 LOADER_UTILS_STATS_OBJ = stats.o
 
@@ -59,7 +63,7 @@ LOADER_UTILS_HELPERS_SRC = helpers.c
 LOADER_UTILS_HELPERS_OBJ = helpers.o
 
 # Loader objects.
-LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_STATS_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
+LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_LOGGING_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_STATS_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
 
 ifeq ($(LIBXDP_STATIC), 1)
 	LOADER_OBJS := $(LIBBPF_OBJS) $(LIBXDP_OBJS) $(LOADER_OBJS)
@@ -93,7 +97,7 @@ all: loader xdp
 loader: loader_utils
 	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_LOADER_DIR)/$(LOADER_OUT) $(LOADER_OBJS) $(LOADER_DIR)/$(LOADER_SRC)
 
-loader_utils: loader_utils_config loader_utils_cmdline loader_utils_helpers loader_utils_xdp loader_utils_stats
+loader_utils: loader_utils_config loader_utils_cmdline loader_utils_helpers loader_utils_xdp loader_utils_logging loader_utils_stats
 
 loader_utils_config:
 	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_CONFIG_SRC)
@@ -103,6 +107,9 @@ loader_utils_cmdline:
 
 loader_utils_xdp:
 	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_XDP_SRC)
+
+loader_utils_logging:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_LOGGING_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_LOGGING_SRC)
 
 loader_utils_stats:
 	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_STATS_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_STATS_SRC)
@@ -128,6 +135,8 @@ libxdp_clean:
 
 install:
 	mkdir -p $(ETC_DIR)
+	mkdir -p $(LOG_DIR)
+	
 	cp -n xdpfw.conf.example $(ETC_DIR)/xdpfw.conf
 
 	cp -n other/xdpfw.service /etc/systemd/system/
