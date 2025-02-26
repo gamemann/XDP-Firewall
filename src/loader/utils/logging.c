@@ -45,7 +45,10 @@ static void LogMsgRaw(int req_lvl, int cur_lvl, int error, const char* log_path,
     // If we're calculating stats, we need to prepend a new line.
     if (doing_stats)
     {
+        printf("\033[F");
+        
         fprintf(pipe, "\n%s\n", full_msg);
+
     }
     else
     {
