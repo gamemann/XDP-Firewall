@@ -104,6 +104,21 @@ void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
 }
 
 /**
+ * Polls the filters map ringbuffer.
+ * 
+ * @param rb A pointer to the ringbuffer.
+ * 
+ * @return void
+ */
+void PollFiltersRb(struct ring_buffer* rb)
+{
+    if (rb)
+    {
+        ring_buffer__poll(rb, RB_TIMEOUT);
+    }
+}
+
+/**
  * Callback for BPF ringbuffer event (filter logging).
  * 
  * @param ctx The context (should be config__t*).

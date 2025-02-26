@@ -254,10 +254,7 @@ int main(int argc, char *argv[])
         }
 
 #ifdef ENABLE_FILTER_LOGGING
-        if (rb)
-        {
-            ring_buffer__poll(rb, RB_TIMEOUT);
-        }
+        PollFiltersRb(rb);
 #endif
 
         usleep(sleep_time);

@@ -17,4 +17,6 @@
 extern int doing_stats;
 
 void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...);
+
+void PollFiltersRb(struct ring_buffer* rb);
 int HandleRbEvent(void* ctx, void* data, size_t sz);
