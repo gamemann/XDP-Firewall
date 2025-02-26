@@ -59,6 +59,12 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
+    // Print tool info.
+    if (cfg.verbose > 0)
+    {
+        PrintToolInfo();
+    }
+
     LogMsg(&cfg, 2, 0, "Raising RLimit...");
 
     // Raise RLimit.

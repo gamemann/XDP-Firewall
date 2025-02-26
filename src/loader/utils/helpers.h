@@ -18,3 +18,4 @@ extern int cont;
 void PrintHelpMenu();
 void SignalHndl(int code);
 ip_range_t ParseIpCidr(const char* ip);
+void PrintToolInfo();
