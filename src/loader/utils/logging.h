@@ -14,5 +14,7 @@
 
 #define RB_TIMEOUT 100
 
+extern int doing_stats;
+
 void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...);
 int HandleRbEvent(void* ctx, void* data, size_t sz);

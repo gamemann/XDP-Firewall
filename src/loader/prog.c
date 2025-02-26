@@ -19,6 +19,7 @@
 #include <loader/utils/helpers.h>
 
 int cont = 1;
+int doing_stats = 0;
 
 int main(int argc, char *argv[])
 {
@@ -194,6 +195,12 @@ int main(int argc, char *argv[])
 
     struct stat conf_stat;
 
+    // Check if we're doing stats.
+    if (!cfg.nostats)
+    {
+        doing_stats = 1;
+    }
+
     while (cont)
     {
         // Get current time.
@@ -225,6 +232,12 @@ int main(int argc, char *argv[])
 
                 // Update timer
                 last_config_check = time(NULL);
+
+                // Make sure we set doing stats if needed.
+                if (!cfg.nostats && !doing_stats)
+                {
+                    doing_stats = 1;
+                }
             }
 
             // Update last updated variable.

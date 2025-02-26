@@ -42,7 +42,15 @@ static void LogMsgRaw(int req_lvl, int cur_lvl, int error, const char* log_path,
     char full_msg[len + 6 + 1];
     snprintf(full_msg, sizeof(full_msg), "[%d] %s", req_lvl, f_msg);
 
-    fprintf(pipe, "%s\n", full_msg);
+    // If we're calculating stats, we need to prepend a new line.
+    if (doing_stats)
+    {
+        fprintf(pipe, "\n%s\n", full_msg);
+    }
+    else
+    {
+        fprintf(pipe, "%s\n", full_msg);
+    }
 
     if (log_path != NULL)
     {
