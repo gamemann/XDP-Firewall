@@ -95,6 +95,13 @@ void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
     va_end(args);
 }
 
+/**
+ * Callback for BPF ringbuffer event (filter logging).
+ * 
+ * @param ctx The context (should be config__t*).
+ * @param data The event data (should be filter_log_event_t*).
+ * @param sz The event data size.
+ */
 int HandleRbEvent(void* ctx, void* data, size_t sz)
 {
     config__t* cfg = (config__t*)ctx;
