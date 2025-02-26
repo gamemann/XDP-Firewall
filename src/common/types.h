@@ -64,6 +64,8 @@ struct filter
 {
     u8 id;
 
+    unsigned int log : 1;
+
     unsigned int enabled : 1;
 
     u8 action;
@@ -132,3 +134,14 @@ struct flow6
     u16 port;
     u8 protocol;
 } typedef flow6_t;
+
+struct filter_log_event
+{
+    u64 ts;
+    int filter_id;
+    u32 src_ip;
+    u32 src_ip6[4];
+    u16 src_port;
+    u64 pps;
+    u64 bps;
+} typedef filter_log_event_t;

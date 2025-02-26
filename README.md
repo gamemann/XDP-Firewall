@@ -129,8 +129,10 @@ The following table quickly explains the data types used within the configuratio
 ### Filter Object
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
-| enabled | bool | `false` | Whether the rule is enabled or not. |
-| action | uint | `0` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
+| enabled | bool | `true` | Whether the rule is enabled or not. |
+
+| action | uint | `1` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
+| log | bool | `false` | Whether to log packets that are matched. |
 | block_time | uint | `1` | The amount of seconds to block the source IP for if matched. |
 | src_ip | string | `NULL` | The source IPv4 address to match (e.g. `10.50.0.3`). CIDRs are also supported (e.g. `10.50.0.0/24`)! |
 | dst_ip | string | `NULL` | The destination IPv4 address to match (e.g. `10.50.0.4`). CIDRs are also supported (e.g. `10.50.0.0/24`)! |

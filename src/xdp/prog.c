@@ -513,6 +513,34 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
         }
+
+#ifdef ENABLE_FILTER_LOGGING
+        if (filter->log > 0)
+        {
+            filter_log_event_t* e = bpf_ringbuf_reserve(&filter_log_map, sizeof(*e), 0);
+
+            if (e)
+            {
+                e->ts = now;
+                e->filter_id = i;
+
+                if (iph)
+                {
+                    e->src_ip = iph->saddr;
+                } else if (iph6)
+                {
+                    memcpy(&e->src_ip6, iph6->saddr.in6_u.u6_addr32, 4);
+                }
+
+                e->src_port = src_port;
+
+                e->pps = pps;
+                e->bps = bps;
+
+                bpf_ringbuf_submit(e, 0);
+            }
+        }
+#endif
         
         // Matched.
         action = filter->action;

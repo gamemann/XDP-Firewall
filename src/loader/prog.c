@@ -136,6 +136,22 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+#ifdef ENABLE_FILTER_LOGGING
+    int filter_log_map = FindMapFd(prog, "filter_log_map");
+    struct ring_buffer* rb = NULL;
+
+    if (filter_log_map < 0)
+    {
+        LogMsg(&cfg, 1, 0, "[WARNING] Failed to find 'filter_log_map' BPF map. Filter logging will be disabled...");
+    }
+    else
+    {
+        LogMsg(&cfg, 3, 0, "filter_log_map FD => %d.", filter_log_map);
+
+        rb = ring_buffer__new(filter_log_map, HandleRbEvent, &cfg, NULL);
+    }
+#endif
+
     LogMsg(&cfg, 3, 0, "stats_map FD => %d.", stats_map);
 
     LogMsg(&cfg, 2, 0, "Updating filters...");
@@ -208,10 +224,24 @@ int main(int argc, char *argv[])
             }
         }
 
+#ifdef ENABLE_FILTER_LOGGING
+        if (rb)
+        {
+            ring_buffer__poll(rb, RB_TIMEOUT);
+        }
+#endif
+
         usleep(sleep_time);
     }
 
     fprintf(stdout, "\n");
+
+#ifdef ENABLE_FILTER_LOGGING
+    if (rb)
+    {
+        ring_buffer__free(rb);
+    }
+#endif
 
     // Detach XDP program.
     if (AttachXdp(prog, &mode_used, ifidx, 1, &cmd))

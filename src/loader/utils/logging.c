@@ -94,3 +94,37 @@ void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
 
     va_end(args);
 }
+
+int HandleRbEvent(void* ctx, void* data, size_t sz)
+{
+    config__t* cfg = (config__t*)ctx;
+    filter_log_event_t* e = (filter_log_event_t*)data;
+
+    filter_t* filter = &cfg->filters[e->filter_id];
+
+    if (filter == NULL)
+    {
+        return 1;
+    }
+
+    char ip_str[INET6_ADDRSTRLEN];
+
+    if (memcmp(e->src_ip6, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16) != 0)
+    {
+        inet_ntop(AF_INET6, e->src_ip6, ip_str, sizeof(ip_str));
+    } else
+    {
+        inet_ntop(AF_INET, &e->src_ip, ip_str, sizeof(ip_str));
+    }
+
+    char* action = "Dropped";
+    
+    if (filter->action == 1)
+    {
+        action = "Passed";
+    }
+
+    LogMsg(cfg, 0, 0, "[FILTER %d] %s packet from '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id, action, ip_str, e->src_port, e->pps, e->bps, filter->blocktime);
+
+    return 0;
+}
