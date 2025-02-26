@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ -z "$ROOT" ]; then
-    make clean
-else
-    cd $ROOT && make clean
+if [ -n "$ROOT" ]; then
+    cd $ROOT
 fi
+
+make clean

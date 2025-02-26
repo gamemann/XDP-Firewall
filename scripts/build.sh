@@ -6,8 +6,8 @@ if [ -z "$STATIC" ]; then
     STATIC=1
 fi
 
-if [ -z "$ROOT" ]; then
-    LIBXDP_STATIC=$STATIC make
-else
-    cd $ROOT && LIBXDP_STATIC=$STATIC make
+if [ -n "$ROOT" ]; then
+    cd $ROOT
 fi
+
+LIBXDP_STATIC=$STATIC make

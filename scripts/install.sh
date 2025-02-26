@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ -z "$ROOT" ]; then
-    make install
-else
-    cd $ROOT && make install
+if [ -n "$ROOT" ]; then
+    cd $ROOT
 fi
+
+make install
