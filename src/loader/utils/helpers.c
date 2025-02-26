@@ -58,6 +58,30 @@ ip_range_t ParseIpCidr(const char *ip)
 }
 
 /**
+ * Retrieves protocol name by ID.
+ * 
+ * @param id The protocol ID
+ * 
+ * @return The protocol string. 
+ */
+const char* GetProtocolStrById(int id)
+{
+    switch (id)
+    {
+        case IPPROTO_TCP:
+            return "TCP";
+
+        case IPPROTO_UDP:
+            return "UDP";
+        
+        case IPPROTO_ICMP:
+            return "ICMP";
+    }
+
+    return "N/A";
+}
+
+/**
  * Prints tool name and author.
  * 
  * @return void

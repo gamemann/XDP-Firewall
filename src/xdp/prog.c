@@ -136,6 +136,11 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct icmp6hdr *icmp6h = NULL;
 
     u16 src_port = 0;
+
+#ifdef ENABLE_FILTER_LOGGING
+    u16 dst_port = 0;
+#endif
+
     u8 protocol = 0;
     
     if (iph6)
@@ -156,6 +161,10 @@ int xdp_prog_main(struct xdp_md *ctx)
 
                 src_port = tcph->source;
 
+#ifdef ENABLE_FILTER_LOGGING
+                dst_port = tcph->dest;
+#endif
+
                 break;
 
             case IPPROTO_UDP:
@@ -169,6 +178,10 @@ int xdp_prog_main(struct xdp_md *ctx)
                 }
 
                 src_port = udph->source;
+
+#ifdef ENABLE_FILTER_LOGGING
+                dst_port = udph->dest;
+#endif
 
                 break;
 
@@ -203,6 +216,10 @@ int xdp_prog_main(struct xdp_md *ctx)
 
                 src_port = tcph->source;
 
+#ifdef ENABLE_FILTER_LOGGING
+                dst_port = tcph->dest;
+#endif
+
                 break;
 
             case IPPROTO_UDP:
@@ -216,6 +233,10 @@ int xdp_prog_main(struct xdp_md *ctx)
                 }
 
                 src_port = udph->source;
+
+#ifdef ENABLE_FILTER_LOGGING
+                dst_port = udph->dest;
+#endif
 
                 break;
 
@@ -527,12 +548,17 @@ int xdp_prog_main(struct xdp_md *ctx)
                 if (iph)
                 {
                     e->src_ip = iph->saddr;
+                    e->dst_ip = iph->daddr;
                 } else if (iph6)
                 {
                     memcpy(&e->src_ip6, iph6->saddr.in6_u.u6_addr32, 4);
+                    memcpy(&e->dst_ip6, iph6->daddr.in6_u.u6_addr32, 4);
                 }
 
                 e->src_port = src_port;
+                e->dst_port = dst_port;
+
+                e->protocol = protocol;
 
                 e->pps = pps;
                 e->bps = bps;

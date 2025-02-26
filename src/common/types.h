@@ -139,9 +139,19 @@ struct filter_log_event
 {
     u64 ts;
     int filter_id;
+
     u32 src_ip;
     u32 src_ip6[4];
+
     u16 src_port;
+
+    u32 dst_ip;
+    u32 dst_ip6[4];
+
+    u16 dst_port;
+
+    u8 protocol;
+
     u64 pps;
     u64 bps;
 } typedef filter_log_event_t;

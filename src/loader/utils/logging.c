@@ -101,6 +101,8 @@ void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
  * @param ctx The context (should be config__t*).
  * @param data The event data (should be filter_log_event_t*).
  * @param sz The event data size.
+ * 
+ * @return 0 on success or 1 on failure.
  */
 int HandleRbEvent(void* ctx, void* data, size_t sz)
 {
@@ -114,14 +116,17 @@ int HandleRbEvent(void* ctx, void* data, size_t sz)
         return 1;
     }
 
-    char ip_str[INET6_ADDRSTRLEN];
+    char src_ip_str[INET6_ADDRSTRLEN];
+    char dst_ip_str[INET_ADDRSTRLEN];
 
     if (memcmp(e->src_ip6, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16) != 0)
     {
-        inet_ntop(AF_INET6, e->src_ip6, ip_str, sizeof(ip_str));
+        inet_ntop(AF_INET6, e->src_ip6, src_ip_str, sizeof(src_ip_str));
+        inet_ntop(AF_INET6, e->dst_ip6, dst_ip_str, sizeof(dst_ip_str));
     } else
     {
-        inet_ntop(AF_INET, &e->src_ip, ip_str, sizeof(ip_str));
+        inet_ntop(AF_INET, &e->src_ip, src_ip_str, sizeof(src_ip_str));
+        inet_ntop(AF_INET, &e->dst_ip, dst_ip_str, sizeof(dst_ip_str));
     }
 
     char* action = "Dropped";
@@ -131,7 +136,9 @@ int HandleRbEvent(void* ctx, void* data, size_t sz)
         action = "Passed";
     }
 
-    LogMsg(cfg, 0, 0, "[FILTER %d] %s packet from '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id, action, ip_str, e->src_port, e->pps, e->bps, filter->blocktime);
+    const char* protocol_str = GetProtocolStrById(e->protocol);
+
+    LogMsg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->pps, e->bps, filter->blocktime);
 
     return 0;
 }
