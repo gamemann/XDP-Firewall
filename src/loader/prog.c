@@ -21,6 +21,34 @@
 int cont = 1;
 int doing_stats = 0;
 
+/**
+ * Unpins filter-specific BPF maps from file system.
+ * 
+ * @param cfg A pointer to the config structure.
+ * @param obj A pointer to the BPF object.
+ * @param ignore_errors Whether to ignore errors.
+ */
+static void UnpinFilterMaps(config__t* cfg, struct bpf_object* obj, int ignore_errors)
+{
+    int ret;
+
+    if ((ret = UnpinBpfMap(obj, XDP_MAP_PIN_DIR, "map_filters")) != 0)
+    {
+        if (!ignore_errors)
+        {
+            LogMsg(cfg, 1, 0, "[WARNING] Failed to un-pin BPF map 'map_filters' from file system (%d).", ret);
+        }
+    }
+
+    if ((ret = UnpinBpfMap(obj, XDP_MAP_PIN_DIR, "map_filter_log")) != 0)
+    {
+        if (!ignore_errors)
+        {
+            LogMsg(cfg, 1, 0, "[WARNING] Failed to un-pin BPF map 'map_filter_log' from file system (%d).", ret);
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     int ret;
@@ -29,6 +57,7 @@ int main(int argc, char *argv[])
     cmdline_t cmd = {0};
     cmd.cfgfile = CONFIG_DEFAULT_PATH;
     cmd.verbose = -1;
+    cmd.pin_maps = -1;
     cmd.update_time = -1;
     cmd.no_stats = -1;
     cmd.stats_per_second = -1;
@@ -54,6 +83,7 @@ int main(int argc, char *argv[])
     cfg_overrides.verbose = cmd.verbose;
     cfg_overrides.log_file = cmd.log_file;
     cfg_overrides.interface = cmd.interface;
+    cfg_overrides.pin_maps = cmd.pin_maps;
     cfg_overrides.update_time = cmd.update_time;
     cfg_overrides.no_stats = cmd.no_stats;
     cfg_overrides.stats_per_second = cmd.stats_per_second;
@@ -140,7 +170,7 @@ int main(int argc, char *argv[])
     // Attach XDP program.
     char *mode_used = NULL;
 
-    if ((ret = AttachXdp(prog, &mode_used, ifidx, 0, &cmd)) != 0)
+    if ((ret = AttachXdp(prog, &mode_used, ifidx, 0, cmd.skb, cmd.offload)) != 0)
     {
         LogMsg(&cfg, 0, 1, "[ERROR] Failed to attach XDP program to interface '%s' using available modes (%d).\n", cfg.interface, ret);
 
@@ -193,6 +223,36 @@ int main(int argc, char *argv[])
 #endif
 
     LogMsg(&cfg, 3, 0, "map_stats FD => %d.", map_stats);
+
+    // Pin BPF maps to file system if we need to.
+    if (cfg.pin_maps)
+    {
+        LogMsg(&cfg, 2, 0, "Pinning BPF maps...");
+
+        struct bpf_object* obj = GetBpfObj(prog);
+
+        // There are times where the BPF maps from the last run weren't cleaned up properly.
+        // So it's best to attempt to unpin the maps before pinning while ignoring errors.
+        UnpinFilterMaps(&cfg, obj, 1);
+
+        if ((ret = PinBpfMap(obj, XDP_MAP_PIN_DIR, "map_filters")) != 0)
+        {
+            LogMsg(&cfg, 1, 0, "[WARNING] Failed to pin 'map_filters' to file system (%d)...", ret);
+        }
+        else
+        {
+            LogMsg(&cfg, 3, 0, "BPF map 'map_filters' pinned to '%s/map_filters'.", XDP_MAP_PIN_DIR);
+        }
+
+        if ((ret = PinBpfMap(obj, XDP_MAP_PIN_DIR, "map_filter_log")) != 0)
+        {
+            LogMsg(&cfg, 1, 0, "[WARNING] Failed to pin 'map_filter_log' to file system (%d)...", ret);
+        }
+        else
+        {
+            LogMsg(&cfg, 3, 0, "BPF map 'map_filter_log' pinned to '%s/map_filter_log'.", XDP_MAP_PIN_DIR);
+        }
+    }
 
     LogMsg(&cfg, 2, 0, "Updating filters...");
 
@@ -281,6 +341,8 @@ int main(int argc, char *argv[])
 
     fprintf(stdout, "\n");
 
+    LogMsg(&cfg, 2, 0, "Cleaning up...");
+
 #ifdef ENABLE_FILTER_LOGGING
     if (rb)
     {
@@ -289,14 +351,27 @@ int main(int argc, char *argv[])
 #endif
 
     // Detach XDP program.
-    if (AttachXdp(prog, &mode_used, ifidx, 1, &cmd))
+    if (AttachXdp(prog, &mode_used, ifidx, 1, cmd.skb, cmd.offload))
     {
         LogMsg(&cfg, 0, 1, "[ERROR] Failed to detach XDP program from interface '%s'.\n", cfg.interface);
 
         return EXIT_FAILURE;
     }
 
-    LogMsg(&cfg, 1, 0, "Cleaned up and exiting...\n");
+    // Unpin maps from file system.
+    if (cfg.pin_maps)
+    {
+        LogMsg(&cfg, 2, 0, "Un-pinning BPF maps from file system...");
+
+        struct bpf_object* obj = GetBpfObj(prog);
+
+        UnpinFilterMaps(&cfg, obj, 0);
+    }
+
+    // Lastly, close the XDP program.
+    xdp_program__close(prog);
+
+    LogMsg(&cfg, 1, 0, "Exiting.\n");
 
     // Exit program successfully.
     return EXIT_SUCCESS;
