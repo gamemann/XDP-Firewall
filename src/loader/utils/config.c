@@ -687,9 +687,9 @@ void PrintConfig(config__t* cfg)
         printf("\t\tFilter #%d:\n", (i + 1));
 
         // Main.
-        printf("\t\t\tLog => %d\n", filter->log);
         printf("\t\t\tEnabled => %d\n", filter->enabled);
-        printf("\t\t\tAction => %d (0 = Block, 1 = Allow).\n\n", filter->action);
+        printf("\t\t\tAction => %d (0 = Block, 1 = Allow).\n", filter->action);
+        printf("\t\t\tLog => %d\n\n", filter->log);
 
         // IP Options.
         printf("\t\t\tIP Options\n");
