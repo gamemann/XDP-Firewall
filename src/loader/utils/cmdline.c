@@ -15,7 +15,7 @@ const struct option opts[] =
     { "update-time", required_argument, NULL, 'u' },
     { "no-stats", required_argument, NULL, 'n' },
     { "stats-ps", required_argument, NULL, 1 },
-    { "stdout-update-time", required_argument, NULL, 2 },
+    { "stdout-ut", required_argument, NULL, 2 },
 
     { NULL, 0, NULL, 0 }
 };

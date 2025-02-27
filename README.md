@@ -107,7 +107,7 @@ Additionally, there are command line overrides for base config options.
 | -u, --update-time | `-u 30` | Overrides the config's update time value. |
 | -n, --no-stats | `-n 1` | Overrides the config's no stats value. |
 | --stats-ps | `--stats-ps 1` | Overrides the config's stats per second value. |
-| --stdout-update-time | `--stdout-update-time 500` | Overrides the config's stdout update time value. |
+| --stdout-ut | `--stdout-ut 500` | Overrides the config's stdout update time value. |
 
 ### Offload Information
 Offloading your XDP/BPF program to your system's NIC allows for the fastest packet processing you can achieve due to the NIC dropping the packets with its hardware. However, for one, there are **not** many NIC manufacturers that do support this feature **and** you're limited to the NIC's memory/processing (e.g. your BPF map sizes will be extremely limited). Additionally, there are usually stricter BPF verifier limitations for offloaded BPF programs, but you may try reaching out to the NIC's manufacturer to see if they will give you a special version of their NIC driver raising these limitations (this is what I did with one manufacturer I used).

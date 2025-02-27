@@ -7,13 +7,21 @@
  */
 void PrintHelpMenu()
 {
-    fprintf(stdout, "Usage:\n" \
-        "--config -c => Config file location (default is /etc/xdpfw/xdpfw.conf).\n" \
-        "--offload -o => Tries to load the XDP program in hardware/offload mode.\n" \
-        "--skb -s => Force the XDP program to load with SKB mode instead of DRV.\n" \
-        "--time -t => How long to run the program for in seconds before exiting. 0 or not set = infinite.\n" \
-        "--list -l => Print config details including filters (this will exit program after done).\n" \
-        "--help -h => Print help menu.\n");
+    printf("Usage: xdpfw [OPTIONS]\n\n");
+
+    printf("  -c, --config         Config file location (default: /etc/xdpfw/xdpfw.conf).\n");
+    printf("  -o, --offload        Load the XDP program in hardware/offload mode.\n");
+    printf("  -s, --skb            Force the XDP program to load with SKB mode instead of DRV.\n");
+    printf("  -t, --time           Duration to run the program (seconds). 0 or unset = infinite.\n");
+    printf("  -l, --list           Print config details including filters (exits after execution).\n");
+    printf("  -h, --help           Show this help message.\n\n");
+    printf("  -v, --verbose        Override config's verbose value.\n");
+    printf("      --log-file       Override config's log file value.\n");
+    printf("  -i, --interface      Override config's interface value.\n");
+    printf("  -u, --update-time    Override config's update time value.\n");
+    printf("  -n, --no-stats       Override config's no stats value.\n");
+    printf("      --stats-ps       Override config's stats per second value.\n");
+    printf("      --stdout-ut      Override config's stdout update time value.\n");
 }
 
 /**
