@@ -28,6 +28,11 @@ int main(int argc, char *argv[])
     // Parse the command line.
     cmdline_t cmd = {0};
     cmd.cfgfile = CONFIG_DEFAULT_PATH;
+    cmd.verbose = -1;
+    cmd.update_time = -1;
+    cmd.no_stats = -1;
+    cmd.stats_per_second = -1;
+    cmd.stdout_update_time = -1;
 
     ParseCommandLine(&cmd, argc, argv);
 
@@ -44,8 +49,18 @@ int main(int argc, char *argv[])
 
     SetCfgDefaults(&cfg);
 
+    // Create overrides for config and set arguments from CLI.
+    config_overrides_t cfg_overrides = {0};
+    cfg_overrides.verbose = cmd.verbose;
+    cfg_overrides.log_file = cmd.log_file;
+    cfg_overrides.interface = cmd.interface;
+    cfg_overrides.update_time = cmd.update_time;
+    cfg_overrides.no_stats = cmd.no_stats;
+    cfg_overrides.stats_per_second = cmd.stats_per_second;
+    cfg_overrides.stdout_update_time = cmd.stdout_update_time;
+
     // Load config.
-    if ((ret = LoadConfig(&cfg, cmd.cfgfile)) != 0)
+    if ((ret = LoadConfig(&cfg, cmd.cfgfile, &cfg_overrides)) != 0)
     {
         fprintf(stderr, "[ERROR] Failed to load config from file system (%s)(%d).\n", cmd.cfgfile, ret);
 
@@ -64,6 +79,14 @@ int main(int argc, char *argv[])
     if (cfg.verbose > 0)
     {
         PrintToolInfo();
+    }
+
+    // Check interface.
+    if (cfg.interface == NULL)
+    {
+        LogMsg(&cfg, 0, 1, "[ERROR] No interface specified in config or CLI override.");
+
+        return EXIT_FAILURE;
     }
 
     LogMsg(&cfg, 2, 0, "Raising RLimit...");
@@ -217,12 +240,8 @@ int main(int argc, char *argv[])
         {
             // Check if config file have been modified
             if (stat(cmd.cfgfile, &conf_stat) == 0 && conf_stat.st_mtime > last_config_check) {
-                // Memleak fix for strdup() in LoadConfig()
-                // Before updating it again, we need to free the old return value
-                free(cfg.interface);
-
                 // Update config.
-                if ((ret = LoadConfig(&cfg, cmd.cfgfile)) != 0)
+                if ((ret = LoadConfig(&cfg, cmd.cfgfile, &cfg_overrides)) != 0)
                 {
                     LogMsg(&cfg, 1, 0, "[WARNING] Failed to load config after update check (%d)...\n", ret);
                 }

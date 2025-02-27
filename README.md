@@ -86,7 +86,7 @@ sudo make install
 ![Script Build Demo](./images/build_make.gif)
 
 ## Command Line Usage
-The following command line arguments are supported.
+The following general command line arguments are supported.
 
 | Name | Default | Description |
 | ---- | ------- | ----------- |
@@ -96,6 +96,18 @@ The following command line arguments are supported.
 | -t, --time | N/A | If set, will run the tool for this long in seconds. E.g. `--time 30` runs the tool for 30 seconds before exiting. |
 | -l, --list | N/A | If set, will print the current config values and exit. |
 | -h, --help | N/A | Prints a help message. |
+
+Additionally, there are command line overrides for base config options.
+
+| Name | Example | Description |
+| ---- | ------- | ----------- |
+| -v, --verbose | `-v 3` | Overrides the config's verbose value. |
+| --log-file | `--log-file ./test.log` | Overrides the config's log file value. |
+| -i, --interface | `-i enp1s0` | Overrides the config's interface value. |
+| -u, --update-time | `-u 30` | Overrides the config's update time value. |
+| -n, --no-stats | `-n 1` | Overrides the config's no stats value. |
+| --stats-ps | `--stats-ps 1` | Overrides the config's stats per second value. |
+| --stdout-update-time | `--stdout-update-time 500` | Overrides the config's stdout update time value. |
 
 ### Offload Information
 Offloading your XDP/BPF program to your system's NIC allows for the fastest packet processing you can achieve due to the NIC dropping the packets with its hardware. However, for one, there are **not** many NIC manufacturers that do support this feature **and** you're limited to the NIC's memory/processing (e.g. your BPF map sizes will be extremely limited). Additionally, there are usually stricter BPF verifier limitations for offloaded BPF programs, but you may try reaching out to the NIC's manufacturer to see if they will give you a special version of their NIC driver raising these limitations (this is what I did with one manufacturer I used).
@@ -195,8 +207,12 @@ You may additionally specified UDP header options for a filter rule which start 
 Here's a config example.
 
 ```squidconf
+verbose = 5;
+log_file = "";
 interface = "ens18";
 update_time = 15;
+no_stats = false;
+stats_per_second = true;
 
 filters = (
     {

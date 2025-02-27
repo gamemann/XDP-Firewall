@@ -8,6 +8,15 @@ const struct option opts[] =
     { "time", required_argument, NULL, 't' },
     { "list", no_argument, NULL, 'l' },
     { "help", no_argument, NULL, 'h' },
+
+    { "verbose", required_argument, NULL, 'v' },
+    { "log-file", required_argument, NULL, 0 },
+    { "interface", required_argument, NULL, 'i' },
+    { "update-time", required_argument, NULL, 'u' },
+    { "no-stats", required_argument, NULL, 'n' },
+    { "stats-ps", required_argument, NULL, 1 },
+    { "stdout-update-time", required_argument, NULL, 2 },
+
     { NULL, 0, NULL, 0 }
 };
 
@@ -22,7 +31,7 @@ void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
 {
     int c;
 
-    while ((c = getopt_long(argc, argv, "c:ost:lh", opts, NULL)) != -1)
+    while ((c = getopt_long(argc, argv, "c:ost:lhv:i:u:n:", opts, NULL)) != -1)
     {
         switch (c)
         {
@@ -54,6 +63,41 @@ void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
             case 'h':
                 cmd->help = 1;
 
+                break;
+
+            case 'v':
+                cmd->verbose = atoi(optarg);
+
+                break;
+
+            case 0:
+                cmd->log_file = optarg;
+
+                break;
+
+            case 'i':
+                cmd->interface = optarg;
+
+                break;
+
+            case 'u':
+                cmd->update_time = atoi(optarg);
+
+                break;
+
+            case 'n':
+                cmd->no_stats = atoi(optarg);
+
+                break;
+
+            case 1:
+                cmd->stats_per_second = atoi(optarg);
+
+                break;
+
+            case 2:
+                cmd->stdout_update_time = atoi(optarg);
+                
                 break;
 
             case '?':

@@ -7,10 +7,11 @@ static FILE *file;
  * 
  * @param cfg A pointer to the config structure.
  * @param cfg_file The path to the config file.
+ * @param overrides Overrides to use instead of config values.
  * 
  * @return 0 on success or 1 on error.
  */
-int LoadConfig(config__t *cfg, char *cfg_file)
+int LoadConfig(config__t *cfg, char *cfg_file, config_overrides_t* overrides)
 {
     // Open config file.
     if (OpenCfg(cfg_file) != 0)
@@ -25,7 +26,7 @@ int LoadConfig(config__t *cfg, char *cfg_file)
     memset(cfg->filters, 0, sizeof(cfg->filters));
 
     // Read config and check for errors.
-    if (ReadCfg(cfg) != 0)
+    if (ReadCfg(cfg, overrides) != 0)
     {
         fprintf(stderr, "Error reading config file.\n");
 
@@ -144,10 +145,11 @@ int OpenCfg(const char *file_name)
  * Read the config file and stores values in config structure.
  * 
  * @param cfg A pointer to the config structure.
+ * @param overrides Overrides to use instead of config values.
  * 
  * @return 0 on success or 1/-1 on error.
  */
-int ReadCfg(config__t *cfg)
+int ReadCfg(config__t *cfg, config_overrides_t* overrides)
 {
     // Not sure why this would be set to NULL after checking for it in OpenConfig(), but just for safety.
     if (file == NULL)
@@ -173,14 +175,21 @@ int ReadCfg(config__t *cfg)
 
     int verbose;
 
-    if (config_lookup_int(&conf, "verbose", &verbose) == CONFIG_TRUE)
+    if (config_lookup_int(&conf, "verbose", &verbose) == CONFIG_TRUE || overrides->verbose > -1)
     {
-        cfg->verbose = verbose;
+        if (overrides->verbose > -1)
+        {
+            cfg->verbose = overrides->verbose;
+        }
+        else
+        {
+            cfg->verbose = verbose;
+        }
     }
 
     const char* log_file;
 
-    if (config_lookup_string(&conf, "log_file", &log_file) == CONFIG_TRUE)
+    if (config_lookup_string(&conf, "log_file", &log_file) == CONFIG_TRUE || overrides->log_file != NULL)
     {
         // We must free previous value to prevent memory leak.
         if (cfg->log_file != NULL)
@@ -189,61 +198,111 @@ int ReadCfg(config__t *cfg)
             cfg->log_file = NULL;
         }
 
-        if (strlen(log_file) > 0)
+        if (overrides->log_file != NULL)
         {
-            cfg->log_file = strdup(log_file);
-            
+            if (strlen(overrides->log_file) > 0)
+            {
+                cfg->log_file = strdup(overrides->log_file);
+                
+            }
+            else
+            {
+                cfg->log_file = NULL;
+            }
         }
         else
         {
-            cfg->log_file = NULL;
+            if (strlen(log_file) > 0)
+            {
+                cfg->log_file = strdup(log_file);
+            }
+            else
+            {
+                cfg->log_file = NULL;
+            }
         }
     }
 
     // Get interface.
     const char *interface;
 
-    if (!config_lookup_string(&conf, "interface", &interface))
+    if (config_lookup_string(&conf, "interface", &interface) == CONFIG_TRUE || overrides->interface != NULL)
     {
-        LogMsg(cfg, 0, 1, "Error from LibConfig when reading 'interface' setting - %s", config_error_text(&conf));
-        
-        config_destroy(&conf);
+        // We must free previous value to prevent memory leak.
+        if (cfg->interface != NULL)
+        {
+            free(cfg->interface);
+            cfg->interface = NULL;
+        }
 
-        return EXIT_FAILURE;    
+        if (overrides->interface != NULL)
+        {
+            cfg->interface = strdup(overrides->interface);
+        }
+        else
+        {
+            cfg->interface = strdup(interface);
+        }
     }
-
-    cfg->interface = strdup(interface);
 
     // Get auto update time.
     int update_time;
 
-    if (config_lookup_int(&conf, "update_time", &update_time) == CONFIG_TRUE)
+    if (config_lookup_int(&conf, "update_time", &update_time) == CONFIG_TRUE || overrides->update_time > -1)
     {
-        cfg->update_time = update_time;
-    }
-
-    // Get stdout update time.
-    int stdout_update_time;
-
-    if (config_lookup_int(&conf, "stdout_update_time", &stdout_update_time) == CONFIG_TRUE)
-    {
-        cfg->stdout_update_time = stdout_update_time;
+        if (overrides->update_time > -1)
+        {
+            cfg->update_time = overrides->update_time;
+        }
+        else
+        {
+            cfg->update_time = update_time;
+        }
     }
 
     // Get no stats.
     int no_stats;
 
-    if (config_lookup_bool(&conf, "no_stats", &no_stats) == CONFIG_TRUE)
+    if (config_lookup_bool(&conf, "no_stats", &no_stats) == CONFIG_TRUE || overrides->no_stats > -1)
     {
-        cfg->no_stats = no_stats;
+        if (overrides->no_stats > -1)
+        {
+            cfg->no_stats = overrides->no_stats;
+        }
+        else
+        {
+            cfg->no_stats = no_stats;
+        }
     }
 
     // Stats per second.
     int stats_per_second;
 
-    if (config_lookup_bool(&conf, "stats_per_second", &stats_per_second) == CONFIG_TRUE)
+    if (config_lookup_bool(&conf, "stats_per_second", &stats_per_second) == CONFIG_TRUE || overrides->stats_per_second > -1)
     {
-        cfg->stats_per_second = stats_per_second;
+        if (overrides->stats_per_second > -1)
+        {
+            cfg->stats_per_second = overrides->stats_per_second;
+        }
+        else
+        {
+            cfg->stats_per_second = stats_per_second;
+        }
+    }
+
+    // Get stdout update time.
+    int stdout_update_time;
+
+    if (config_lookup_int(&conf, "stdout_update_time", &stdout_update_time) == CONFIG_TRUE || overrides->stdout_update_time > -1)
+    {
+        if (overrides->stdout_update_time > -1)
+        {
+            cfg->stdout_update_time = overrides->stdout_update_time;
+        }
+        else
+        {
+            cfg->stdout_update_time = stdout_update_time;
+        }
     }
 
     // Read filters in filters_map structure.
@@ -592,14 +651,32 @@ int ReadCfg(config__t *cfg)
  */
 void PrintConfig(config__t* cfg)
 {
-    fprintf(stdout, "Printing config...\n");
-    fprintf(stdout, "\tGeneral Settings\n");
-    fprintf(stdout, "\t\tInterface Name => %s\n", cfg->interface);
-    fprintf(stdout, "\t\tUpdate Time => %d\n", cfg->update_time);
-    fprintf(stdout, "\t\tStdout Update Time => %d\n", cfg->stdout_update_time);
-    fprintf(stdout, "\t\tNo Stats => %d\n\n", cfg->no_stats);
+    char* interface = "N/A";
 
-    fprintf(stdout, "\tFilters\n");
+    if (cfg->interface != NULL)
+    {
+        interface = cfg->interface;
+    }
+
+    char* log_file = "N/A";
+
+    if (cfg->log_file != NULL)
+    {
+        log_file = cfg->log_file;
+    }
+
+    printf("Printing config...\n");
+    printf("\tGeneral Settings\n");
+    
+    printf("\t\tVerbose => %d\n", cfg->verbose);
+    printf("\t\tLog File => %s\n", log_file);
+    printf("\t\tInterface Name => %s\n", interface);
+    printf("\t\tUpdate Time => %d\n", cfg->update_time);
+    printf("\t\tNo Stats => %d\n", cfg->no_stats);
+    printf("\t\tStats Per Second => %d\n", cfg->stats_per_second);
+    printf("\t\tStdout Update Time => %d\n\n", cfg->stdout_update_time);
+
+    printf("\tFilters\n");
 
     for (int i = 0; i < MAX_FILTERS; i++)
     {
@@ -610,27 +687,27 @@ void PrintConfig(config__t* cfg)
             break;
         }
 
-        fprintf(stdout, "\t\tFilter #%d:\n", (i + 1));
+        printf("\t\tFilter #%d:\n", (i + 1));
 
         // Main.
-        fprintf(stdout, "\t\t\tID => %d\n", filter->id);
-        fprintf(stdout, "\t\t\tLog => %d\n", filter->log);
-        fprintf(stdout, "\t\t\tEnabled => %d\n", filter->enabled);
-        fprintf(stdout, "\t\t\tAction => %d (0 = Block, 1 = Allow).\n\n", filter->action);
+        printf("\t\t\tID => %d\n", filter->id);
+        printf("\t\t\tLog => %d\n", filter->log);
+        printf("\t\t\tEnabled => %d\n", filter->enabled);
+        printf("\t\t\tAction => %d (0 = Block, 1 = Allow).\n\n", filter->action);
 
         // IP Options.
-        fprintf(stdout, "\t\t\tIP Options\n");
+        printf("\t\t\tIP Options\n");
 
         // IP addresses require additional code for string printing.
         struct sockaddr_in sin;
         sin.sin_addr.s_addr = filter->src_ip;
-        fprintf(stdout, "\t\t\t\tSource IPv4 => %s\n", inet_ntoa(sin.sin_addr));
-        fprintf(stdout, "\t\t\t\tSource CIDR => %d\n", filter->src_cidr);
+        printf("\t\t\t\tSource IPv4 => %s\n", inet_ntoa(sin.sin_addr));
+        printf("\t\t\t\tSource CIDR => %d\n", filter->src_cidr);
 
         struct sockaddr_in din;
         din.sin_addr.s_addr = filter->dst_ip;
-        fprintf(stdout, "\t\t\t\tDestination IPv4 => %s\n", inet_ntoa(din.sin_addr));
-        fprintf(stdout, "\t\t\t\tDestination CIDR => %d\n", filter->dst_cidr);
+        printf("\t\t\t\tDestination IPv4 => %s\n", inet_ntoa(din.sin_addr));
+        printf("\t\t\t\tDestination CIDR => %d\n", filter->dst_cidr);
 
         struct in6_addr sin6;
         memcpy(&sin6, &filter->src_ip6, sizeof(sin6));
@@ -638,7 +715,7 @@ void PrintConfig(config__t* cfg)
         char srcipv6[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET6, &sin6, srcipv6, sizeof(srcipv6));
 
-        fprintf(stdout, "\t\t\t\tSource IPv6 => %s\n", srcipv6);
+        printf("\t\t\t\tSource IPv6 => %s\n", srcipv6);
 
         struct in6_addr din6;
         memcpy(&din6, &filter->dst_ip6, sizeof(din6));
@@ -646,44 +723,44 @@ void PrintConfig(config__t* cfg)
         char dstipv6[INET6_ADDRSTRLEN];
         inet_ntop(AF_INET6, &din6, dstipv6, sizeof(dstipv6));
 
-        fprintf(stdout, "\t\t\t\tDestination IPv6 => %s\n", dstipv6);
+        printf("\t\t\t\tDestination IPv6 => %s\n", dstipv6);
 
         // Other IP header information.
-        fprintf(stdout, "\t\t\t\tMax Length => %d\n", filter->max_len);
-        fprintf(stdout, "\t\t\t\tMin Length => %d\n", filter->min_len);
-        fprintf(stdout, "\t\t\t\tMax TTL => %d\n", filter->max_ttl);
-        fprintf(stdout, "\t\t\t\tMin TTL => %d\n", filter->min_ttl);
-        fprintf(stdout, "\t\t\t\tTOS => %d\n", filter->tos);
-        fprintf(stdout, "\t\t\t\tPPS => %llu\n", filter->pps);
-        fprintf(stdout, "\t\t\t\tBPS => %llu\n", filter->bps);
-        fprintf(stdout, "\t\t\t\tBlock Time => %llu\n\n", filter->blocktime);
+        printf("\t\t\t\tMax Length => %d\n", filter->max_len);
+        printf("\t\t\t\tMin Length => %d\n", filter->min_len);
+        printf("\t\t\t\tMax TTL => %d\n", filter->max_ttl);
+        printf("\t\t\t\tMin TTL => %d\n", filter->min_ttl);
+        printf("\t\t\t\tTOS => %d\n", filter->tos);
+        printf("\t\t\t\tPPS => %llu\n", filter->pps);
+        printf("\t\t\t\tBPS => %llu\n", filter->bps);
+        printf("\t\t\t\tBlock Time => %llu\n\n", filter->blocktime);
 
         // TCP Options.
-        fprintf(stdout, "\t\t\tTCP Options\n");
-        fprintf(stdout, "\t\t\t\tTCP Enabled => %d\n", filter->tcpopts.enabled);
-        fprintf(stdout, "\t\t\t\tTCP Source Port => %d\n", filter->tcpopts.sport);
-        fprintf(stdout, "\t\t\t\tTCP Destination Port => %d\n", filter->tcpopts.dport);
-        fprintf(stdout, "\t\t\t\tTCP URG Flag => %d\n", filter->tcpopts.urg);
-        fprintf(stdout, "\t\t\t\tTCP ACK Flag => %d\n", filter->tcpopts.ack);
-        fprintf(stdout, "\t\t\t\tTCP RST Flag => %d\n", filter->tcpopts.rst);
-        fprintf(stdout, "\t\t\t\tTCP PSH Flag => %d\n", filter->tcpopts.psh);
-        fprintf(stdout, "\t\t\t\tTCP SYN Flag => %d\n", filter->tcpopts.syn);
-        fprintf(stdout, "\t\t\t\tTCP FIN Flag => %d\n", filter->tcpopts.fin);
-        fprintf(stdout, "\t\t\t\tTCP ECE Flag => %d\n", filter->tcpopts.ece);
-        fprintf(stdout, "\t\t\t\tTCP CWR Flag => %d\n\n", filter->tcpopts.cwr);
+        printf("\t\t\tTCP Options\n");
+        printf("\t\t\t\tTCP Enabled => %d\n", filter->tcpopts.enabled);
+        printf("\t\t\t\tTCP Source Port => %d\n", filter->tcpopts.sport);
+        printf("\t\t\t\tTCP Destination Port => %d\n", filter->tcpopts.dport);
+        printf("\t\t\t\tTCP URG Flag => %d\n", filter->tcpopts.urg);
+        printf("\t\t\t\tTCP ACK Flag => %d\n", filter->tcpopts.ack);
+        printf("\t\t\t\tTCP RST Flag => %d\n", filter->tcpopts.rst);
+        printf("\t\t\t\tTCP PSH Flag => %d\n", filter->tcpopts.psh);
+        printf("\t\t\t\tTCP SYN Flag => %d\n", filter->tcpopts.syn);
+        printf("\t\t\t\tTCP FIN Flag => %d\n", filter->tcpopts.fin);
+        printf("\t\t\t\tTCP ECE Flag => %d\n", filter->tcpopts.ece);
+        printf("\t\t\t\tTCP CWR Flag => %d\n\n", filter->tcpopts.cwr);
 
         // UDP Options.
-        fprintf(stdout, "\t\t\tUDP Options\n");
-        fprintf(stdout, "\t\t\t\tUDP Enabled => %d\n", filter->udpopts.enabled);
-        fprintf(stdout, "\t\t\t\tUDP Source Port => %d\n", filter->udpopts.sport);
-        fprintf(stdout, "\t\t\t\tUDP Destination Port => %d\n\n", filter->udpopts.dport);
+        printf("\t\t\tUDP Options\n");
+        printf("\t\t\t\tUDP Enabled => %d\n", filter->udpopts.enabled);
+        printf("\t\t\t\tUDP Source Port => %d\n", filter->udpopts.sport);
+        printf("\t\t\t\tUDP Destination Port => %d\n\n", filter->udpopts.dport);
 
         // ICMP Options.
-        fprintf(stdout, "\t\t\tICMP Options\n");
-        fprintf(stdout, "\t\t\t\tICMP Enabled => %d\n", filter->icmpopts.enabled);
-        fprintf(stdout, "\t\t\t\tICMP Code => %d\n", filter->icmpopts.code);
-        fprintf(stdout, "\t\t\t\tICMP Type => %d\n", filter->icmpopts.type);
+        printf("\t\t\tICMP Options\n");
+        printf("\t\t\t\tICMP Enabled => %d\n", filter->icmpopts.enabled);
+        printf("\t\t\t\tICMP Code => %d\n", filter->icmpopts.code);
+        printf("\t\t\t\tICMP Type => %d\n", filter->icmpopts.type);
 
-        fprintf(stdout, "\n\n");
+        printf("\n\n");
     }
 }
