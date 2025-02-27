@@ -187,35 +187,40 @@ int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdli
 void UpdateFilters(int filters_map, config__t *cfg)
 {
     int ret;
+    int cur_idx = 0;
 
     // Add a filter to the filter maps.
     for (int i = 0; i < MAX_FILTERS; i++)
     {
+        filter_t* filter = &cfg->filters[i];
+
         // Delete previous rule from BPF map.
         // We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
         u32 key = i;
 
         bpf_map_delete_elem(filters_map, &key);
 
-        // Check if we have a valid filter.
-        if (cfg->filters[i].id < 1)
+        // Only insert set and enabled filters.
+        if (!filter->set || !filter->enabled)
         {
             continue;
         }
 
         // Create value array (max CPUs in size) since we're using a per CPU map.
-        filter_t filter[MAX_CPUS];
-        memset(filter, 0, sizeof(filter));
+        filter_t filter_cpus[MAX_CPUS];
+        memset(filter_cpus, 0, sizeof(filter_cpus));
 
         for (int j = 0; j < MAX_CPUS; j++)
         {
-            filter[j] = cfg->filters[i];
+            filter_cpus[j] = *filter;
         }
 
         // Attempt to update BPF map.
-        if ((ret = bpf_map_update_elem(filters_map, &i, &filter, BPF_ANY)) != 0)
+        if ((ret = bpf_map_update_elem(filters_map, &cur_idx, &filter_cpus, BPF_ANY)) != 0)
         {
             fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d)...\n", i, ret);
         }
+
+        cur_idx++;
     }
 }

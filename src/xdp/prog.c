@@ -275,15 +275,9 @@ int xdp_prog_main(struct xdp_md *ctx)
         filter_t *filter = bpf_map_lookup_elem(&filters_map, &key);
 
         // Check if ID is above 0 (if 0, it's an invalid rule).
-        if (!filter || filter->id < 1)
+        if (!filter || !filter->set)
         {
             break;
-        }
-
-        // Check if the rule is enabled.
-        if (!filter->enabled)
-        {
-            continue;
         }
 
         // Do specific IPv6.

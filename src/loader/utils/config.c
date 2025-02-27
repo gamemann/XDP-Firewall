@@ -57,7 +57,7 @@ void SetCfgDefaults(config__t *cfg)
     {
         filter_t* filter = &cfg->filters[i];
 
-        filter->id = 0;
+        filter->set = 0;
         filter->enabled = 1;
 
         filter->log = 0;
@@ -317,9 +317,6 @@ int ReadCfg(config__t *cfg, config_overrides_t* overrides)
 
         return 1;
     }
-
-    // Set filter count.
-    int filters = 0;
 
     for (int i = 0; i < config_setting_length(setting); i++)
     {
@@ -633,8 +630,8 @@ int ReadCfg(config__t *cfg, config_overrides_t* overrides)
             filter->icmpopts.do_type = 1;
         }
 
-        // Assign ID and increase filter count.
-        filter->id = ++filters;
+        // Make sure filter is set.
+        filter->set = 1;
     }
 
     config_destroy(&conf);
@@ -682,7 +679,7 @@ void PrintConfig(config__t* cfg)
     {
         filter_t *filter = &cfg->filters[i];
 
-        if (filter->id < 1)
+        if (!filter->set)
         {
             break;
         }
@@ -690,7 +687,6 @@ void PrintConfig(config__t* cfg)
         printf("\t\tFilter #%d:\n", (i + 1));
 
         // Main.
-        printf("\t\t\tID => %d\n", filter->id);
         printf("\t\t\tLog => %d\n", filter->log);
         printf("\t\t\tEnabled => %d\n", filter->enabled);
         printf("\t\t\tAction => %d (0 = Block, 1 = Allow).\n\n", filter->action);

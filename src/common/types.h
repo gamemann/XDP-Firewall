@@ -62,10 +62,8 @@ struct icmp_opts
 
 struct filter
 {
-    u8 id;
-
+    unsigned int set : 1;
     unsigned int log : 1;
-
     unsigned int enabled : 1;
 
     u8 action;
