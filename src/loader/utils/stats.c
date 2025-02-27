@@ -9,13 +9,13 @@ u64 last_passed = 0;
 /**
  * Calculates and displays packet counters/stats.
  * 
- * @param stats_map The stats map BPF FD.
+ * @param map_stats The stats map BPF FD.
  * @param cpus The amount of CPUs the host has.
  * @param per_second Calculate packet counters per second (PPS).
  * 
  * @return 0 on success or 1 on failure.
  */
-int CalculateStats(int stats_map, int cpus, int per_second)
+int CalculateStats(int map_stats, int cpus, int per_second)
 {
     u32 key = 0;
 
@@ -26,7 +26,7 @@ int CalculateStats(int stats_map, int cpus, int per_second)
     u64 dropped = 0;
     u64 passed = 0;
     
-    if (bpf_map_lookup_elem(stats_map, &key, stats) != 0)
+    if (bpf_map_lookup_elem(map_stats, &key, stats) != 0)
     {
         return EXIT_FAILURE;
     }

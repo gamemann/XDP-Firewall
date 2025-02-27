@@ -155,49 +155,49 @@ int main(int argc, char *argv[])
     LogMsg(&cfg, 2, 0, "Retrieving BPF map FDs...");
 
     // Retrieve BPF maps.
-    int filters_map = FindMapFd(prog, "filters_map");
+    int map_filters = FindMapFd(prog, "map_filters");
 
     // Check for valid maps.
-    if (filters_map < 0)
+    if (map_filters < 0)
     {
-        LogMsg(&cfg, 0, 1, "[ERROR] Failed to find 'filters_map' BPF map.\n");
+        LogMsg(&cfg, 0, 1, "[ERROR] Failed to find 'map_filters' BPF map.\n");
 
         return EXIT_FAILURE;
     }
 
-    LogMsg(&cfg, 3, 0, "filters_map FD => %d.", filters_map);
+    LogMsg(&cfg, 3, 0, "map_filters FD => %d.", map_filters);
 
-    int stats_map = FindMapFd(prog, "stats_map");
+    int map_stats = FindMapFd(prog, "map_stats");
 
-    if (stats_map < 0)
+    if (map_stats < 0)
     {
-        LogMsg(&cfg, 0, 1, "[ERROR] Failed to find 'stats_map' BPF map.\n");
+        LogMsg(&cfg, 0, 1, "[ERROR] Failed to find 'map_stats' BPF map.\n");
 
         return EXIT_FAILURE;
     }
 
 #ifdef ENABLE_FILTER_LOGGING
-    int filter_log_map = FindMapFd(prog, "filter_log_map");
+    int map_filter_log = FindMapFd(prog, "map_filter_log");
     struct ring_buffer* rb = NULL;
 
-    if (filter_log_map < 0)
+    if (map_filter_log < 0)
     {
-        LogMsg(&cfg, 1, 0, "[WARNING] Failed to find 'filter_log_map' BPF map. Filter logging will be disabled...");
+        LogMsg(&cfg, 1, 0, "[WARNING] Failed to find 'map_filter_log' BPF map. Filter logging will be disabled...");
     }
     else
     {
-        LogMsg(&cfg, 3, 0, "filter_log_map FD => %d.", filter_log_map);
+        LogMsg(&cfg, 3, 0, "map_filter_log FD => %d.", map_filter_log);
 
-        rb = ring_buffer__new(filter_log_map, HandleRbEvent, &cfg, NULL);
+        rb = ring_buffer__new(map_filter_log, HandleRbEvent, &cfg, NULL);
     }
 #endif
 
-    LogMsg(&cfg, 3, 0, "stats_map FD => %d.", stats_map);
+    LogMsg(&cfg, 3, 0, "map_stats FD => %d.", map_stats);
 
     LogMsg(&cfg, 2, 0, "Updating filters...");
 
     // Update BPF maps.
-    UpdateFilters(filters_map, &cfg);
+    UpdateFilters(map_filters, &cfg);
 
     // Signal.
     signal(SIGINT, SignalHndl);
@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Update BPF maps.
-                UpdateFilters(filters_map, &cfg);
+                UpdateFilters(map_filters, &cfg);
 
                 // Update timer
                 last_config_check = time(NULL);
@@ -266,9 +266,9 @@ int main(int argc, char *argv[])
         // Calculate and display stats if enabled.
         if (!cfg.no_stats)
         {
-            if (CalculateStats(stats_map, cpus, cfg.stats_per_second))
+            if (CalculateStats(map_stats, cpus, cfg.stats_per_second))
             {
-                LogMsg(&cfg, 1, 0, "[WARNING] Failed to calculate packet stats. Stats map FD => %d...\n", stats_map);
+                LogMsg(&cfg, 1, 0, "[WARNING] Failed to calculate packet stats. Stats map FD => %d...\n", map_stats);
             }
         }
 

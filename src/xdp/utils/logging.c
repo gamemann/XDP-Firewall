@@ -21,7 +21,7 @@
  */
 static __always_inline int LogFilterMsg(struct iphdr* iph, struct ipv6hdr* iph6, u16 src_port, u16 dst_port, u8 protocol, u64 now, u64 pps, u64 bps, int filter_id)
 {
-    filter_log_event_t* e = bpf_ringbuf_reserve(&filter_log_map, sizeof(*e), 0);
+    filter_log_event_t* e = bpf_ringbuf_reserve(&map_filter_log, sizeof(*e), 0);
 
     if (e)
     {

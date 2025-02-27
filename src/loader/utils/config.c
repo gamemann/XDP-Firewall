@@ -305,7 +305,7 @@ int ReadCfg(config__t *cfg, config_overrides_t* overrides)
         }
     }
 
-    // Read filters in filters_map structure.
+    // Read filters in map_filters structure.
     setting = config_lookup(&conf, "filters");
 
     // Check if filters map is valid. If not, not a biggie since they aren't required.

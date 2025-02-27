@@ -11,7 +11,7 @@ struct
     __uint(max_entries, MAX_FILTERS);
     __type(key, u32);
     __type(value, filter_t);
-} filters_map SEC(".maps");
+} map_filters SEC(".maps");
 
 struct 
 {
@@ -19,7 +19,7 @@ struct
     __uint(max_entries, 1);
     __type(key, u32);
     __type(value, stats_t);
-} stats_map SEC(".maps");
+} map_stats SEC(".maps");
 
 struct 
 {
@@ -31,7 +31,7 @@ struct
     __type(key, u32);
 #endif
     __type(value, ip_stats_t);
-} ip_stats_map SEC(".maps");
+} map_ip_stats SEC(".maps");
 
 struct 
 {
@@ -39,7 +39,7 @@ struct
     __uint(max_entries, MAX_TRACK_IPS);
     __type(key, u32);
     __type(value, u64);
-} ip_blacklist_map SEC(".maps");
+} map_ip_blacklist SEC(".maps");
 
 struct 
 {
@@ -51,7 +51,7 @@ struct
     __type(key, u128);
 #endif
     __type(value, ip_stats_t);
-} ip6_stats_map SEC(".maps");
+} map_ip6_stats SEC(".maps");
 
 struct 
 {
@@ -59,12 +59,12 @@ struct
     __uint(max_entries, MAX_TRACK_IPS);
     __type(key, u128);
     __type(value, u64);
-} ip6_blacklist_map SEC(".maps");
+} map_ip6_blacklist SEC(".maps");
 
 #ifdef ENABLE_FILTER_LOGGING
 struct
 {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
     __uint(max_entries, 1 << 16);
-} filter_log_map SEC(".maps");
+} map_filter_log SEC(".maps");
 #endif

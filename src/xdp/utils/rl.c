@@ -21,9 +21,9 @@ static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, 
     key.port = port;
     key.protocol = protocol;
 
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip_stats, &key);
 #else
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &ip);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip_stats, &ip);
 #endif
 
     if (ip_stats)
@@ -58,9 +58,9 @@ static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, 
         *bps = new.bps;
 
 #ifdef USE_FLOW_RL
-        bpf_map_update_elem(&ip_stats_map, &key, &new, BPF_ANY);
+        bpf_map_update_elem(&map_ip_stats, &key, &new, BPF_ANY);
 #else
-        bpf_map_update_elem(&ip_stats_map, &ip, &new, BPF_ANY);
+        bpf_map_update_elem(&map_ip_stats, &ip, &new, BPF_ANY);
 #endif
     }
 }
@@ -86,9 +86,9 @@ static __always_inline void UpdateIp6Stats(u64 *pps, u64 *bps, u128 *ip, u16 por
     key.port = port;
     key.protocol = protocol;
 
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, &key);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip6_stats, &key);
 #else
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&ip_stats_map, ip);
+    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip6_stats, ip);
 #endif
 
     if (ip_stats)
@@ -123,9 +123,9 @@ static __always_inline void UpdateIp6Stats(u64 *pps, u64 *bps, u128 *ip, u16 por
         *bps = new.bps;
 
 #ifdef USE_FLOW_RL
-        bpf_map_update_elem(&ip_stats_map, &key, &new, BPF_ANY);
+        bpf_map_update_elem(&map_ip6_stats, &key, &new, BPF_ANY);
 #else
-        bpf_map_update_elem(&ip_stats_map, ip, &new, BPF_ANY);
+        bpf_map_update_elem(&map_ip6_stats, ip, &new, BPF_ANY);
 #endif
     }
 }

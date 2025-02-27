@@ -179,12 +179,12 @@ int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdli
 /**
  * Updates the filter's BPF map with current config settings.
  * 
- * @param filters_map The filter's BPF map FD.
+ * @param map_filters The filter's BPF map FD.
  * @param cfg A pointer to the config structure.
  * 
  * @return Void
  */
-void UpdateFilters(int filters_map, config__t *cfg)
+void UpdateFilters(int map_filters, config__t *cfg)
 {
     int ret;
     int cur_idx = 0;
@@ -198,7 +198,7 @@ void UpdateFilters(int filters_map, config__t *cfg)
         // We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
         u32 key = i;
 
-        bpf_map_delete_elem(filters_map, &key);
+        bpf_map_delete_elem(map_filters, &key);
 
         // Only insert set and enabled filters.
         if (!filter->set || !filter->enabled)
@@ -216,7 +216,7 @@ void UpdateFilters(int filters_map, config__t *cfg)
         }
 
         // Attempt to update BPF map.
-        if ((ret = bpf_map_update_elem(filters_map, &cur_idx, &filter_cpus, BPF_ANY)) != 0)
+        if ((ret = bpf_map_update_elem(map_filters, &cur_idx, &filter_cpus, BPF_ANY)) != 0)
         {
             fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d)...\n", i, ret);
         }
