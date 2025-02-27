@@ -98,7 +98,7 @@ struct filter
     unsigned int do_bps : 1;
     u64 bps;
 
-    u64 blocktime;
+    u64 block_time;
 
     tcp_opts_t tcpopts;
     udp_opts_t udpopts;

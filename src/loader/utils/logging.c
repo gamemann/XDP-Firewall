@@ -164,7 +164,7 @@ int HandleRbEvent(void* ctx, void* data, size_t sz)
 
     const char* protocol_str = GetProtocolStrById(e->protocol);
 
-    LogMsg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id + 1, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->pps, e->bps, filter->blocktime);
+    LogMsg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id + 1, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->pps, e->bps, filter->block_time);
 
     return 0;
 }

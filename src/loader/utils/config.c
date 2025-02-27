@@ -46,7 +46,7 @@ int LoadConfig(config__t *cfg, char *cfg_file, config_overrides_t* overrides)
 void SetCfgDefaults(config__t *cfg)
 {
     cfg->verbose = 2;
-    cfg->log_file = strdup("/var/log/xdpfw/xdpfw.log");
+    cfg->log_file = strdup("/var/log/xdpfw.log");
     cfg->update_time = 0;
     cfg->interface = NULL;
     cfg->no_stats = 0;
@@ -90,7 +90,7 @@ void SetCfgDefaults(config__t *cfg)
         filter->do_bps = 0;
         filter->bps = 0;
 
-        filter->blocktime = 1;
+        filter->block_time = 1;
         
         filter->tcpopts.enabled = 0;
         filter->tcpopts.do_dport = 0;
@@ -465,15 +465,15 @@ int ReadCfg(config__t *cfg, config_overrides_t* overrides)
         }
 
         // Block time (default 1).
-        long long blocktime;
+        long long block_time;
 
-        if (config_setting_lookup_int64(filter_cfg, "block_time", &blocktime) == CONFIG_TRUE)
+        if (config_setting_lookup_int64(filter_cfg, "block_time", &block_time) == CONFIG_TRUE)
         {
-            filter->blocktime = blocktime;
+            filter->block_time = block_time;
         }
         else
         {
-            filter->blocktime = 1;
+            filter->block_time = 1;
         }
 
         /* TCP options */
@@ -729,7 +729,7 @@ void PrintConfig(config__t* cfg)
         printf("\t\t\t\tTOS => %d\n", filter->tos);
         printf("\t\t\t\tPPS => %llu\n", filter->pps);
         printf("\t\t\t\tBPS => %llu\n", filter->bps);
-        printf("\t\t\t\tBlock Time => %llu\n\n", filter->blocktime);
+        printf("\t\t\t\tBlock Time => %llu\n\n", filter->block_time);
 
         // TCP Options.
         printf("\t\t\tTCP Options\n");
