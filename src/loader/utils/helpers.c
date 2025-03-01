@@ -113,7 +113,7 @@ void PrintToolInfo()
 /**
  * Retrieves nanoseconds since system boot.
  * 
- * @return The current nanoseconds since the system started.
+ * @return The current nanoseconds since the system last booted.
  */
 u64 GetBootNanoTime()
 {

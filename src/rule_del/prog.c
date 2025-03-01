@@ -157,6 +157,8 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
+        printf("Using 'map_range_drop' FD => %d.\n", map_range_drop);
+
         // Parse IP range.
         ip_range_t range = ParseIpCidr(cmd.ip);
 
@@ -168,7 +170,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        printf("Removed IP range '%s' from BPF map.\n", cmd.ip);
+        printf("Removed IP range '%s'...\n", cmd.ip);
 
         if (cmd.save)
         {
@@ -216,6 +218,8 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
 
+            printf("Using 'map_block6' FD => %d.\n", map_block6);
+
             struct in6_addr addr;
 
             if ((ret = inet_pton(AF_INET6, cmd.ip, &addr)) != 1)
@@ -248,6 +252,8 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
 
+            printf("Using 'map_block' FD => %d.\n", map_block);
+
             struct in_addr addr;
 
             if ((ret = inet_pton(AF_INET, cmd.ip, &addr)) != 1)
@@ -264,7 +270,7 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
 
-            printf("Deleted '%s' from block map...\n", cmd.ip);
+            printf("Deleted IP '%s'...\n", cmd.ip);
         }
     }
 
