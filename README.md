@@ -1,13 +1,50 @@
 [![XDP Firewall Build Workflow](https://github.com/gamemann/XDP-Firewall/actions/workflows/build.yml/badge.svg)](https://github.com/gamemann/XDP-Firewall/actions/workflows/build.yml) [![XDP Firewall Run Workflow](https://github.com/gamemann/XDP-Firewall/actions/workflows/run.yml/badge.svg)](https://github.com/gamemann/XDP-Firewall/actions/workflows/run.yml)
 
-A *stateless* firewall that attaches to the Linux kernel's [XDP](https://www.iovisor.org/technology/xdp) hook through [(e)BPF](https://ebpf.io/) for fast packet processing. This firewall is designed to read filtering rules from a config file and filter incoming packets. Both IPv4 and **IPv6** are supported! The protocols currently supported are TCP, UDP, and ICMP. The firewall also has the option to display counters for allowed, dropped, and passed packets which are written to `stdout`.
+A *stateless* firewall that attaches to the [XDP](https://www.iovisor.org/technology/xdp) hook in the Linux kernel using [(e)BPF](https://ebpf.io/) for fast packet processing.
+
+This firewall is designed for performance and flexibility, offering features such as dynamic filtering, source IP blocking, IP range dropping, and real-time packet counters. This makes it a powerful tool for network engineers, security professionals, and anyone interested in XDP or high-performance firewalling.
 
 ![Demo Run](./images/run.gif)
 
-I hope this project helps existing network engineers and programmers interested in utilizing XDP or anybody interested in getting into those fields! (D)DoS protection and mitigation is an important part of Cyber Security and understanding the concept of networking and packet flow on a low-medium level would certainly help those who are pursuing a career in the field 🙂
+I ultimately hope this tool helps existing network engineers and programmers interested in utilizing XDP or anybody interested in getting into those fields! (D)DoS protection and mitigation is an important part of Cyber Security and understanding networking concepts and packet flow at a low-to-medium level would certainly help those who are pursuing a career in the field 🙂
 
-## Building & Installing
-Before building, ensure the following packages are installed. These packages can be installed with `apt` on Debian-based systems (e.g. Ubuntu, etc.), but there should be similar package names in other package managers.
+## 🚀 Features Overview
+All features can be enabled or disabled through the configuration file on disk or by modifying [`config.h`](./src/common/config.h) before compilation. If you're planning to only use certain features such as the source IP block and drop functionality, it is recommended you disable other features like dynamic filtering to achieve best performance.
+
+### 🔥 High-Performance Packet Filtering
+* **XDP-Powered** - Runs at the earliest point in the network stack for **minimal latency**.
+* **eBPF-Based** - Uses BPF maps for efficient rule lookups and packet processing.
+
+### 🛑 Source IP Blocking & Dropping
+* Instantly **drop packets** from known bad IP addresses.
+* Uses a **BPF map** for **efficient** lookups and blocking.
+* Can be managed dynamically via CLI tools (`xdpfw-add`, `xdpfw-del`).
+
+### ⚡ Dynamic Filtering (Rule-Based)
+* Define **custom rules** to allow or drop packets based on protocol, port, or IP.
+* Supports **temporary bans** by adding IPs to the block list for a configurable duration.
+* Ideal for mitigating **non-spoofed (D)DoS attacks**.
+
+### 🌍 IP Range Dropping (CIDR)
+* Block entire **IP subnets** efficiently at the XDP level.
+* Supports **CIDR-based filtering** (e.g., `192.168.1.0/24`).
+* Disabled by default but can be enabled in [`config.h`](./src/common/config.h).
+
+### 📊 Real-Time Packet Counters
+* Track **allowed, dropped, and passed** packets in real time.
+* Supports **per-second statistics** for better traffic analysis.
+
+### 📜 Logging System
+* Built-in **logging** to terminal and/or a file.
+* Configurable **verbosity levels** to control log output.
+
+### 📌 Pinned Maps & CLI Utilities
+* **Pinned BPF maps** allow external programs to interact with firewall rules.
+* CLI utilities (`xdpfw-add`, `xdpfw-del`) enable **dynamic rule** management without restarting the firewall.
+* Supports integration with **user-space security systems** for enhanced protection.
+
+## 🛠️ Building & Installing
+Before building, ensure the following packages are installed. These packages can be installed with `apt` on Debian-based systems (e.g. Ubuntu, etc.), but there should be similar names in other package managers.
 
 ```bash
 # Install dependencies.
@@ -20,20 +57,20 @@ sudo apt install -y libpcap-dev m4 gcc-multilib
 sudo apt install -y linux-tools-$(uname -r)
 ```
 
-You can use `git` to clone this project. Make sure to include the `--recursive` flag so it downloads the XDP Tools submodule!
+You can use `git` to clone this project. Make sure to include the `--recursive` flag so it downloads the XDP Tools sub-module!
 
 ```bash
-# Clone repository via Git. Use recursive flag to download XDP Tools submodule.
+# Clone repository via Git. Use recursive flag to download XDP Tools sub-module.
 git clone --recursive https://github.com/gamemann/XDP-Firewall.git
 
 # Change directory to repository.
 cd XDP-Firewall
 ```
 
-From here, you have two options to build and install this tool which are explained below.
+From here, you have two options to build and install the firewall.
 
 ### With Bash Script
-The easiest way to build and install this tool is to use the provided [`install.sh`](./install.sh) Bash script. This script relies on `sudo` being installed on your system. If you do not have sudo, please refer to the below steps on building and installing this tool without the Bash script.
+The easiest way to build and install the firewall is to use the provided [`install.sh`](./install.sh) Bash script. This script relies on `sudo` being installed on your system. If you do not have sudo, please refer to the below steps on building and installing this tool without the Bash script.
 
 If you don't have LibXDP installed on your system yet, I'd recommend using the following command.
 
@@ -51,7 +88,7 @@ Additionally, here is a list of flags you may pass to this script.
 | --no-install | Build the tool and/or LibXDP without installing them. |
 | --clean | Remove build files for the tool and LibXDP. |
 | --no-static | Do *not* statically link LibXDP and LibBPF object files when building the tool. This makes the build process faster, but you may need to alter your `LD_LIBRARY_PATH` env variable before running the tool and requires LibXDP to be installed on your system already. |
-| --objdump | Dumps the XDP/BPF object file using [`llvm-objdump`](https://llvm.org/docs/CommandGuide/llvm-objdump.html) to Assemby into `objdump.asm`. |
+| --objdump | Dumps the XDP/BPF object file using [`llvm-objdump`](https://llvm.org/docs/CommandGuide/llvm-objdump.html) to Assemby into `objdump.asm`. This is used for debugging. |
 | --help | Displays help message. |
 
 ![Script Build Demo](./images/build_script.gif)
@@ -77,8 +114,8 @@ sudo make install
 
 ![Script Build Demo](./images/build_make.gif)
 
-## Command Line Usage
-The following general command line arguments are supported.
+## 💻 CLI Usage
+The following command line arguments are supported when running the firewall.
 
 | Name | Default | Description |
 | ---- | ------- | ----------- |
@@ -89,22 +126,29 @@ The following general command line arguments are supported.
 | -l, --list | N/A | If set, will print the current config values and exit. |
 | -h, --help | N/A | Prints a help message. |
 
-Additionally, there are command line overrides for base config options.
+Additionally, there are command line overrides for base config options you may include.
 
 | Name | Example | Description |
 | ---- | ------- | ----------- |
 | -v, --verbose | `-v 3` | Overrides the config's verbose value. |
 | --log-file | `--log-file ./test.log` | Overrides the config's log file value. |
 | -i, --interface | `-i enp1s0` | Overrides the config's interface value. |
+| -p, --pin-maps | `-p 0` | Overrides the config's pin maps value. |
 | -u, --update-time | `-u 30` | Overrides the config's update time value. |
 | -n, --no-stats | `-n 1` | Overrides the config's no stats value. |
 | --stats-ps | `--stats-ps 1` | Overrides the config's stats per second value. |
 | --stdout-ut | `--stdout-ut 500` | Overrides the config's stdout update time value. |
 
-## Configuration
-By default, the configuration file path is `/etc/xdpfw/xdpfw.conf`. This path may be altered with the `-c --config` CLI arguments detailed above.
+## ⚙️ Configuration
+There are two configuration methods for this firewall:
+
+1️⃣ **Build-Time Configuration** - Modify hard-coded constants in [`config.h`](./src/common/config.h) by commenting (`//`) or uncommenting options along with setting values. Since these settings are required at build time, the firewall must be rebuilt for changes to take effect.
+
+2️⃣ **Runtime Configuration** - Settings can also be adjusted via a configuration file stored on disk. By default, this file is located at `/etc/xdpfw/xdpfw.conf`, but you can specify a different path using the `-c` or `--config` CLI options.
 
 The [`libconfig`](https://hyperrealm.github.io/libconfig/libconfig_manual.html) library and syntax is used when parsing the config file.
+
+Here are more details on the layout of the runtime configuration.
 
 ### Data Types
 The following table quickly explains the data types used within the configuration documentation below (known data types which are not used within the configuration below will **not** be listed).
@@ -125,11 +169,13 @@ The following table quickly explains the data types used within the configuratio
 | verbose | int | `2` | The verbose level for logging (0 - 5 supported so far). |
 | log_file | string | `/var/log/xdpfw.log` | The log file location. If the string is empty (`""`), the log file is disabled. |
 | interface | string | `NULL` | The network interface name to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
+| pin_maps | bool | `true` | Pins main BPF maps to `/sys/fs/bpf/xdpfw/[map_name]` on the file system. |
 | update_time | uint | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
 | stats_per_second | bool | `false` | If true, packet counters and stats are calculated per second. `stdout_update_time` must be 1000 or less for this to work properly. |
 | stdout_update_time | uint | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
 | filters | Array of Filter Object(s) | `NULL` | An array of filters to use with the XDP Firewall. |
+| ip_drop_ranges | Array Of IP Ranges | `NULL` | An array of IP ranges (strings) to drop if the IP range drop feature is enabled. | 
 
 ### Filter Object
 | Name | Type | Default | Description |
@@ -188,10 +234,10 @@ You may additionally specified UDP header options for a filter rule which start 
 #### Notes
 * All settings within a filter rule other than `enabled` and `action` are **not** required. This means you do not have to define them within your config.
 * When a filter rule's setting is set (not `NULL`), but doesn't match the packet, the program moves onto the next filter rule. Therefore, all of the filter rule's settings that are set must match the packet in order to perform the action specified. Think of it as something like `if src_ip == "10.50.0.3" and udp_dport == 27015: action`. 
-* As of right now, you can specify up to 60 total filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Forwarding/tree/master/patches) README from my XDP Forwarding project.
+* As of right now, you can specify up to **60 total** dynamic filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Forwarding/tree/master/patches) README from my XDP Forwarding project.
 
-### Example
-Here's a config example.
+### Runtime Example
+Here's a runtime config example.
 
 ```squidconf
 verbose = 5;
@@ -232,7 +278,7 @@ filters = (
 );
 ```
 
-## Notes
+## 📝 Notes
 ### XDP Attach Modes
 By default, the firewall attaches to the Linux kernel's XDP hook using **DRV** mode (AKA native; occurs before [SKB creation](http://vger.kernel.org/~davem/skb.html)). If the host's network configuration or network interface card (NIC) doesn't support DRV mode, the program will attempt to attach to the XDP hook using **SKB** mode (AKA generic; occurs after SKB creation which is where IPTables and NFTables are processed via the `netfilter` kernel module). You may use overrides through the command-line to force SKB or offload modes.
 
@@ -247,16 +293,8 @@ Offloading your XDP/BPF program to your system's NIC allows for the fastest pack
 
 As of this time, I am not aware of any NIC manufacturers that will be able to offload this firewall completely to the NIC due to its BPF complexity. To be honest, in the current networking age, I believe it's best to leave offloaded programs to BPF map lookups and minimum packet inspection. For example, a BPF blacklist map lookup for malicious source IPs or ports. However, XDP is still very new and I would imagine we're going to see these limitations loosened or lifted in the next upcoming years. This is why I added support for offload mode on this firewall. 
 
-### Moved To LibXDP
-On **June 6th, 2023**, we've started using [LibXDP](https://github.com/xdp-project/xdp-tools/tree/master/lib/libxdp) from [XDP Tools](https://github.com/xdp-project/xdp-tools) to load and attach the XDP/(e)BPF program. This requires additional packages and tools to install and use with this XDP firewall as noted above.
-
-### Issues On Ubuntu 20.04
-If you have issues on Ubuntu 20.04 or earlier, please refer to the reply on [this](https://github.com/gamemann/XDP-Firewall/issues/41#issuecomment-1758701008) issue.
-
-Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux kernel 5.3 or above.
-
-### BPF For/While Loop Support + Performance Notes
-This project requires loop support with BPF. Older kernels will not support this feature and output an error such as the following.
+### BPF Loop Support + Performance Notes
+The dynamic filters feature requires loop support with BPF. Older kernels will not support this feature and output an error such as the following.
 
 ```vim
 libbpf: load bpf program failed: Invalid argument
@@ -271,47 +309,18 @@ libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
 
 It looks like BPF loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
 
-#### Performance With `For` Loops
+#### Performance With Loops & Dynamic Filters
 Due to the usage of a [`for` loop](https://github.com/gamemann/XDP-Firewall/blob/master/src/xdp/prog.c#L249) inside the XDP program that handles looping through all filtering rules inside of a BPF array map, performance will be impacted depending on how many filtering rules you have configured (ultimately, the firewall **doesn't scale** that well). This firewall was designed to be as flexible as possible regarding configuration and is most effective when configured to add malicious source IPs to the block map for a certain amount of time which are then dropped at the beginning of the XDP program for the best performance.
 
 Unfortunately, we can't really eliminate the `for` loop with the current amount of flexibility we allow (especially minimum/maximum TTL, packet lengths, IDs, etc.), unless if we were to create more BPF maps and insert many more entries which would result in a lot more memory consumed and isn't ideal at all. If we were to remove flexibility, the best approach would be to store filtering rules inside a hashed BPF map using the packet's destination IP/port as the entry's key in my opinion (this would then eliminate flexibility related to being able to specify a filtering rule to match against a single destination IP without a port, unless if we implemented multiple BPF map lookups inside the XDP program which would then impact performance). However, there are currently no plans to switch to this format due to the amount of flexibility lost and also not having the time on my side (if somebody else creates a PR to implement this, I'd be willing to have a separate branch with the new functionality for others to use if the current branch isn't working out for their needs).
 
 The firewall is still decent at filtering non-spoofed attacks, especially when a block time is specified so that malicious IPs are filtered at the beginning of the program for some time.
 
-### Error Related To Toolchain Hardening
-As stated in issue [#38](https://github.com/gamemann/XDP-Firewall/issues/38) by [g00g1](https://github.com/g00g1), if you have toolchain hardening enabled, you may receive the following error when compiling.
-
-```
-error: <unknown>:0:0: in function xdp_prog_main i32 (ptr): A call to built-in function '__stack_chk_fail' is not supported.
-```
-
-In order to fix this, you'll need to pass the `-fno-stack-protector` flag to Clang when building LibBPF and the firewall itself. You'll want to modify the `Makefile` for each project to add this flag. Patches for this may be found [here](https://github.com/gamemann/XDP-Firewall/issues/38#issuecomment-1547965524)!
-
-### Will You Make This Firewall Stateful?
-There is a possibility I may make this firewall stateful in the future *when* I have time, but this will require a complete overhaul along with implementing application-specific filters. With that said, I am still on contract from my previous employers for certain filters of game servers. If others are willing to contribute to the project and implement these features, feel free to make pull requests!
-
-You may also be interested in this awesome project called [FastNetMon](https://github.com/pavel-odintsov/fastnetmon)!
-
 ### Rate Limits
 By default, client stats including packets and bytes per second are calculated per *partial* flow (source IP/port and protocol). This is useful if you want to specify connection-specific rate limits inside of your filtering rules using the `pps` and `bps` settings. However, if you want to calculate client stats using only the source IP, you may comment out [this](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L12) line.
 
 ```C
 //#define USE_FLOW_RL
-```
-
-### Error While Loading Shared Libraries
-If you receive an error similar to the one below when running the program and have built the program using the no static option, make sure you have LibXDP globally installed onto your system via [XDP Tools](https://github.com/xdp-project/xdp-tools). You can execute `make libxdp && sudo make libxdp_install` to build and install both LibXDP and LibBPF onto your system separately.
-
-```bash
-./xdpfw: error while loading shared libraries: libxdp.so.1: cannot open shared object file: No such file or directory
-```
-
-If you still run into issues, try adding `/usr/local/lib` to your `LD_LIBRARY_PATH` since that's where LibXDP installs the shared objects from my testing. Here's an example.
-
-```bash
-export LD_LIBRARY_PATH=/usr/local/lib
-
-sudo xdpfw
 ```
 
 ### Filter Logging
@@ -330,7 +339,37 @@ When loading the BPF/XDP program through LibXDP/LibBPF, logging is disabled unle
 
 If the tool fails to load or attach the XDP program, it is recommended you set `verbose` to 5 or above so LibXDP outputs specific warnings and errors.
 
-## My Other XDP Projects
+## ❓ F.A.Q.
+### I receive an error related to failing to load shared libraries. How do I fix this?
+If you receive an error similar to the one below when running the program and have built the program using the no static option, make sure you have LibXDP globally installed onto your system via [XDP Tools](https://github.com/xdp-project/xdp-tools). You can execute `make libxdp && sudo make libxdp_install` to build and install both LibXDP and LibBPF onto your system separately.
+
+```bash
+./xdpfw: error while loading shared libraries: libxdp.so.1: cannot open shared object file: No such file or directory
+```
+
+If you still run into issues, try adding `/usr/local/lib` to your `LD_LIBRARY_PATH` since that's where LibXDP installs the shared objects from my testing. Here's an example.
+
+```bash
+export LD_LIBRARY_PATH=/usr/local/lib
+
+sudo xdpfw
+```
+
+### I receive an error related to toolchain hardening. How do I fix this?
+As stated in issue [#38](https://github.com/gamemann/XDP-Firewall/issues/38) by [g00g1](https://github.com/g00g1), if you have toolchain hardening enabled, you may receive the following error when compiling.
+
+```
+error: <unknown>:0:0: in function xdp_prog_main i32 (ptr): A call to built-in function '__stack_chk_fail' is not supported.
+```
+
+In order to fix this, you'll need to pass the `-fno-stack-protector` flag to Clang when building LibBPF and the firewall itself. You'll want to modify the `Makefile` for each project to add this flag. Patches for this may be found [here](https://github.com/gamemann/XDP-Firewall/issues/38#issuecomment-1547965524)!
+
+### I have issues running the firewall on Ubuntu 20.04. What could be the cause?
+If you have issues on Ubuntu 20.04 or earlier, please refer to the reply on [this](https://github.com/gamemann/XDP-Firewall/issues/41#issuecomment-1758701008) issue.
+
+Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux kernel 5.3 or above.
+
+## 🌟 My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 
 ### [XDP Forwarding](https://github.com/gamemann/XDP-Forwarding)
@@ -344,6 +383,6 @@ An application that utilizes fast [AF_XDP](https://docs.kernel.org/networking/af
 
 While this application doesn't utilize native XDP or (e)BPF, I do feel it should be mentioned here. AF_XDP sockets are very fast and often used with raw XDP programs via the `bpf_redirect_map()` function call (also see my [XDP Stats](https://github.com/gamemann/XDP-Stats) project which calculates stats in raw XDP and AF_XDP programs).
 
-## Credits
+## 🙌 Credits
 * [Christian Deacon](https://github.com/gamemann) - Creator.
 * [Phil](https://github.com/Nasty07) - Contributor.
