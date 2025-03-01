@@ -6,7 +6,7 @@
 
 struct cmdline
 {
-    char *cfgfile;
+    char *cfg_file;
     unsigned int offload : 1;
     unsigned int skb : 1;
     unsigned int time;

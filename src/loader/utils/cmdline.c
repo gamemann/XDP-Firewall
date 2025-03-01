@@ -36,7 +36,7 @@ void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
         switch (c)
         {
             case 'c':
-                cmd->cfgfile = optarg;
+                cmd->cfg_file = optarg;
 
                 break;
 
