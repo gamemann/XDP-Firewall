@@ -6,7 +6,7 @@
 
 // Enables IPv4 range drop map.
 // Disable this if you don't plan on adding IPv4 ranges to the drop map as it will increase performance.
-#define ENABLE_IP_RANGE_DROP
+//#define ENABLE_IP_RANGE_DROP
 
 // The maximum IP ranges supported in the IP range drop map.
 #define MAX_IP_RANGES 4096
