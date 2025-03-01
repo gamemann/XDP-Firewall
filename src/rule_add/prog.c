@@ -463,14 +463,12 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        int expires = 0;
+        u64 expires_rel = 0;
 
-        if (cmd.expires > -1)
+        if (cmd.expires > 0)
         {
-            expires = cmd.expires;
+            expires_rel = GetBootNanoTime() + ((u64)cmd.expires * 1e9);
         }
-
-        u64 expires_rel = GetBootNanoTime() + ((u64)expires * 1e9);
 
         int map_block = GetMapPinFd(XDP_MAP_PIN_DIR, "map_block");
         int map_block6 = GetMapPinFd(XDP_MAP_PIN_DIR, "map_block6");
@@ -536,7 +534,14 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
 
-            printf("Added '%s' to block map...\n", cmd.ip);
+            if (cmd.expires > 0)
+            {
+                printf("Added '%s' to block map for %lld seconds...\n", cmd.ip, cmd.expires);
+            }
+            else
+            {
+                printf("Added '%s' to block map indefinitely...\n", cmd.ip);
+            }
         }
     }
 

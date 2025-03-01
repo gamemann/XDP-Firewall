@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
         printf("Using 'map_filters' FD => %d...\n", map_filters);
 
-        int index = -1;
+        int idx = -1;
         int cfg_idx = cmd.idx - 1;
         int cur_idx = 0;
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
             if (i == cur_idx)
             {
-                index = cur_idx;
+                idx = cur_idx;
 
                 break;
             }
@@ -116,9 +116,9 @@ int main(int argc, char *argv[])
             cur_idx++;
         }
 
-        if (index < 0)
+        if (idx < 0)
         {
-            fprintf(stderr, "[ERROR] Failed to find proper index in config file (%d).\n", index);
+            fprintf(stderr, "[ERROR] Failed to find proper index in config file (%d).\n", idx);
 
             return EXIT_FAILURE;
         }
