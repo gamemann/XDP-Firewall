@@ -96,9 +96,9 @@ int xdp_prog_main(struct xdp_md *ctx)
         blocked = bpf_map_lookup_elem(&map_block, &iph->saddr);
     }
     
-    if (blocked != NULL && *blocked > 0)
+    if (blocked != NULL)
     {
-        if (now > *blocked)
+        if (*blocked > 0 && now > *blocked)
         {
             // Remove element from map.
             if (iph6)
