@@ -153,3 +153,8 @@ struct filter_log_event
     u64 pps;
     u64 bps;
 } typedef filter_log_event_t;
+
+struct lpm_trie_key {
+    u32 prefix_len;
+    u32 data;
+} typedef LpmTrieKey;
