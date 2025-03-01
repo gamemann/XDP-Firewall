@@ -244,6 +244,7 @@ Here's a runtime config example.
 verbose = 5;
 log_file = "";
 interface = "ens18";
+pin_maps = true;
 update_time = 15;
 no_stats = false;
 stats_per_second = true;
@@ -277,10 +278,12 @@ filters = (
         src_ip = "10.50.0.4"
     }
 );
+
+ip_drop_ranges = ( "192.168.1.0/24", "10.3.0.0/24" );
 ```
 
 ## 🔧 The `xdpfw-add` & `xdpfw-del` Utilities
-When the main BPF maps are pinned to the file system (depending on the `pin_maps` runtime option detailed above), this allows you to add or delete rules while the firewall is running using `xdpfw-add` and `xdpfw-del`.
+When the main BPF maps are pinned to the file system (depending on the `pin_maps` runtime option detailed above), this allows you to add or delete rules while the firewall is running using the `xdpfw-add` and `xdpfw-del` utilities.
 
 ### General CLI Usage
 The following general CLI arguments are supported with these utilities.
