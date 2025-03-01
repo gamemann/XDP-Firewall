@@ -1,5 +1,6 @@
 #include <xdp/utils/rl.h>
 
+#ifdef ENABLE_FILTERS
 /**
  * Updates IPv4 client stats.
  * 
@@ -129,3 +130,4 @@ static __always_inline void UpdateIp6Stats(u64 *pps, u64 *bps, u128 *ip, u16 por
 #endif
     }
 }
+#endif

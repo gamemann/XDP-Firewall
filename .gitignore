@@ -1,6 +1,6 @@
 .vscode/
 xdpfw
-xdpfw.s
-xdpfw.conf
+*.s
+*.conf
 *.log
 *.asm

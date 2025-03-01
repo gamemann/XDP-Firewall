@@ -18,11 +18,14 @@ struct config
     int verbose;
     char *log_file;
     char *interface;
+    unsigned int pin_maps : 1;
     int update_time;
     unsigned int no_stats : 1;
     unsigned int stats_per_second : 1;
     int stdout_update_time;
+
     filter_t filters[MAX_FILTERS];
+    const char* drop_ranges[MAX_IP_RANGES];
 } typedef config__t; // config_t is taken by libconfig -.-
 
 struct config_overrides
@@ -30,18 +33,28 @@ struct config_overrides
     int verbose;
     const char* log_file;
     const char* interface;
+    int pin_maps;
     int update_time;
     int no_stats;
     int stats_per_second;
     int stdout_update_time;
-    
 } typedef config_overrides_t;
 
-int LoadConfig(config__t *cfg, char *cfg_file, config_overrides_t* overrides);
 void SetCfgDefaults(config__t *cfg);
-void PrintConfig(config__t* cfg);
+void SetFilterDefaults(filter_t* filter);
 
-int OpenCfg(const char *filename);
-int ReadCfg(config__t *cfg, config_overrides_t* overrides);
+void PrintConfig(config__t* cfg);
+void PrintFilter(filter_t* filter, int idx);
+
+int LoadConfig(config__t *cfg, const char* cfg_file, config_overrides_t* overrides);
+int SaveCfg(config__t* cfg, const char* file_path);
+
+int OpenCfg(FILE** file, const char *file_name);
+int CloseCfg(FILE* file);
+int ReadCfg(FILE* file, char** buffer);
+int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides);
+
+int GetNextAvailableFilterIndex(config__t* cfg);
+int GetNextAvailableIpDropRangeIndex(config__t* cfg);
 
 #include <loader/utils/logging.h>

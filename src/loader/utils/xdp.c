@@ -86,17 +86,30 @@ struct xdp_program *LoadBpfObj(const char *file_name)
 }
 
 /**
+ * Retrieves BPF object from XDP program.
+ * 
+ * @param prog A pointer to the XDP program.
+ * 
+ * @return The BPF object.
+ */
+struct bpf_object* GetBpfObj(struct xdp_program* prog)
+{
+    return xdp_program__bpf_obj(prog);
+}
+
+/**
  * Attempts to attach or detach (progfd = -1) a BPF/XDP program to an interface.
  * 
  * @param prog A pointer to the XDP program structure.
  * @param mode_used The mode being used.
  * @param ifidx The index to the interface to attach to.
  * @param detach If above 0, attempts to detach XDP program.
- * @param cmd A pointer to a cmdline struct that includes command line arguments (mostly checking for offload/HW mode set).
+ * @param force_skb If set, forces the XDP program to run in SKB mode.
+ * @param force_offload If set, forces the XDP program to run in offload mode.
  * 
  * @return 0 on success and 1 on error.
  */
-int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdline_t *cmd)
+int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, int detach, int force_skb, int force_offload)
 {
     int err;
 
@@ -104,13 +117,13 @@ int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdli
 
     *mode = "DRV/native";
 
-    if (cmd->offload)
+    if (force_offload)
     {
         *mode = "HW/offload";
 
         attach_mode = XDP_MODE_HW;
     }
-    else if (cmd->skb)
+    else if (force_skb)
     {
         *mode = "SKB/generic";
         
@@ -177,6 +190,58 @@ int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, u8 detach, cmdli
 }
 
 /**
+ * Deletes a filter.
+ * 
+ * @param map_filters The filters BPF map FD.
+ * @param idx The filter index to delete.
+ * 
+ * @return 0 on success or the error value of bpf_map_delete_elem().
+ */
+int DeleteFilter(int map_filters, u32 idx)
+{
+    return bpf_map_delete_elem(map_filters, &idx);
+}
+
+/**
+ * Deletes all filters.
+ * 
+ * @param map_filters The filters BPF map FD.
+ * 
+ * @return void
+ */
+void DeleteFilters(int map_filters)
+{
+    for (int i = 0; i < MAX_FILTERS; i++)
+    {
+        DeleteFilter(map_filters, i);
+    }
+}
+
+/**
+ * Updates a filter rule.
+ * 
+ * @param map_filters The filters BPF map FD.
+ * @param filter A pointer to the filter.
+ * @param idx The filter index to insert or update.
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem().
+ */
+int UpdateFilter(int map_filters, filter_t* filter, int idx)
+{
+    int ret;
+
+    filter_t filter_cpus[MAX_CPUS];
+    memset(filter_cpus, 0, sizeof(filter_cpus));
+
+    for (int j = 0; j < MAX_CPUS; j++)
+    {
+        filter_cpus[j] = *filter;
+    }
+
+    return bpf_map_update_elem(map_filters, &idx, &filter_cpus, BPF_ANY);
+}
+
+/**
  * Updates the filter's BPF map with current config settings.
  * 
  * @param map_filters The filter's BPF map FD.
@@ -192,13 +257,11 @@ void UpdateFilters(int map_filters, config__t *cfg)
     // Add a filter to the filter maps.
     for (int i = 0; i < MAX_FILTERS; i++)
     {
-        filter_t* filter = &cfg->filters[i];
-
         // Delete previous rule from BPF map.
         // We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
-        u32 key = i;
+        DeleteFilter(map_filters, i);
 
-        bpf_map_delete_elem(map_filters, &key);
+        filter_t* filter = &cfg->filters[i];
 
         // Only insert set and enabled filters.
         if (!filter->set || !filter->enabled)
@@ -206,21 +269,202 @@ void UpdateFilters(int map_filters, config__t *cfg)
             continue;
         }
 
-        // Create value array (max CPUs in size) since we're using a per CPU map.
-        filter_t filter_cpus[MAX_CPUS];
-        memset(filter_cpus, 0, sizeof(filter_cpus));
-
-        for (int j = 0; j < MAX_CPUS; j++)
+        // Attempt to update filter.
+        if ((ret = UpdateFilter(map_filters, filter, cur_idx)) != 0)
         {
-            filter_cpus[j] = *filter;
-        }
+            fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d)...\n", cur_idx, ret);
 
-        // Attempt to update BPF map.
-        if ((ret = bpf_map_update_elem(map_filters, &cur_idx, &filter_cpus, BPF_ANY)) != 0)
-        {
-            fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d)...\n", i, ret);
+            continue;
         }
 
         cur_idx++;
+    }
+}
+
+/**
+ * Pins a BPF map to the file system.
+ * 
+ * @param obj A pointer to the BPF object.
+ * @param pin_dir The pin directory.
+ * @param map_name The map name.
+ * 
+ * @return 0 on success or value of bpf_map__pin() on error.
+ */
+int PinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name)
+{
+    struct bpf_map* map = bpf_object__find_map_by_name(obj, map_name);
+
+    if (!map)
+    {
+        return -1;
+    }
+
+    char full_path[255];
+    snprintf(full_path, sizeof(full_path), "%s/%s", XDP_MAP_PIN_DIR, map_name);
+
+    return bpf_map__pin(map, full_path);
+}
+
+/**
+ * Unpins a BPF map from the file system.
+ * 
+ * @param obj A pointer to the BPF object.
+ * @param pin_dir The pin directory.
+ * @param map_name The map name.
+ * 
+ * @return
+ */
+int UnpinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name)
+{
+    struct bpf_map* map = bpf_object__find_map_by_name(obj, map_name);
+
+    if (!map)
+    {
+        return 1;
+    }
+
+    char full_path[255];
+    snprintf(full_path, sizeof(full_path), "%s/%s", XDP_MAP_PIN_DIR, map_name);
+
+    return bpf_map__unpin(map, full_path);
+}
+
+/**
+ * Retrieves a map FD on the file system (pinned).
+ * 
+ * @param pin_dir The pin directory.
+ * @param map_name The map name.
+ * 
+ * @return The map FD or -1 on error.
+ */
+int GetMapPinFd(const char* pin_dir, const char* map_name)
+{
+    char full_path[255];
+    snprintf(full_path, sizeof(full_path), "%s/%s", pin_dir, map_name);
+
+    return bpf_obj_get(full_path);
+}
+
+/**
+ * Deletes IPv4 address from block map.
+ * 
+ * @param map_block The block map's FD.
+ * @param ip The IP address to remove.
+ * 
+ * @return 0 on success or error value of bpf_map_delete_elem().
+ */
+int DeleteBlock(int map_block, u32 ip)
+{
+    return bpf_map_delete_elem(map_block, &ip);
+}
+
+/**
+ * Adds an IPv4 address to the block map.
+ * 
+ * @param map_block The block map's FD.
+ * @param ip The IP address to add.
+ * @param expires When the block expires (nanoseconds since system boot).
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem().
+ */
+int AddBlock(int map_block, u32 ip, u64 expires)
+{
+    return bpf_map_update_elem(map_block, &ip, &expires, BPF_ANY);
+}
+
+/**
+ * Deletes IPv6 address from block map.
+ * 
+ * @param map_block6 The block map's FD.
+ * @param ip The IP address to remove.
+ * 
+ * @return 0 on success or error value of bpf_map_delete_elem().
+ */
+int DeleteBlock6(int map_block6, u128 ip)
+{
+    return bpf_map_delete_elem(map_block6, &ip);
+}
+
+/**
+ * Adds an IPv6 address to the block map.
+ * 
+ * @param map_block6 The block map's FD.
+ * @param ip The IP address to add.
+ * @param expires When the block expires (nanoseconds since system boot).
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem().
+ */
+int AddBlock6(int map_block6, u128 ip, u64 expires)
+{
+    return bpf_map_update_elem(map_block6, &ip, &expires, BPF_ANY);
+}
+
+/**
+ * Deletes an IPv4 range from the drop map.
+ * 
+ * @param map_range_drop The IPv4 range drop map's FD.
+ * @param net The network IP.
+ * @param cidr The network's CIDR.
+ * 
+ * @return 0 on success or error value of bpf_map_delete_elem(). 
+ */
+int DeleteRangeDrop(int map_range_drop, u32 net, u8 cidr)
+{
+    u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
+    u32 start = net & bit_mask;
+
+    LpmTrieKey key = {0};
+    key.prefix_len = cidr;
+    key.data = start;
+
+    return bpf_map_delete_elem(map_range_drop, &key);
+}
+
+/**
+ * Adds an IPv4 range to the drop map.
+ * 
+ * @param map_range_drop The IPv4 range drop map's FD.
+ * @param net The network IP.
+ * @param cidr The network's CIDR.
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem(). 
+ */
+int AddRangeDrop(int map_range_drop, u32 net, u8 cidr)
+{
+    u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
+    u32 start = net & bit_mask;
+
+    LpmTrieKey key = {0};
+    key.prefix_len = cidr;
+    key.data = start;
+
+    u64 val = ( (u64)bit_mask << 32 ) | start;
+
+    return bpf_map_update_elem(map_range_drop, &key, &val, BPF_ANY);
+}
+
+/**
+ * Updates IP ranges from config file.
+ * 
+ * @param map_range_drop The IPv4 range drop map's FD.
+ * @param cfg A pointer to the config file
+ * 
+ * @return void
+ */
+void UpdateRangeDrops(int map_range_drop, config__t* cfg)
+{
+    for (int i = 0; i < MAX_IP_RANGES; i++)
+    {
+        const char* range = cfg->drop_ranges[i];
+
+        if (!range)
+        {
+            continue;
+        }
+
+        // Parse IP range string and return network IP and CIDR.
+        ip_range_t t = ParseIpCidr(range);
+
+        AddRangeDrop(map_range_drop, t.ip, t.cidr);
     }
 }

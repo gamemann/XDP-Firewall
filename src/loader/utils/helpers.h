@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/sysinfo.h>
+
 struct ip_range
 {
     u32 ip;
@@ -20,3 +22,4 @@ void SignalHndl(int code);
 ip_range_t ParseIpCidr(const char* ip);
 const char* GetProtocolStrById(int id);
 void PrintToolInfo();
+u64 GetBootNanoTime();

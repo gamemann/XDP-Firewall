@@ -8,19 +8,38 @@
 struct 
 {
     __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, MAX_FILTERS);
-    __type(key, u32);
-    __type(value, filter_t);
-} map_filters SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
     __uint(max_entries, 1);
     __type(key, u32);
     __type(value, stats_t);
 } map_stats SEC(".maps");
 
+struct 
+{
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, MAX_TRACK_IPS);
+    __type(key, u32);
+    __type(value, u64);
+} map_block SEC(".maps");
+
+struct 
+{
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, MAX_TRACK_IPS);
+    __type(key, u128);
+    __type(value, u64);
+} map_block6 SEC(".maps");
+
+#ifdef ENABLE_IP_RANGE_DROP
+struct {
+    __uint(type, BPF_MAP_TYPE_LPM_TRIE);
+    __uint(max_entries, MAX_IP_RANGES);
+    __uint(map_flags, BPF_F_NO_PREALLOC);
+    __type(key, LpmTrieKey);
+    __type(value, u64);
+} map_range_drop SEC(".maps");
+#endif
+
+#ifdef ENABLE_FILTERS
 struct 
 {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
@@ -37,14 +56,6 @@ struct
 {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, MAX_TRACK_IPS);
-    __type(key, u32);
-    __type(value, u64);
-} map_ip_blacklist SEC(".maps");
-
-struct 
-{
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, MAX_TRACK_IPS);
 #ifdef USE_FLOW_RL
     __type(key, flow6_t);
 #else
@@ -55,11 +66,11 @@ struct
 
 struct 
 {
-    __uint(type, BPF_MAP_TYPE_LRU_HASH);
-    __uint(max_entries, MAX_TRACK_IPS);
-    __type(key, u128);
-    __type(value, u64);
-} map_ip6_blacklist SEC(".maps");
+    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+    __uint(max_entries, MAX_FILTERS);
+    __type(key, u32);
+    __type(value, filter_t);
+} map_filters SEC(".maps");
 
 #ifdef ENABLE_FILTER_LOGGING
 struct
@@ -67,4 +78,5 @@ struct
     __uint(type, BPF_MAP_TYPE_RINGBUF);
     __uint(max_entries, 1 << 16);
 } map_filter_log SEC(".maps");
+#endif
 #endif

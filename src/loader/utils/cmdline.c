@@ -12,6 +12,7 @@ const struct option opts[] =
     { "verbose", required_argument, NULL, 'v' },
     { "log-file", required_argument, NULL, 0 },
     { "interface", required_argument, NULL, 'i' },
+    { "pin-maps", required_argument, NULL, 'p' },
     { "update-time", required_argument, NULL, 'u' },
     { "no-stats", required_argument, NULL, 'n' },
     { "stats-ps", required_argument, NULL, 1 },
@@ -31,12 +32,12 @@ void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
 {
     int c;
 
-    while ((c = getopt_long(argc, argv, "c:ost:lhv:i:u:n:", opts, NULL)) != -1)
+    while ((c = getopt_long(argc, argv, "c:ost:lhv:i:p:u:n:", opts, NULL)) != -1)
     {
         switch (c)
         {
             case 'c':
-                cmd->cfgfile = optarg;
+                cmd->cfg_file = optarg;
 
                 break;
 
@@ -77,6 +78,11 @@ void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
 
             case 'i':
                 cmd->interface = optarg;
+
+                break;
+
+            case 'p':
+                cmd->pin_maps = atoi(optarg);
 
                 break;
 

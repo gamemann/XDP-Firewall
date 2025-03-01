@@ -53,7 +53,8 @@ int CalculateStats(int map_stats, int cpus, int per_second)
     if (per_second)
     {
         struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);  // Get precise time
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        
         double elapsed_time = (now.tv_sec - last_update_time.tv_sec) +
                               (now.tv_nsec - last_update_time.tv_nsec) / 1e9; 
 

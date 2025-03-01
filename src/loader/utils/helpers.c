@@ -48,7 +48,11 @@ ip_range_t ParseIpCidr(const char *ip)
     ip_range_t ret = {0};
     ret.cidr = 32;
 
-    char *token = strtok((char *) ip, "/");
+    char ip_copy[INET_ADDRSTRLEN + 3];
+    strncpy(ip_copy, ip, sizeof(ip_copy) - 1);
+    ip_copy[sizeof(ip_copy) - 1] = '\0';
+
+    char *token = strtok((char *) ip_copy, "/");
 
     if (token)
     {
@@ -104,4 +108,17 @@ void PrintToolInfo()
         " /_/\\_\\____/|_|     |_|   |_|_|  \\___| \\_/\\_/ \\__,_|_|_|\n"
         "\n\n"
     );
+}
+
+/**
+ * Retrieves nanoseconds since system boot.
+ * 
+ * @return The current nanoseconds since the system last booted.
+ */
+u64 GetBootNanoTime()
+{
+    struct sysinfo sys;
+    sysinfo(&sys);
+
+    return sys.uptime * 1e9;
 }

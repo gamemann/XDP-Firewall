@@ -4,6 +4,7 @@
 #include <xdp/utils/helpers.h>
 #include <xdp/utils/maps.h>
 
+#if defined(ENABLE_FILTERS) && defined(ENABLE_FILTER_LOGGING)
 /**
  * Logs a message to the filter ringbuffer map.
  * 
@@ -51,3 +52,4 @@ static __always_inline int LogFilterMsg(struct iphdr* iph, struct ipv6hdr* iph6,
 
     return 0;
 }
+#endif

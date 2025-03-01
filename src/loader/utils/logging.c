@@ -74,7 +74,6 @@ static void LogMsgRaw(int req_lvl, int cur_lvl, int error, const char* log_path,
             return;
         }
 
-
         char log_file_msg[len + 22 + 1];
 
         snprintf(log_file_msg, sizeof(log_file_msg), "[%02d-%02d-%02d %02d:%02d:%02d]%s", tm_val->tm_year % 100, tm_val->tm_mon + 1, tm_val->tm_mday,
@@ -143,7 +142,7 @@ int HandleRbEvent(void* ctx, void* data, size_t sz)
     }
 
     char src_ip_str[INET6_ADDRSTRLEN];
-    char dst_ip_str[INET_ADDRSTRLEN];
+    char dst_ip_str[INET6_ADDRSTRLEN];
 
     if (memcmp(e->src_ip6, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 16) != 0)
     {

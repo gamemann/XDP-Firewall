@@ -44,9 +44,6 @@ int xdp_prog_main(struct xdp_md *ctx)
         return XDP_PASS;
     }
 
-    u8 action = 0;
-    u64 block_time = 1;
-
     // Initialize IP headers.
     struct iphdr *iph = NULL;
     struct ipv6hdr *iph6 = NULL;
@@ -62,7 +59,7 @@ int xdp_prog_main(struct xdp_md *ctx)
             return XDP_DROP;
         }
 
-        memcpy(&src_ip6, &iph6->saddr.in6_u.u6_addr32, sizeof(src_ip6));
+        memcpy(&src_ip6, iph6->saddr.in6_u.u6_addr32, sizeof(src_ip6));
     }
     else
     {
@@ -74,42 +71,43 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
     }
     
-    // Check IP header protocols.
+    // We only want to process TCP, UDP, and ICMP packets.
     if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
     {
         return XDP_PASS;
     }
 
-    // Get stats map.
+    // Retrieve stats map value.
     u32 key = 0;
     stats_t*stats = bpf_map_lookup_elem(&map_stats, &key);
 
+    // Retrieve nanoseconds since system boot as timestamp.
     u64 now = bpf_ktime_get_ns();
 
-    // Check blacklist map.
+    // Check block map.
     u64 *blocked = NULL;
 
     if (iph6)
     {
-        blocked = bpf_map_lookup_elem(&map_ip6_blacklist, &src_ip6);
+        blocked = bpf_map_lookup_elem(&map_block6, &src_ip6);
     }
     else if (iph)
     {
-        blocked = bpf_map_lookup_elem(&map_ip_blacklist, &iph->saddr);
+        blocked = bpf_map_lookup_elem(&map_block, &iph->saddr);
     }
     
-    if (blocked != NULL && *blocked > 0)
+    if (blocked != NULL)
     {
-        if (now > *blocked)
+        if (*blocked > 0 && now > *blocked)
         {
             // Remove element from map.
             if (iph6)
             {
-                bpf_map_delete_elem(&map_ip6_blacklist, &src_ip6);
+                bpf_map_delete_elem(&map_block6, &src_ip6);
             }
             else if (iph)
             {
-                bpf_map_delete_elem(&map_ip_blacklist, &iph->saddr);
+                bpf_map_delete_elem(&map_block, &iph->saddr);
             }
         }
         else
@@ -127,6 +125,21 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
     }
 
+#ifdef ENABLE_IP_RANGE_DROP
+    if (iph && CheckIpRangeDrop(iph->saddr))
+    {
+#ifdef DO_STATS_ON_IP_RANGE_DROP_MAP
+        if (stats)
+        {
+            stats->dropped++;
+        }
+#endif
+
+        return XDP_DROP;
+    }
+#endif
+
+#ifdef ENABLE_FILTERS
     // Retrieve total packet length.
     u16 pkt_len = data_end - data;
 
@@ -267,7 +280,10 @@ int xdp_prog_main(struct xdp_md *ctx)
     {
         UpdateIpStats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
     }
-    
+
+    int action = 0;
+    u64 block_time = 1;
+
     for (int i = 0; i < MAX_FILTERS; i++)
     {
         u32 key = i;
@@ -543,6 +559,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         goto matched;
     }
+#endif
 
     if (stats)
     {
@@ -551,21 +568,22 @@ int xdp_prog_main(struct xdp_md *ctx)
             
     return XDP_PASS;
 
-    matched:
+#ifdef ENABLE_FILTERS
+matched:
     if (action == 0)
     {
-        // Before dropping, update the blacklist map.
+        // Before dropping, update the block map.
         if (block_time > 0)
         {
             u64 new_time = now + (block_time * NANO_TO_SEC);
             
             if (iph6)
             {
-                bpf_map_update_elem(&map_ip6_blacklist, &src_ip6, &new_time, BPF_ANY);
+                bpf_map_update_elem(&map_block6, &src_ip6, &new_time, BPF_ANY);
             }
             else if (iph)
             {
-                bpf_map_update_elem(&map_ip_blacklist, &iph->saddr, &new_time, BPF_ANY);
+                bpf_map_update_elem(&map_block, &iph->saddr, &new_time, BPF_ANY);
             }
         }
 
@@ -585,6 +603,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     return XDP_PASS;
+#endif
 }
 
 char _license[] SEC("license") = "GPL";

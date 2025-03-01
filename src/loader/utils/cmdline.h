@@ -6,7 +6,7 @@
 
 struct cmdline
 {
-    char *cfgfile;
+    char *cfg_file;
     unsigned int offload : 1;
     unsigned int skb : 1;
     unsigned int time;
@@ -16,6 +16,7 @@ struct cmdline
     int verbose;
     char* log_file;
     char* interface;
+    int pin_maps;
     int update_time;
     int no_stats;
     int stats_per_second;
