@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#include <string.h>
+
 struct cmdline
 {
     const char* cfg_file;
@@ -22,6 +24,11 @@ struct cmdline
     int v6;
 
     s64 expires;
+
+    int enabled;
+    int log;
+    int action;
+    s64 block_time;
 
     const char* src_ip;
     const char* dst_ip;

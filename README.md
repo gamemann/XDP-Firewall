@@ -54,7 +54,8 @@ sudo apt install -y libconfig-dev llvm clang libelf-dev build-essential
 # Install dependencies for building LibXDP and LibBPF.
 sudo apt install -y libpcap-dev m4 gcc-multilib
 
-# You may need tools for your Linux kernel since BPFTool is required. If this doesn't work and you still run into issues, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
+# You may need tools for your Linux kernel since BPFTool is required.
+# If this doesn't work and you still run into issues, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
 sudo apt install -y linux-tools-$(uname -r)
 ```
 
@@ -306,6 +307,10 @@ The following CLI arguments are supported.
 | Name | Example | Description |
 | ---- | ------- | ----------- |
 | -e, --expires | `-e 60` | When the source IP block expires in seconds when running in IP block list mode. |
+| --enabled | `--enabled 0` | Enables or disables dynamic filter. |
+| --action | `--action 1` | The action to perform on packets that match the filter (0 = drop, 1 = allow). |
+| --log | `--log 1` | Enables or disables logging for the dynamic filter. |
+| --block-time | `--block-time 60` | How long to block the source IP for if the packet is matched and the action is drop in the dynamic filter (0 = no time). | 
 | --sip | `--sip 192.168.1.0/24` | The source IPv4 address/range to match with the dynamic filter. |
 | --dip | `--sip 10.90.0.0/24` | The destination IPv4 address/range to match with the dynamic filter. |
 | --sip6 | `--sip 192.168.1.0/24` | The source IPv6 address to match with the dynamic filter. |

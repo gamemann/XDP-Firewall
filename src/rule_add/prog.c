@@ -23,6 +23,10 @@ int main(int argc, char *argv[])
     cmd.cfg_file = CONFIG_DEFAULT_PATH;
 
     // We need to set integers for dynamic filters to -1 since we consider -1 as 'unset'.
+    cmd.enabled = -1;
+    cmd.action = -1;
+    cmd.log = -1;
+
     cmd.min_ttl = -1;
     cmd.max_ttl = -1;
     cmd.min_len = -1;
@@ -47,7 +51,7 @@ int main(int argc, char *argv[])
     cmd.udp_enabled = -1;
     cmd.udp_sport = -1;
     cmd.udp_dport = -1;
-    
+
     cmd.icmp_enabled = -1;
     cmd.icmp_code = -1;
     cmd.icmp_type = -1;
@@ -72,6 +76,11 @@ int main(int argc, char *argv[])
         printf("  -e, --expires     How long to block the IP for in seconds (for mode 2).\n\n");
 
         printf("Filter Mode Options:\n");
+        printf("  --enabled         Enables or disables the dynamic filter.\n");
+        printf("  --action          The action when a packet matches (0 = drop, 1 = allow).\n");
+        printf("  --log             Enables or disables logging for this filter.\n");
+        printf("  --block-time      How long to add the source IP to the block list for if matched and the action is drop (0 = no time).\n\n");
+
         printf("  --sip             The source IPv4 address (with CIDR support).\n");
         printf("  --dip             The destination IPv4 address (with CIDR support).\n");
         printf("  --sip6            The source IPv6 address.\n");
@@ -99,7 +108,7 @@ int main(int argc, char *argv[])
 
         printf("  --udp             Enable or disables matching on the UDP protocol.\n");
         printf("  --usport          The UDP source port to match on.\n");
-        printf("  --udport          The UDP destination port to match on.\n");
+        printf("  --udport          The UDP destination port to match on.\n\n");
 
         printf("  --icmp            Enable or disables matching on the ICMP protocol.\n");
         printf("  --code            The ICMP code to match on.\n");
@@ -136,14 +145,6 @@ int main(int argc, char *argv[])
     {
         printf("Using filters mode (0)...\n");
 
-        // Check index.
-        if (cmd.idx < 1)
-        {
-            fprintf(stderr, "Invalid filter index. Index must start from 1.\n");
-
-            return EXIT_FAILURE;
-        }
-
         // Retrieve filters map FD.
         int map_filters = GetMapPinFd(XDP_MAP_PIN_DIR, "map_filters");
 
@@ -159,6 +160,8 @@ int main(int argc, char *argv[])
         // Create new base filter and set its defaults.
         filter_t new_filter = {0};
         SetFilterDefaults(&new_filter);
+
+        new_filter.set = 1;
 
         // Determine what index we'll be storing this filter at.
         int idx = -1;
@@ -180,6 +183,26 @@ int main(int argc, char *argv[])
         }
 
         // Fill out new filter.
+        if (cmd.enabled > -1)
+        {
+            new_filter.enabled = cmd.enabled;
+        }
+
+        if (cmd.action > -1)
+        {
+            new_filter.action = cmd.action;
+        }
+
+        if (cmd.log > -1)
+        {
+            new_filter.log = cmd.log;
+        }
+
+        if (cmd.block_time > -1)
+        {
+            new_filter.block_time = cmd.block_time;
+        }
+
         if (cmd.src_ip)
         {
             ip_range_t range = ParseIpCidr(cmd.src_ip);
@@ -371,7 +394,7 @@ int main(int argc, char *argv[])
         cfg.filters[idx] = new_filter;
 
         // Update filters.
-        fprintf(stdout, "Updating filters...\n");
+        fprintf(stdout, "Updating filters (index %d)...\n", idx);
 
         UpdateFilters(map_filters, &cfg);
     }

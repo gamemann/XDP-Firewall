@@ -15,6 +15,11 @@ const struct option opts[] =
     { "v6", no_argument, NULL, 'v' },
     { "expires", required_argument, NULL, 'e' },
 
+    { "enabled", required_argument, NULL, 28 },
+    { "action", required_argument, NULL, 29 },
+    { "log", required_argument, NULL, 30 },
+    { "block-time", required_argument, NULL, 31 },
+
     { "sip", required_argument, NULL, 0 },
     { "dip", required_argument, NULL, 1 },
     { "sip6", required_argument, NULL, 2 },
@@ -96,6 +101,26 @@ void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[])
 
             case 'e':
                 cmd->expires = strtoll(optarg, NULL, 10);
+
+                break;
+
+            case 28:
+                cmd->enabled = atoi(optarg);
+
+                break;
+
+            case 29:
+                cmd->action = atoi(optarg);
+
+                break;
+
+            case 30:
+                cmd->log = atoi(optarg);
+
+                break;
+
+            case 31:
+                cmd->block_time = strtoll(optarg, NULL, 10);
 
                 break;
 
