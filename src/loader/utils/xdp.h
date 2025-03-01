@@ -27,3 +27,13 @@ void UpdateFilters(int map_filters, config__t *cfg);
 int PinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name);
 int UnpinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name);
 int GetMapPinFd(const char* pin_dir, const char* map_name);
+
+int DeleteBlock(int map_block, u32 ip);
+int AddBlock(int map_block, u32 ip, u64 expires);
+
+int DeleteBlock6(int map_block6, u128 ip);
+int AddBlock6(int map_block6, u128 ip, u64 expires);
+
+int DeleteRangeDrop(int map_range_drop, u32 net, u8 cidr);
+int AddRangeDrop(int map_range_drop, u32 net, u8 cidr);
+void UpdateRangeDrops(int map_range_drop, config__t* cfg);

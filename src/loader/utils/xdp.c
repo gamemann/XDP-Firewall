@@ -344,3 +344,127 @@ int GetMapPinFd(const char* pin_dir, const char* map_name)
 
     return bpf_obj_get(full_path);
 }
+
+/**
+ * Deletes IPv4 address from block map.
+ * 
+ * @param map_block The block map's FD.
+ * @param ip The IP address to remove.
+ * 
+ * @return 0 on success or error value of bpf_map_delete_elem().
+ */
+int DeleteBlock(int map_block, u32 ip)
+{
+    return bpf_map_delete_elem(map_block, &ip);
+}
+
+/**
+ * Adds an IPv4 address to the block map.
+ * 
+ * @param map_block The block map's FD.
+ * @param ip The IP address to add.
+ * @param expires When the block expires (nanoseconds since system boot).
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem().
+ */
+int AddBlock(int map_block, u32 ip, u64 expires)
+{
+    return bpf_map_update_elem(map_block, &ip, &expires, BPF_ANY);
+}
+
+/**
+ * Deletes IPv6 address from block map.
+ * 
+ * @param map_block6 The block map's FD.
+ * @param ip The IP address to remove.
+ * 
+ * @return 0 on success or error value of bpf_map_delete_elem().
+ */
+int DeleteBlock6(int map_block6, u128 ip)
+{
+    return bpf_map_delete_elem(map_block6, &ip);
+}
+
+/**
+ * Adds an IPv6 address to the block map.
+ * 
+ * @param map_block6 The block map's FD.
+ * @param ip The IP address to add.
+ * @param expires When the block expires (nanoseconds since system boot).
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem().
+ */
+int AddBlock6(int map_block6, u128 ip, u64 expires)
+{
+    return bpf_map_update_elem(map_block6, &ip, &expires, BPF_ANY);
+}
+
+/**
+ * Deletes an IPv4 range from the drop map.
+ * 
+ * @param map_range_drop The IPv4 range drop map's FD.
+ * @param net The network IP.
+ * @param cidr The network's CIDR.
+ * 
+ * @return 0 on success or error value of bpf_map_delete_elem(). 
+ */
+int DeleteRangeDrop(int map_range_drop, u32 net, u8 cidr)
+{
+    u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
+    u32 start = net & bit_mask;
+
+    LpmTrieKey key = {0};
+    key.prefix_len = cidr;
+    key.data = start;
+
+    return bpf_map_delete_elem(map_range_drop, &key);
+}
+
+/**
+ * Adds an IPv4 range to the drop map.
+ * 
+ * @param map_range_drop The IPv4 range drop map's FD.
+ * @param net The network IP.
+ * @param cidr The network's CIDR.
+ * 
+ * @return 0 on success or error value of bpf_map_update_elem(). 
+ */
+int AddRangeDrop(int map_range_drop, u32 net, u8 cidr)
+{
+    u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
+    u32 start = net & bit_mask;
+
+    LpmTrieKey key = {0};
+    key.prefix_len = cidr;
+    key.data = start;
+
+    u64 val = ( (u64)bit_mask << 32 ) | start;
+
+    return bpf_map_update_elem(map_range_drop, &key, &val, BPF_ANY);
+}
+
+/**
+ * Updates IP ranges from config file.
+ * 
+ * @param map_range_drop The IPv4 range drop map's FD.
+ * @param cfg A pointer to the config file
+ * 
+ * @return void
+ */
+void UpdateRangeDrops(int map_range_drop, config__t* cfg)
+{
+    for (int i = 0; i < MAX_IP_RANGES; i++)
+    {
+        const char* range = cfg->drop_ranges[i];
+
+        if (!range)
+        {
+            continue;
+        }
+
+        // Parse IP range string and return network IP and CIDR.
+        ip_range_t t = ParseIpCidr(range);
+
+        AddRangeDrop(map_range_drop, t.ip, t.cidr);
+    }
+}
