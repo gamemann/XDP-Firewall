@@ -22,6 +22,36 @@ int main(int argc, char *argv[])
     cmdline_t cmd = {0};
     cmd.cfg_file = CONFIG_DEFAULT_PATH;
 
+    // We need to set integers for dynamic filters to -1 since we consider -1 as 'unset'.
+    cmd.min_ttl = -1;
+    cmd.max_ttl = -1;
+    cmd.min_len = -1;
+    cmd.max_len = -1;
+    cmd.tos = -1;
+
+    cmd.pps = -1;
+    cmd.bps = -1;
+
+    cmd.tcp_enabled = -1;
+    cmd.tcp_sport = -1;
+    cmd.tcp_dport = -1;
+    cmd.tcp_urg = -1;
+    cmd.tcp_ack = -1;
+    cmd.tcp_rst = -1;
+    cmd.tcp_psh = -1;
+    cmd.tcp_syn = -1;
+    cmd.tcp_fin = -1;
+    cmd.tcp_ece = -1;
+    cmd.tcp_cwr = -1;
+
+    cmd.udp_enabled = -1;
+    cmd.udp_sport = -1;
+    cmd.udp_dport = -1;
+    
+    cmd.icmp_enabled = -1;
+    cmd.icmp_code = -1;
+    cmd.icmp_type = -1;
+
     ParseCommandLine(&cmd, argc, argv);
 
     if (!cmd.help)
