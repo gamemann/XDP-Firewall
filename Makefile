@@ -9,14 +9,20 @@ MODULES_DIR = modules
 
 # Common directories.
 COMMON_DIR = $(SRC_DIR)/common
+ETC_DIR = /etc/xdpfw
+
+# Project source directories.
 LOADER_DIR = $(SRC_DIR)/loader
 XDP_DIR = $(SRC_DIR)/xdp
 
-ETC_DIR = /etc/xdpfw
+RULE_ADD_DIR = $(SRC_DIR)/rule_add
+RULE_DEL_DIR = $(SRC_DIR)/rule_del
 
 # Additional build directories.
 BUILD_LOADER_DIR = $(BUILD_DIR)/loader
 BUILD_XDP_DIR = $(BUILD_DIR)/xdp
+BUILD_RULE_ADD_DIR = $(BUILD_DIR)/rule_add
+BUILD_RULE_DEL_DIR = $(BUILD_DIR)/rule_del
 
 # XDP Tools directories.
 XDP_TOOLS_DIR = $(MODULES_DIR)/xdp-tools
@@ -72,6 +78,37 @@ endif
 XDP_SRC = prog.c
 XDP_OBJ = xdp_prog.o
 
+# Rule common.
+RULE_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_LOGGING_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
+
+ifeq ($(LIBXDP_STATIC), 1)
+	RULE_OBJS := $(LIBBPF_OBJS) $(LIBXDP_OBJS) $(RULE_OBJS)
+endif
+
+# Rule add.
+RULE_ADD_SRC = prog.c
+RULE_ADD_OUT = xdpfw-add
+
+RULE_ADD_UTILS_DIR = $(RULE_ADD_DIR)/utils
+
+# Rule add utils.
+RULE_ADD_UTILS_CMDLINE_SRC = cmdline.c
+RULE_ADD_UTILS_CMDLINE_OBJ = cmdline.o
+
+RULE_ADD_OBJS = $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_UTILS_CMDLINE_OBJ)
+
+# Rule delete.
+RULE_DEL_SRC = prog.c
+RULE_DEL_OUT = xdpfw-del
+
+RULE_DEL_UTILS_DIR = $(RULE_DEL_DIR)/utils
+
+# Rule delete utils.
+RULE_DEL_UTILS_CMDLINE_SRC = cmdline.c
+RULE_DEL_UTILS_CMDLINE_OBJ = cmdline.o
+
+RULE_DEL_OBJS = $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_UTILS_CMDLINE_OBJ)
+
 # Includes.
 INCS = -I $(SRC_DIR) -I /usr/include -I /usr/local/include
 
@@ -90,7 +127,7 @@ else
 endif
 
 # All chains.
-all: loader xdp
+all: loader xdp rule_add rule_del
 
 # Loader program.
 loader: loader_utils
@@ -120,6 +157,24 @@ loader_utils_helpers:
 xdp:
 	$(CC) $(INCS) $(FLAGS) -target bpf -c -o $(BUILD_XDP_DIR)/$(XDP_OBJ) $(XDP_DIR)/$(XDP_SRC)
 
+# Rule add.
+rule_add: loader_utils rule_add_utils
+	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_OUT) $(RULE_OBJS) $(RULE_ADD_OBJS) $(RULE_ADD_DIR)/$(RULE_ADD_SRC)
+
+rule_add_utils: rule_add_utils_cmdline
+
+rule_add_utils_cmdline:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_UTILS_CMDLINE_OBJ) $(RULE_ADD_UTILS_DIR)/$(RULE_ADD_UTILS_CMDLINE_SRC)
+
+# Rule delete.
+rule_del: loader_utils rule_del_utils
+	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_OUT) $(RULE_OBJS) $(RULE_DEL_OBJS) $(RULE_DEL_DIR)/$(RULE_DEL_SRC)
+
+rule_del_utils: rule_del_utils_cmdline
+
+rule_del_utils_cmdline:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_UTILS_CMDLINE_OBJ) $(RULE_DEL_UTILS_DIR)/$(RULE_DEL_UTILS_CMDLINE_SRC)
+
 # LibXDP chain. We need to install objects here since our program relies on installed object files and such.
 libxdp:
 	$(MAKE) -C $(XDP_TOOLS_DIR) libxdp
@@ -140,12 +195,17 @@ install:
 	cp -n other/xdpfw.service /etc/systemd/system/
 
 	cp -f $(BUILD_LOADER_DIR)/$(LOADER_OUT) /usr/bin
+	cp -f $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_OUT) /usr/bin
+	cp -f $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_OUT) /usr/bin
+
 	cp -f $(BUILD_XDP_DIR)/$(XDP_OBJ) $(ETC_DIR)
 
 clean:	
 	find $(BUILD_DIR) -type f ! -name ".*" -exec rm -f {} +
 	find $(BUILD_LOADER_DIR) -type f ! -name ".*" -exec rm -f {} +
 	find $(BUILD_XDP_DIR) -type f ! -name ".*" -exec rm -f {} +
+	find $(BUILD_RULE_ADD_DIR) -type f ! -name ".*" -exec rm -f {} +
+	find $(BUILD_RULE_DEL_DIR) -type f ! -name ".*" -exec rm -f {} +
 
 .PHONY: all libxdp
 .DEFAULT: all
