@@ -9,7 +9,7 @@ This firewall is designed for performance and flexibility, offering features suc
 I ultimately hope this tool helps existing network engineers and programmers interested in utilizing XDP or anybody interested in getting into those fields! (D)DoS protection and mitigation is an important part of Cyber Security and understanding networking concepts and packet flow at a low-to-medium level would certainly help those who are pursuing a career in the field 🙂
 
 ## 🚀 Features Overview
-All features can be enabled or disabled through the configuration file on disk or by modifying [`config.h`](./src/common/config.h) before compilation. If you're planning to only use certain features such as the source IP block and drop functionality, it is recommended you disable other features like dynamic filtering to achieve best performance.
+All features can be enabled or disabled through the build-time configuration ([`config.h`](./src/common/config.h) before compilation) or runtime configuration on disk. If you're planning to only use certain features such as the source IP block and drop functionality, it is recommended you disable other features like dynamic filtering to achieve best performance.
 
 ### 🔥 High-Performance Packet Filtering
 * **XDP-Powered** - Runs at the earliest point in the network stack for **minimal latency**.
@@ -21,8 +21,9 @@ All features can be enabled or disabled through the configuration file on disk o
 * Can be managed dynamically via CLI tools (`xdpfw-add`, `xdpfw-del`).
 
 ### ⚡ Dynamic Filtering (Rule-Based)
-* Define **custom rules** to allow or drop packets based on protocol, port, or IP.
+* Define **custom rules** to allow or drop packets based on protocols, ports, IP addresses, and more!
 * Supports **temporary bans** by adding IPs to the block list for a configurable duration.
+* Supports **TCP, UDP, and ICMP** network protocols and **IPv6**!
 * Ideal for mitigating **non-spoofed (D)DoS attacks**.
 
 ### 🌍 IP Range Dropping (CIDR)
@@ -53,17 +54,17 @@ sudo apt install -y libconfig-dev llvm clang libelf-dev build-essential
 # Install dependencies for building LibXDP and LibBPF.
 sudo apt install -y libpcap-dev m4 gcc-multilib
 
-# You need tools for your kernel since we require BPFTool. If this doesn't work, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
+# You may need tools for your Linux kernel since BPFTool is required. If this doesn't work and you still run into issues, I'd suggest building BPFTool from source (https://github.com/libbpf/bpftool).
 sudo apt install -y linux-tools-$(uname -r)
 ```
 
-You can use `git` to clone this project. Make sure to include the `--recursive` flag so it downloads the XDP Tools sub-module!
+You can use `git` to clone this project. Make sure to include the `--recursive` flag so it downloads the XDP Tools sub-module! Otherwise, you will need to execute `git submodule update --init` while in the cloned repository's directory.
 
 ```bash
 # Clone repository via Git. Use recursive flag to download XDP Tools sub-module.
 git clone --recursive https://github.com/gamemann/XDP-Firewall.git
 
-# Change directory to repository.
+# Change directory to cloned repository.
 cd XDP-Firewall
 ```
 
@@ -278,6 +279,64 @@ filters = (
 );
 ```
 
+## 🔧 The `xdpfw-add` & `xdpfw-del` Utilities
+When the main BPF maps are pinned to the file system (depending on the `pin_maps` runtime option detailed above), this allows you to add or delete rules while the firewall is running using `xdpfw-add` and `xdpfw-del`.
+
+### General CLI Usage
+The following general CLI arguments are supported with these utilities.
+
+| Name | Example | Description |
+| ---- | ------- | ----------- |
+| -c, --cfg | `-c ./local/conf` | The path to the configuration file (required if the save argument is specified or if you're using dynamic filters mode). |
+| -s, --save | `-s` | Updates the runtime config file. |
+| -m, --mode | `-m 1` | The mode to use (0 = dynamic filters, 1 = IP range drop list, 2 = source IP block list). |
+| -i, --idx | `-i 3` | The index to update or delete when running in filters mode. |
+| -d, --ip | `-d 192.168.1.0/24` | The IP range or source IP when running in IP range drop list or source IP block list modes. |
+| -v, --v6 | `-v` | Parses and adds the IP address as IPv6 when running in source IP block list mode. |
+
+### The `xdpfw-add` Tool
+This CLI tool allows you to add dynamic rules, IP ranges to the drop list, and source IPs to the block list. I'd recommend using `xdpfw-add -h` for more information.
+
+#### Additional CLI Usage
+The following CLI arguments are supported.
+
+| Name | Example | Description |
+| ---- | ------- | ----------- |
+| -e, --expires | `-e 60` | When the source IP block expires in seconds when running in IP block list mode. |
+| --sip | `--sip 192.168.1.0/24` | The source IPv4 address/range to match with the dynamic filter. |
+| --dip | `--sip 10.90.0.0/24` | The destination IPv4 address/range to match with the dynamic filter. |
+| --sip6 | `--sip 192.168.1.0/24` | The source IPv6 address to match with the dynamic filter. |
+| --dip6 | `--sip 192.168.1.0/24` | The destination IPv6 address to match with the dynamic filter. |
+| --min-ttl | `--min-ttl 0` | The IP's minimum TTL to match with the dynamic filter. |
+| --max-ttl | `--max-ttl 6` | The IP's maximum TTL to match with the dynamic filter. |
+| --min-len | `--min-len 42` | The packet's mimimum length to match with the dynamic filter. |
+| --max-len | `--max-len 96` | The packet's maximum length to match with the dynamic filter. |
+| --tos | `--tos 1` | The IP's Type of Service to match with the dynamic filter. |
+| --pps | `--pps 10000` | The minimum PPS rate to match with the dynamic filter. |
+| --bps | `--bps 126000` | The minimum BPS rate to match with the dynamic filter. |
+| --tcp | `--tcp 1` | Enables or disables TCP matching with the dynamic filter. |
+| --tsport | `--tsport 22` | The TCP source port to match with the dynamic filter. |
+| --tdport | `--tdport 443` | The TCP destination port to match with the dynamic filter. |
+| --urg | `--urg 1` | Enables or disables TCP URG flag matching with the dynamic filter. |
+| --ack | `--ack 1` | Enables or disables TCP ACK flag matching with the dynamic filter. |
+| --rst | `--rst 1` | Enables or disables TCP RST flag matching with the dynamic filter. |
+| --psh | `--psh 1` | Enables or disables TCP PSH flag matching with the dynamic filter. |
+| --syn | `--syn 1` | Enables or disables TCP SYN flag matching with the dynamic filter. |
+| --fin | `--fin 1` | Enables or disables TCP FIN flag matching with the dynamic filter. |
+| --ece | `--ece 1` | Enables or disables TCP ECE flag matching with the dynamic filter. |
+| --cwr | `--cwr 1` | Enables or disables TCP CWR flag matching with the dynamic filter. |
+| --udp | `--udp 1` | Enables or disables UDP matching with the dynamic filter. |
+| --usport | `--usport 53` | The UDP source port to match with the dynamic filter. |
+| --udport | `--udport 27015` | The UDP destination port to match with the dynamic filter. |
+| --icmp | `--icmp 1` | Enables or disables ICMP matching with the dynamic filter. |
+| --code | `--code 1` | The ICMP code to match with the dynamic filter. |
+| --type | `--type 8` | The ICMP type to match with the dynamic filter. |
+
+### The `xdpfw-del` Tool
+This CLI tool allows you to delete dynamic rules, IP ranges from the drop list, and source IPs from the block list.
+
+There is no additional CLI usage for this tool. Please refer to the general CLI usage above.
+
 ## 📝 Notes
 ### XDP Attach Modes
 By default, the firewall attaches to the Linux kernel's XDP hook using **DRV** mode (AKA native; occurs before [SKB creation](http://vger.kernel.org/~davem/skb.html)). If the host's network configuration or network interface card (NIC) doesn't support DRV mode, the program will attempt to attach to the XDP hook using **SKB** mode (AKA generic; occurs after SKB creation which is where IPTables and NFTables are processed via the `netfilter` kernel module). You may use overrides through the command-line to force SKB or offload modes.
@@ -368,6 +427,9 @@ In order to fix this, you'll need to pass the `-fno-stack-protector` flag to Cla
 If you have issues on Ubuntu 20.04 or earlier, please refer to the reply on [this](https://github.com/gamemann/XDP-Firewall/issues/41#issuecomment-1758701008) issue.
 
 Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux kernel 5.3 or above.
+
+### Will you make this firewall stateful?
+At this time, there are no plans to make this firewall stateful. There is a chance I may make a separate firewall with basic connection tracking, but I have no ETA on that and haven't started its development. With that said, I cannot share code for things like layer-7 filters or a full TCP proxy with SYN cookies support.
 
 ## 🌟 My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
