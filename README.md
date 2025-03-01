@@ -23,7 +23,7 @@ All features can be enabled or disabled through the build-time configuration ([`
 ### ⚡ Dynamic Filtering (Rule-Based)
 * Define **custom rules** to allow or drop packets based on protocols, ports, IP addresses, and more!
 * Supports **temporary bans** by adding IPs to the block list for a configurable duration.
-* Supports **TCP, UDP, and ICMP** network protocols and **IPv6**!
+* Supports **TCP, UDP, and ICMP** layer-4 protocols and **IPv6**!
 * Ideal for mitigating **non-spoofed (D)DoS attacks**.
 
 ### 🌍 IP Range Dropping (CIDR)
