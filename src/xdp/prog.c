@@ -240,7 +240,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Scan UDP header.
                 udph = data + sizeof(struct ethhdr) + (iph->ihl * 4);
 
-                // Check TCP header.
+                // Check UDP header.
                 if (unlikely(udph + 1 > (struct udphdr *)data_end))
                 {
                     return XDP_DROP;

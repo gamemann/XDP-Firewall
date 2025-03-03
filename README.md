@@ -442,8 +442,10 @@ At this time, there are no plans to make this firewall stateful. There is a chan
 ## 🌟 My Other XDP Projects
 I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 
-### [XDP Forwarding](https://github.com/gamemann/XDP-Forwarding)
-This project performs basic layer 3/4 forwarding using source port mapping similar to IPTables/NFTables and utilizes XDP.
+### [XDP Proxy](https://github.com/gamemann/XDP-Proxy)
+A *stateless*, high-performance NAT-like proxy that attaches to the [XDP](https://www.iovisor.org/technology/xdp) hook in the Linux kernel using [(e)BPF](https://ebpf.io/) for fast packet processing.
+
+This proxy forwards packets based on configurable rules and performs **source-port mapping**, similar to [IPTables](https://linux.die.net/man/8/iptables) and [NFTables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page).
 
 ### [Kilimanjaro](https://github.com/gamemann/Kilimanjaro)
 This is a complex packet processing/forwarding/dropping project I made for a gaming community I was a part of that utilizes XDP, AF_XDP, and the IPIP network protocol. I no longer work on/maintain the project, but the source code may be very helpful to other XDP developers, especially when it comes to manipulating packets inside of XDP and such.
