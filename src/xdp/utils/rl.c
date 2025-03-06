@@ -14,7 +14,7 @@
  * 
  * @return void
  */
-static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
+static __always_inline void update_ip_stats(u64 *pps, u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
 #ifdef USE_FLOW_RL
     flow_t key = {0};
@@ -79,7 +79,7 @@ static __always_inline void UpdateIpStats(u64 *pps, u64 *bps, u32 ip, u16 port, 
  * 
  * @return void
  */
-static __always_inline void UpdateIp6Stats(u64 *pps, u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
+static __always_inline void update_ip6_stats(u64 *pps, u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
 #ifdef USE_FLOW_RL
     flow6_t key = {0};

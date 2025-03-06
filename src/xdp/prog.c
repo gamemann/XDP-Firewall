@@ -126,7 +126,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
 #ifdef ENABLE_IP_RANGE_DROP
-    if (iph && CheckIpRangeDrop(iph->saddr))
+    if (iph && check_ip_range_drop(iph->saddr))
     {
 #ifdef DO_STATS_ON_IP_RANGE_DROP_MAP
         if (stats)
@@ -274,11 +274,11 @@ int xdp_prog_main(struct xdp_md *ctx)
     
     if (iph6)
     {
-        UpdateIp6Stats(&pps, &bps, &src_ip6, src_port, protocol, pkt_len, now);
+        update_ip6_stats(&pps, &bps, &src_ip6, src_port, protocol, pkt_len, now);
     }
     else if (iph)
     {
-        UpdateIpStats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
+        update_ip_stats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
     }
 
     int action = 0;
@@ -290,7 +290,6 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         filter_t *filter = bpf_map_lookup_elem(&map_filters, &key);
 
-        // Check if ID is above 0 (if 0, it's an invalid rule).
         if (!filter || !filter->set)
         {
             break;
@@ -352,10 +351,12 @@ int xdp_prog_main(struct xdp_md *ctx)
                     continue;
                 }
 
-                if (!IsIpInRange(iph->saddr, filter->src_ip, filter->src_cidr))
+                if (!is_ip_in_range(iph->saddr, filter->src_ip, filter->src_cidr))
                 {
                     continue;
                 }
+
+                
             }
 
             // Destination address.
@@ -366,7 +367,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                     continue;
                 }
                 
-                if (!IsIpInRange(iph->daddr, filter->dst_ip, filter->dst_cidr))
+                if (!is_ip_in_range(iph->daddr, filter->dst_ip, filter->dst_cidr))
                 {
                     continue;
                 }
@@ -549,7 +550,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 #ifdef ENABLE_FILTER_LOGGING
         if (filter->log > 0)
         {
-            LogFilterMsg(iph, iph6, src_port, dst_port, protocol, now, pps, bps, i);
+            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, pps, bps, i);
         }
 #endif
         

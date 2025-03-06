@@ -8,7 +8,7 @@
  * 
  * @return The map's FD.
  */
-int FindMapFd(struct xdp_program *prog, const char *map_name)
+int get_map_fd(struct xdp_program *prog, const char *map_name)
 {
     int fd = -1;
 
@@ -57,7 +57,7 @@ static int LibBPFSilent(enum libbpf_print_level level, const char *format, va_li
  * 
  * @return void
  */
-void SetLibBPFLogMode(int silent)
+void set_libbpf_log_mode(int silent)
 {
     if (silent)
     {
@@ -72,7 +72,7 @@ void SetLibBPFLogMode(int silent)
  * 
  * @return XDP program structure (pointer) or NULL.
  */
-struct xdp_program *LoadBpfObj(const char *file_name)
+struct xdp_program *load_bpf_obj(const char *file_name)
 {
     struct xdp_program *prog = xdp_program__open_file(file_name, "xdp_prog", NULL);
 
@@ -92,7 +92,7 @@ struct xdp_program *LoadBpfObj(const char *file_name)
  * 
  * @return The BPF object.
  */
-struct bpf_object* GetBpfObj(struct xdp_program* prog)
+struct bpf_object* get_bpf_obj(struct xdp_program* prog)
 {
     return xdp_program__bpf_obj(prog);
 }
@@ -109,7 +109,7 @@ struct bpf_object* GetBpfObj(struct xdp_program* prog)
  * 
  * @return 0 on success and 1 on error.
  */
-int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, int detach, int force_skb, int force_offload)
+int attach_xdp(struct xdp_program *prog, char** mode, int ifidx, int detach, int force_skb, int force_offload)
 {
     int err;
 
@@ -197,7 +197,7 @@ int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, int detach, int 
  * 
  * @return 0 on success or the error value of bpf_map_delete_elem().
  */
-int DeleteFilter(int map_filters, u32 idx)
+int delete_filter(int map_filters, u32 idx)
 {
     return bpf_map_delete_elem(map_filters, &idx);
 }
@@ -209,11 +209,11 @@ int DeleteFilter(int map_filters, u32 idx)
  * 
  * @return void
  */
-void DeleteFilters(int map_filters)
+void delete_filters(int map_filters)
 {
     for (int i = 0; i < MAX_FILTERS; i++)
     {
-        DeleteFilter(map_filters, i);
+        delete_filter(map_filters, i);
     }
 }
 
@@ -226,7 +226,7 @@ void DeleteFilters(int map_filters)
  * 
  * @return 0 on success or error value of bpf_map_update_elem().
  */
-int UpdateFilter(int map_filters, filter_t* filter, int idx)
+int update_filter(int map_filters, filter_t* filter, int idx)
 {
     int ret;
 
@@ -249,7 +249,7 @@ int UpdateFilter(int map_filters, filter_t* filter, int idx)
  * 
  * @return Void
  */
-void UpdateFilters(int map_filters, config__t *cfg)
+void update_filters(int map_filters, config__t *cfg)
 {
     int ret;
     int cur_idx = 0;
@@ -259,7 +259,7 @@ void UpdateFilters(int map_filters, config__t *cfg)
     {
         // Delete previous rule from BPF map.
         // We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
-        DeleteFilter(map_filters, i);
+        delete_filter(map_filters, i);
 
         filter_t* filter = &cfg->filters[i];
 
@@ -270,7 +270,7 @@ void UpdateFilters(int map_filters, config__t *cfg)
         }
 
         // Attempt to update filter.
-        if ((ret = UpdateFilter(map_filters, filter, cur_idx)) != 0)
+        if ((ret = update_filter(map_filters, filter, cur_idx)) != 0)
         {
             fprintf(stderr, "[WARNING] Failed to update filter #%d due to BPF update error (%d)...\n", cur_idx, ret);
 
@@ -290,7 +290,7 @@ void UpdateFilters(int map_filters, config__t *cfg)
  * 
  * @return 0 on success or value of bpf_map__pin() on error.
  */
-int PinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name)
+int pin_bpf_map(struct bpf_object* obj, const char* pin_dir, const char* map_name)
 {
     struct bpf_map* map = bpf_object__find_map_by_name(obj, map_name);
 
@@ -314,7 +314,7 @@ int PinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name)
  * 
  * @return
  */
-int UnpinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name)
+int unpin_bpf_map(struct bpf_object* obj, const char* pin_dir, const char* map_name)
 {
     struct bpf_map* map = bpf_object__find_map_by_name(obj, map_name);
 
@@ -337,7 +337,7 @@ int UnpinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_nam
  * 
  * @return The map FD or -1 on error.
  */
-int GetMapPinFd(const char* pin_dir, const char* map_name)
+int get_map_fd_pin(const char* pin_dir, const char* map_name)
 {
     char full_path[255];
     snprintf(full_path, sizeof(full_path), "%s/%s", pin_dir, map_name);
@@ -353,7 +353,7 @@ int GetMapPinFd(const char* pin_dir, const char* map_name)
  * 
  * @return 0 on success or error value of bpf_map_delete_elem().
  */
-int DeleteBlock(int map_block, u32 ip)
+int delete_block(int map_block, u32 ip)
 {
     return bpf_map_delete_elem(map_block, &ip);
 }
@@ -367,7 +367,7 @@ int DeleteBlock(int map_block, u32 ip)
  * 
  * @return 0 on success or error value of bpf_map_update_elem().
  */
-int AddBlock(int map_block, u32 ip, u64 expires)
+int add_block(int map_block, u32 ip, u64 expires)
 {
     return bpf_map_update_elem(map_block, &ip, &expires, BPF_ANY);
 }
@@ -380,7 +380,7 @@ int AddBlock(int map_block, u32 ip, u64 expires)
  * 
  * @return 0 on success or error value of bpf_map_delete_elem().
  */
-int DeleteBlock6(int map_block6, u128 ip)
+int delete_block6(int map_block6, u128 ip)
 {
     return bpf_map_delete_elem(map_block6, &ip);
 }
@@ -394,7 +394,7 @@ int DeleteBlock6(int map_block6, u128 ip)
  * 
  * @return 0 on success or error value of bpf_map_update_elem().
  */
-int AddBlock6(int map_block6, u128 ip, u64 expires)
+int add_block6(int map_block6, u128 ip, u64 expires)
 {
     return bpf_map_update_elem(map_block6, &ip, &expires, BPF_ANY);
 }
@@ -408,7 +408,7 @@ int AddBlock6(int map_block6, u128 ip, u64 expires)
  * 
  * @return 0 on success or error value of bpf_map_delete_elem(). 
  */
-int DeleteRangeDrop(int map_range_drop, u32 net, u8 cidr)
+int delete_range_drop(int map_range_drop, u32 net, u8 cidr)
 {
     u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
     u32 start = net & bit_mask;
@@ -429,7 +429,7 @@ int DeleteRangeDrop(int map_range_drop, u32 net, u8 cidr)
  * 
  * @return 0 on success or error value of bpf_map_update_elem(). 
  */
-int AddRangeDrop(int map_range_drop, u32 net, u8 cidr)
+int add_range_drop(int map_range_drop, u32 net, u8 cidr)
 {
     u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
     u32 start = net & bit_mask;
@@ -451,7 +451,7 @@ int AddRangeDrop(int map_range_drop, u32 net, u8 cidr)
  * 
  * @return void
  */
-void UpdateRangeDrops(int map_range_drop, config__t* cfg)
+void update_range_drops(int map_range_drop, config__t* cfg)
 {
     for (int i = 0; i < MAX_IP_RANGES; i++)
     {
@@ -463,8 +463,8 @@ void UpdateRangeDrops(int map_range_drop, config__t* cfg)
         }
 
         // Parse IP range string and return network IP and CIDR.
-        ip_range_t t = ParseIpCidr(range);
+        ip_range_t t = parse_ip_range(range);
 
-        AddRangeDrop(map_range_drop, t.ip, t.cidr);
+        add_range_drop(map_range_drop, t.ip, t.cidr);
     }
 }

@@ -9,49 +9,49 @@
  * 
  * @return 0 on success or 1 on error.
  */
-int LoadConfig(config__t *cfg, const char* cfg_file, config_overrides_t* overrides)
+int load_cfg(config__t *cfg, const char* cfg_file, config_overrides_t* overrides)
 {
     int ret;
     
     FILE *file = NULL;
     
     // Open config file.
-    if ((ret = OpenCfg(&file, cfg_file)) != 0 || file == NULL)
+    if ((ret = open_cfg(&file, cfg_file)) != 0 || file == NULL)
     {
         fprintf(stderr, "Error opening config file.\n");
         
         return ret;
     }
 
-    SetCfgDefaults(cfg);
+    set_cfg_defaults(cfg);
 
     memset(cfg->filters, 0, sizeof(cfg->filters));
 
     char* buffer = NULL;
 
     // Read config.
-    if ((ret = ReadCfg(file, &buffer)) != 0)
+    if ((ret = read_cfg(file, &buffer)) != 0)
     {
         fprintf(stderr, "Error reading config file.\n");
 
-        CloseCfg(file);
+        close_cfg(file);
 
         return ret;
     }
 
     // Parse config.
-    if ((ret = ParseCfg(cfg, buffer, overrides)) != 0)
+    if ((ret = parse_cfg(cfg, buffer, overrides)) != 0)
     {
         fprintf(stderr, "Error parsing config file.\n");
 
-        CloseCfg(file);
+        close_cfg(file);
 
         return ret;
     }
 
     free(buffer);
 
-    if ((ret = CloseCfg(file)) != 0)
+    if ((ret = close_cfg(file)) != 0)
     {
         fprintf(stderr, "Error closing config file.\n");
 
@@ -68,7 +68,7 @@ int LoadConfig(config__t *cfg, const char* cfg_file, config_overrides_t* overrid
  * 
  * @return 0 on success or 1 on error.
  */
-int OpenCfg(FILE** file, const char *file_name)
+int open_cfg(FILE** file, const char *file_name)
 {
     // Close any existing files.
     if (*file != NULL)
@@ -95,7 +95,7 @@ int OpenCfg(FILE** file, const char *file_name)
  * 
  * @param return 0 on success or error value of fclose().
  */
-int CloseCfg(FILE* file)
+int close_cfg(FILE* file)
 {
     return fclose(file);
 }
@@ -106,7 +106,7 @@ int CloseCfg(FILE* file)
  * @param file The file pointer.
  * @param buffer The buffer to store the data in (manually allocated).
  */
-int ReadCfg(FILE* file, char** buffer)
+int read_cfg(FILE* file, char** buffer)
 {
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
@@ -139,7 +139,7 @@ int ReadCfg(FILE* file, char** buffer)
  * 
  * @return 0 on success or 1/-1 on error.
  */
-int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides)
+int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
 {
     // Initialize config.
     config_t conf;
@@ -150,7 +150,7 @@ int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides)
     // Attempt to read the config.
     if (config_read_string(&conf, data) == CONFIG_FALSE)
     {
-        LogMsg(cfg, 0, 1, "Error from LibConfig when reading file - %s (Line %d)", config_error_text(&conf), config_error_line(&conf));
+        log_msg(cfg, 0, 1, "Error from LibConfig when reading file - %s (Line %d)", config_error_text(&conf), config_error_line(&conf));
 
         config_destroy(&conf);
 
@@ -317,7 +317,7 @@ int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides)
 
             if (filter == NULL || filter_cfg == NULL)
             {
-                LogMsg(cfg, 0, 1, "[WARNING] Failed to read filter rule at index #%d. 'filter' or 'filter_cfg' is NULL (make sure you didn't exceed the maximum filters allowed!)...");
+                log_msg(cfg, 0, 1, "[WARNING] Failed to read filter rule at index #%d. 'filter' or 'filter_cfg' is NULL (make sure you didn't exceed the maximum filters allowed!)...");
 
                 continue;
             }
@@ -351,7 +351,7 @@ int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides)
 
             if (config_setting_lookup_string(filter_cfg, "src_ip", &sip) == CONFIG_TRUE)
             {
-                ip_range_t ip = ParseIpCidr(sip);
+                ip_range_t ip = parse_ip_range(sip);
 
                 filter->src_ip = ip.ip;
                 filter->src_cidr = ip.cidr;
@@ -362,7 +362,7 @@ int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides)
 
             if (config_setting_lookup_string(filter_cfg, "dst_ip", &dip) == CONFIG_TRUE)
             {
-                ip_range_t ip = ParseIpCidr(dip);
+                ip_range_t ip = parse_ip_range(dip);
 
                 filter->dst_ip = ip.ip;
                 filter->dst_cidr = ip.cidr;
@@ -662,7 +662,7 @@ int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides)
  * 
  * @param return 0 on success or 1 on failure.
  */
-int SaveCfg(config__t* cfg, const char* file_path)
+int save_cfg(config__t* cfg, const char* file_path)
 {
     config_t conf;
     config_setting_t *root, *setting;
@@ -945,7 +945,7 @@ int SaveCfg(config__t* cfg, const char* file_path)
  * 
  * @return void
  */
-void SetFilterDefaults(filter_t* filter)
+void set_filter_defaults(filter_t* filter)
 {
     filter->set = 0;
     filter->enabled = 1;
@@ -1010,7 +1010,7 @@ void SetFilterDefaults(filter_t* filter)
  * 
  * @return void
  */
-void SetCfgDefaults(config__t* cfg)
+void set_cfg_defaults(config__t* cfg)
 {
     cfg->verbose = 2;
     cfg->log_file = strdup("/var/log/xdpfw.log");
@@ -1025,7 +1025,7 @@ void SetCfgDefaults(config__t* cfg)
     {
         filter_t* filter = &cfg->filters[i];
 
-        SetFilterDefaults(filter);
+        set_filter_defaults(filter);
     }
 
     memset(cfg->drop_ranges, 0, sizeof(cfg->drop_ranges));
@@ -1120,7 +1120,7 @@ void PrintFilter(filter_t* filter, int idx)
  * 
  * @return void
  */
-void PrintConfig(config__t* cfg)
+void print_cfg(config__t* cfg)
 {
     char* interface = "N/A";
 
@@ -1186,7 +1186,7 @@ void PrintConfig(config__t* cfg)
  * 
  * @return The next available index or -1 if there are no available indexes.
  */
-int GetNextAvailableFilterIndex(config__t* cfg)
+int get_next_filter_idx(config__t* cfg)
 {
     for (int i = 0; i < MAX_FILTERS; i++)
     {
@@ -1210,7 +1210,7 @@ int GetNextAvailableFilterIndex(config__t* cfg)
  * 
  * @return The next available index or -1 if there are no available indexes.
  */
-int GetNextAvailableIpDropRangeIndex(config__t* cfg)
+int get_next_ip_drop_range_idx(config__t* cfg)
 {
     for (int i = 0; i < MAX_IP_RANGES; i++)
     {

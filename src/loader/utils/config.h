@@ -40,21 +40,21 @@ struct config_overrides
     int stdout_update_time;
 } typedef config_overrides_t;
 
-void SetCfgDefaults(config__t *cfg);
-void SetFilterDefaults(filter_t* filter);
+void set_cfg_defaults(config__t *cfg);
+void set_filter_defaults(filter_t* filter);
 
-void PrintConfig(config__t* cfg);
+void print_cfg(config__t* cfg);
 void PrintFilter(filter_t* filter, int idx);
 
-int LoadConfig(config__t *cfg, const char* cfg_file, config_overrides_t* overrides);
-int SaveCfg(config__t* cfg, const char* file_path);
+int load_cfg(config__t *cfg, const char* cfg_file, config_overrides_t* overrides);
+int save_cfg(config__t* cfg, const char* file_path);
 
-int OpenCfg(FILE** file, const char *file_name);
-int CloseCfg(FILE* file);
-int ReadCfg(FILE* file, char** buffer);
-int ParseCfg(config__t *cfg, const char* data, config_overrides_t* overrides);
+int open_cfg(FILE** file, const char *file_name);
+int close_cfg(FILE* file);
+int read_cfg(FILE* file, char** buffer);
+int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides);
 
-int GetNextAvailableFilterIndex(config__t* cfg);
-int GetNextAvailableIpDropRangeIndex(config__t* cfg);
+int get_next_filter_idx(config__t* cfg);
+int get_next_ip_drop_range_idx(config__t* cfg);
 
 #include <loader/utils/logging.h>

@@ -7,7 +7,7 @@
 #include <loader/utils/xdp.h>
 #include <loader/utils/config.h>
 
-#include <rule_add/utils/cmdline.h>
+#include <rule_add/utils/cli.h>
 
 // These are required due to being extern with Loader.
 // To Do: Figure out a way to not require the below without requiring separate object files.
@@ -19,46 +19,46 @@ int main(int argc, char *argv[])
     int ret;
 
     // Parse command line.
-    cmdline_t cmd = {0};
-    cmd.cfg_file = CONFIG_DEFAULT_PATH;
+    cli_t cli = {0};
+    cli.cfg_file = CONFIG_DEFAULT_PATH;
 
     // We need to set integers for dynamic filters to -1 since we consider -1 as 'unset'.
-    cmd.enabled = -1;
-    cmd.action = -1;
-    cmd.log = -1;
+    cli.enabled = -1;
+    cli.action = -1;
+    cli.log = -1;
 
-    cmd.min_ttl = -1;
-    cmd.max_ttl = -1;
-    cmd.min_len = -1;
-    cmd.max_len = -1;
-    cmd.tos = -1;
+    cli.min_ttl = -1;
+    cli.max_ttl = -1;
+    cli.min_len = -1;
+    cli.max_len = -1;
+    cli.tos = -1;
 
-    cmd.pps = -1;
-    cmd.bps = -1;
+    cli.pps = -1;
+    cli.bps = -1;
 
-    cmd.tcp_enabled = -1;
-    cmd.tcp_sport = -1;
-    cmd.tcp_dport = -1;
-    cmd.tcp_urg = -1;
-    cmd.tcp_ack = -1;
-    cmd.tcp_rst = -1;
-    cmd.tcp_psh = -1;
-    cmd.tcp_syn = -1;
-    cmd.tcp_fin = -1;
-    cmd.tcp_ece = -1;
-    cmd.tcp_cwr = -1;
+    cli.tcp_enabled = -1;
+    cli.tcp_sport = -1;
+    cli.tcp_dport = -1;
+    cli.tcp_urg = -1;
+    cli.tcp_ack = -1;
+    cli.tcp_rst = -1;
+    cli.tcp_psh = -1;
+    cli.tcp_syn = -1;
+    cli.tcp_fin = -1;
+    cli.tcp_ece = -1;
+    cli.tcp_cwr = -1;
 
-    cmd.udp_enabled = -1;
-    cmd.udp_sport = -1;
-    cmd.udp_dport = -1;
+    cli.udp_enabled = -1;
+    cli.udp_sport = -1;
+    cli.udp_dport = -1;
 
-    cmd.icmp_enabled = -1;
-    cmd.icmp_code = -1;
-    cmd.icmp_type = -1;
+    cli.icmp_enabled = -1;
+    cli.icmp_code = -1;
+    cli.icmp_type = -1;
 
-    ParseCommandLine(&cmd, argc, argv);
+    parse_cli(&cli, argc, argv);
 
-    if (!cmd.help)
+    if (!cli.help)
     {
         printf("Parsed command line...\n");
     }
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     }
 
     // Check for config file path.
-    if ((cmd.save || cmd.mode == 0) && (!cmd.cfg_file || strlen(cmd.cfg_file) < 1))
+    if ((cli.save || cli.mode == 0) && (!cli.cfg_file || strlen(cli.cfg_file) < 1))
     {
         fprintf(stderr, "[ERROR] CFG file not specified or empty. This is required for filters mode or when saving config.\n");
 
@@ -128,11 +128,11 @@ int main(int argc, char *argv[])
     // Load config.
     config__t cfg = {0};
     
-    if (cmd.save || cmd.mode == 0)
+    if (cli.save || cli.mode == 0)
     {
-        if ((ret = LoadConfig(&cfg, cmd.cfg_file, NULL)) != 0)
+        if ((ret = load_cfg(&cfg, cli.cfg_file, NULL)) != 0)
         {
-            fprintf(stderr, "[ERROR] Failed to load config at '%s' (%d)\n", cmd.cfg_file, ret);
+            fprintf(stderr, "[ERROR] Failed to load config at '%s' (%d)\n", cli.cfg_file, ret);
 
             return EXIT_FAILURE;
         }
@@ -141,12 +141,12 @@ int main(int argc, char *argv[])
     }
 
     // Handle filters mode.
-    if (cmd.mode == 0)
+    if (cli.mode == 0)
     {
         printf("Using filters mode (0)...\n");
 
         // Retrieve filters map FD.
-        int map_filters = GetMapPinFd(XDP_MAP_PIN_DIR, "map_filters");
+        int map_filters = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_filters");
 
         if (map_filters < 0)
         {
@@ -159,20 +159,20 @@ int main(int argc, char *argv[])
 
         // Create new base filter and set its defaults.
         filter_t new_filter = {0};
-        SetFilterDefaults(&new_filter);
+        set_filter_defaults(&new_filter);
 
         new_filter.set = 1;
 
         // Determine what index we'll be storing this filter at.
         int idx = -1;
 
-        if (cmd.idx > 0)
+        if (cli.idx > 0)
         {
-            idx = cmd.idx - 1;
+            idx = cli.idx - 1;
         }
         else
         {
-            idx = GetNextAvailableFilterIndex(&cfg);
+            idx = get_next_filter_idx(&cfg);
         }
 
         if (idx < 0)
@@ -183,47 +183,47 @@ int main(int argc, char *argv[])
         }
 
         // Fill out new filter.
-        if (cmd.enabled > -1)
+        if (cli.enabled > -1)
         {
-            new_filter.enabled = cmd.enabled;
+            new_filter.enabled = cli.enabled;
         }
 
-        if (cmd.action > -1)
+        if (cli.action > -1)
         {
-            new_filter.action = cmd.action;
+            new_filter.action = cli.action;
         }
 
-        if (cmd.log > -1)
+        if (cli.log > -1)
         {
-            new_filter.log = cmd.log;
+            new_filter.log = cli.log;
         }
 
-        if (cmd.block_time > -1)
+        if (cli.block_time > -1)
         {
-            new_filter.block_time = cmd.block_time;
+            new_filter.block_time = cli.block_time;
         }
 
-        if (cmd.src_ip)
+        if (cli.src_ip)
         {
-            ip_range_t range = ParseIpCidr(cmd.src_ip);
+            ip_range_t range = parse_ip_range(cli.src_ip);
 
             new_filter.src_ip = range.ip;
             new_filter.src_cidr = range.cidr;
         }
 
-        if (cmd.dst_ip)
+        if (cli.dst_ip)
         {
-            ip_range_t range = ParseIpCidr(cmd.dst_ip);
+            ip_range_t range = parse_ip_range(cli.dst_ip);
 
             new_filter.dst_ip = range.ip;
             new_filter.dst_cidr = range.cidr;
         }
 
-        if (cmd.src_ip6)
+        if (cli.src_ip6)
         {
             struct in6_addr addr;
 
-            if ((ret = inet_pton(AF_INET6, cmd.src_ip6, &addr)) != 1)
+            if ((ret = inet_pton(AF_INET6, cli.src_ip6, &addr)) != 1)
             {
                 fprintf(stderr, "Failed to convert source IPv6 address to decimal (%d).\n", ret);
 
@@ -233,11 +233,11 @@ int main(int argc, char *argv[])
             memcpy(new_filter.src_ip6, addr.s6_addr, sizeof(new_filter.src_ip6));
         }
 
-        if (cmd.dst_ip6)
+        if (cli.dst_ip6)
         {
             struct in6_addr addr;
 
-            if ((ret = inet_pton(AF_INET6, cmd.dst_ip6, &addr)) != 1)
+            if ((ret = inet_pton(AF_INET6, cli.dst_ip6, &addr)) != 1)
             {
                 fprintf(stderr, "Failed to convert destination IPv6 address to decimal (%d).\n", ret);
 
@@ -249,145 +249,145 @@ int main(int argc, char *argv[])
 
         // To Do: See if I can create a macro for below.
         // As long as the naming convention lines up, it should be easily possible.
-        if (cmd.pps > -1)
+        if (cli.pps > -1)
         {
             new_filter.do_pps = 1;
-            new_filter.pps = cmd.pps;
+            new_filter.pps = cli.pps;
         }
 
-        if (cmd.bps > -1)
+        if (cli.bps > -1)
         {
             new_filter.do_bps = 1;
-            new_filter.bps = cmd.bps;
+            new_filter.bps = cli.bps;
         }
 
-        if (cmd.min_ttl > -1)
+        if (cli.min_ttl > -1)
         {
             new_filter.do_min_ttl = 1;
-            new_filter.min_ttl = cmd.min_ttl;
+            new_filter.min_ttl = cli.min_ttl;
         }
 
-        if (cmd.max_ttl > -1)
+        if (cli.max_ttl > -1)
         {
             new_filter.do_max_ttl = 1;
-            new_filter.max_ttl = cmd.max_ttl;
+            new_filter.max_ttl = cli.max_ttl;
         }
 
-        if (cmd.min_len > -1)
+        if (cli.min_len > -1)
         {
             new_filter.do_min_len = 1;
-            new_filter.min_len = cmd.min_len;
+            new_filter.min_len = cli.min_len;
         }
 
-        if (cmd.max_len > -1)
+        if (cli.max_len > -1)
         {
             new_filter.do_max_len = 1;
-            new_filter.max_len = cmd.max_len;
+            new_filter.max_len = cli.max_len;
         }
 
-        if (cmd.tos > -1)
+        if (cli.tos > -1)
         {
             new_filter.do_tos = 1;
-            new_filter.tos = cmd.tos;
+            new_filter.tos = cli.tos;
         }
 
-        if (cmd.tcp_enabled > -1)
+        if (cli.tcp_enabled > -1)
         {
-            new_filter.tcpopts.enabled = cmd.tcp_enabled;
+            new_filter.tcpopts.enabled = cli.tcp_enabled;
         }
 
-        if (cmd.tcp_sport > -1)
+        if (cli.tcp_sport > -1)
         {
             new_filter.tcpopts.do_sport = 1;
-            new_filter.tcpopts.sport = cmd.tcp_sport;
+            new_filter.tcpopts.sport = cli.tcp_sport;
         }
 
-        if (cmd.tcp_dport > -1)
+        if (cli.tcp_dport > -1)
         {
             new_filter.tcpopts.do_dport = 1;
-            new_filter.tcpopts.dport = cmd.tcp_dport;
+            new_filter.tcpopts.dport = cli.tcp_dport;
         }
 
-        if (cmd.tcp_urg > -1)
+        if (cli.tcp_urg > -1)
         {
             new_filter.tcpopts.do_urg = 1;
-            new_filter.tcpopts.urg = cmd.tcp_urg;
+            new_filter.tcpopts.urg = cli.tcp_urg;
         }
 
-        if (cmd.tcp_ack > -1)
+        if (cli.tcp_ack > -1)
         {
             new_filter.tcpopts.do_ack = 1;
-            new_filter.tcpopts.ack = cmd.tcp_ack;
+            new_filter.tcpopts.ack = cli.tcp_ack;
         }
 
-        if (cmd.tcp_rst > -1)
+        if (cli.tcp_rst > -1)
         {
             new_filter.tcpopts.do_rst = 1;
-            new_filter.tcpopts.rst = cmd.tcp_rst;
+            new_filter.tcpopts.rst = cli.tcp_rst;
         }
 
-        if (cmd.tcp_psh > -1)
+        if (cli.tcp_psh > -1)
         {
             new_filter.tcpopts.do_psh = 1;
-            new_filter.tcpopts.psh = cmd.tcp_psh;
+            new_filter.tcpopts.psh = cli.tcp_psh;
         }
 
-        if (cmd.tcp_syn > -1)
+        if (cli.tcp_syn > -1)
         {
             new_filter.tcpopts.do_syn = 1;
-            new_filter.tcpopts.syn = cmd.tcp_syn;
+            new_filter.tcpopts.syn = cli.tcp_syn;
         }
 
-        if (cmd.tcp_fin > -1)
+        if (cli.tcp_fin > -1)
         {
             new_filter.tcpopts.do_fin = 1;
-            new_filter.tcpopts.fin = cmd.tcp_fin;
+            new_filter.tcpopts.fin = cli.tcp_fin;
         }
 
-        if (cmd.tcp_ece > -1)
+        if (cli.tcp_ece > -1)
         {
             new_filter.tcpopts.do_ece = 1;
-            new_filter.tcpopts.ece = cmd.tcp_ece;
+            new_filter.tcpopts.ece = cli.tcp_ece;
         }
 
-        if (cmd.tcp_cwr > -1)
+        if (cli.tcp_cwr > -1)
         {
             new_filter.tcpopts.do_cwr = 1;
-            new_filter.tcpopts.cwr = cmd.tcp_cwr;
+            new_filter.tcpopts.cwr = cli.tcp_cwr;
         }
 
-        if (cmd.udp_enabled > -1)
+        if (cli.udp_enabled > -1)
         {
-            new_filter.udpopts.enabled = cmd.udp_enabled;
+            new_filter.udpopts.enabled = cli.udp_enabled;
         }
 
-        if (cmd.udp_sport > -1)
+        if (cli.udp_sport > -1)
         {
             new_filter.udpopts.do_sport = 1;
-            new_filter.udpopts.sport = cmd.udp_sport;
+            new_filter.udpopts.sport = cli.udp_sport;
         }
 
-        if (cmd.udp_dport > -1)
+        if (cli.udp_dport > -1)
         {
             new_filter.udpopts.do_dport = 1;
-            new_filter.udpopts.dport = cmd.udp_dport;
+            new_filter.udpopts.dport = cli.udp_dport;
         }
 
-        if (cmd.icmp_enabled > -1)
+        if (cli.icmp_enabled > -1)
         {
-            new_filter.icmpopts.enabled = cmd.icmp_enabled;
+            new_filter.icmpopts.enabled = cli.icmp_enabled;
         }
 
-        if (cmd.icmp_code > -1)
+        if (cli.icmp_code > -1)
         {
             new_filter.icmpopts.do_code = 1;
-            new_filter.icmpopts.code = cmd.icmp_code;
+            new_filter.icmpopts.code = cli.icmp_code;
         }
 
-        if (cmd.icmp_type > -1)
+        if (cli.icmp_type > -1)
         {
             new_filter.icmpopts.do_type = 1;
-            new_filter.icmpopts.type = cmd.icmp_type;
+            new_filter.icmpopts.type = cli.icmp_type;
         }
 
         // Set filter at index.
@@ -396,15 +396,15 @@ int main(int argc, char *argv[])
         // Update filters.
         fprintf(stdout, "Updating filters (index %d)...\n", idx);
 
-        UpdateFilters(map_filters, &cfg);
+        update_filters(map_filters, &cfg);
     }
     // Handle IPv4 range drop mode.
-    else if (cmd.mode == 1)
+    else if (cli.mode == 1)
     {
         printf("Using IPv4 range drop mode (1)...\n");
 
         // Make sure IP range is specified.
-        if (!cmd.ip)
+        if (!cli.ip)
         {
             fprintf(stderr, "No IP address or range specified. Please set an IP range using -d, --ip arguments.\n");
 
@@ -412,7 +412,7 @@ int main(int argc, char *argv[])
         }
 
         // Get range map.
-        int map_range_drop = GetMapPinFd(XDP_MAP_PIN_DIR, "map_range_drop");
+        int map_range_drop = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_range_drop");
 
         if (map_range_drop < 0)
         {
@@ -424,22 +424,22 @@ int main(int argc, char *argv[])
         printf("Using 'map_range_drop' FD => %d.\n", map_range_drop);
 
         // Parse IP range.
-        ip_range_t range = ParseIpCidr(cmd.ip);
+        ip_range_t range = parse_ip_range(cli.ip);
 
         // Attempt to add range.
-        if ((ret = AddRangeDrop(map_range_drop, range.ip, range.cidr)) != 0)
+        if ((ret = add_range_drop(map_range_drop, range.ip, range.cidr)) != 0)
         {
             fprintf(stderr, "Error adding range to BPF map (%d).\n", ret);
 
             return EXIT_FAILURE;
         }
 
-        printf("Added IP range '%s' to IP range drop map...\n", cmd.ip);
+        printf("Added IP range '%s' to IP range drop map...\n", cli.ip);
 
-        if (cmd.save)
+        if (cli.save)
         {
             // Get next available index.
-            int idx = GetNextAvailableIpDropRangeIndex(&cfg);
+            int idx = get_next_ip_drop_range_idx(&cfg);
 
             if (idx < 0)
             {
@@ -448,7 +448,7 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
 
-            cfg.drop_ranges[idx] = strdup(cmd.ip);
+            cfg.drop_ranges[idx] = strdup(cli.ip);
         }
     }
     // Handle block map mode.
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
     {
         printf("Using source IP block mode (2)...\n");
 
-        if (!cmd.ip)
+        if (!cli.ip)
         {
             fprintf(stderr, "No source IP address specified. Please set an IP using -s, --ip arguments.\n");
 
@@ -465,15 +465,15 @@ int main(int argc, char *argv[])
 
         u64 expires_rel = 0;
 
-        if (cmd.expires > 0)
+        if (cli.expires > 0)
         {
-            expires_rel = GetBootNanoTime() + ((u64)cmd.expires * 1e9);
+            expires_rel = get_boot_nano_time() + ((u64)cli.expires * 1e9);
         }
 
-        int map_block = GetMapPinFd(XDP_MAP_PIN_DIR, "map_block");
-        int map_block6 = GetMapPinFd(XDP_MAP_PIN_DIR, "map_block6");
+        int map_block = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_block");
+        int map_block6 = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_block6");
 
-        if (cmd.v6)
+        if (cli.v6)
         {
             if (map_block6 < 0)
             {
@@ -486,9 +486,9 @@ int main(int argc, char *argv[])
 
             struct in6_addr addr;
 
-            if ((ret = inet_pton(AF_INET6, cmd.ip, &addr)) != 1)
+            if ((ret = inet_pton(AF_INET6, cli.ip, &addr)) != 1)
             {
-                fprintf(stderr, "Failed to convert IPv6 address '%s' to decimal (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to convert IPv6 address '%s' to decimal (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
@@ -500,9 +500,9 @@ int main(int argc, char *argv[])
                 ip = (ip << 8) | addr.s6_addr[i];
             }
 
-            if ((ret = AddBlock6(map_block6, ip, expires_rel)) != 0)
+            if ((ret = add_block6(map_block6, ip, expires_rel)) != 0)
             {
-                fprintf(stderr, "Failed to add IP '%s' to BPF map (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to add IP '%s' to BPF map (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
@@ -520,37 +520,37 @@ int main(int argc, char *argv[])
 
             struct in_addr addr;
 
-            if ((ret = inet_pton(AF_INET, cmd.ip, &addr)) != 1)
+            if ((ret = inet_pton(AF_INET, cli.ip, &addr)) != 1)
             {
-                fprintf(stderr, "Failed to convert IP address '%s' to decimal (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to convert IP address '%s' to decimal (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
 
-            if ((ret = AddBlock(map_block, addr.s_addr, expires_rel)) != 0)
+            if ((ret = add_block(map_block, addr.s_addr, expires_rel)) != 0)
             {
-                fprintf(stderr, "Failed to add IP '%s' too BPF map (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to add IP '%s' too BPF map (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
 
-            if (cmd.expires > 0)
+            if (cli.expires > 0)
             {
-                printf("Added '%s' to block map for %lld seconds...\n", cmd.ip, cmd.expires);
+                printf("Added '%s' to block map for %lld seconds...\n", cli.ip, cli.expires);
             }
             else
             {
-                printf("Added '%s' to block map indefinitely...\n", cmd.ip);
+                printf("Added '%s' to block map indefinitely...\n", cli.ip);
             }
         }
     }
 
-    if (cmd.save)
+    if (cli.save)
     {
         // Save config.
         printf("Saving config...\n");
 
-        if ((ret = SaveCfg(&cfg, cmd.cfg_file)) != 0)
+        if ((ret = save_cfg(&cfg, cli.cfg_file)) != 0)
         {
             fprintf(stderr, "[ERROR] Failed to save config.\n");
 

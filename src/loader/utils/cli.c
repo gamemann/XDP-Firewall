@@ -1,4 +1,4 @@
-#include <loader/utils/cmdline.h>
+#include <loader/utils/cli.h>
 
 const struct option opts[] =
 {
@@ -22,13 +22,13 @@ const struct option opts[] =
 };
 
 /**
- * Parses the command line and stores values in the cmdline structure.
+ * Parses the command line and stores values in the cli structure.
  * 
- * @param cmd A pointer to the cmdline structure.
+ * @param cli A pointer to the cli structure.
  * 
  * @return Void
  */
-void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
+void parse_cli(cli_t *cli, int argc, char *argv[])
 {
     int c;
 
@@ -37,72 +37,72 @@ void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[])
         switch (c)
         {
             case 'c':
-                cmd->cfg_file = optarg;
+                cli->cfg_file = optarg;
 
                 break;
 
             case 'o':
-                cmd->offload = 1;
+                cli->offload = 1;
 
                 break;
 
             case 's':
-                cmd->skb = 1;
+                cli->skb = 1;
 
                 break;
 
             case 't':
-                cmd->time = atoi(optarg);
+                cli->time = atoi(optarg);
 
                 break;
 
             case 'l':
-                cmd->list = 1;
+                cli->list = 1;
 
                 break;
 
             case 'h':
-                cmd->help = 1;
+                cli->help = 1;
 
                 break;
 
             case 'v':
-                cmd->verbose = atoi(optarg);
+                cli->verbose = atoi(optarg);
 
                 break;
 
             case 0:
-                cmd->log_file = optarg;
+                cli->log_file = optarg;
 
                 break;
 
             case 'i':
-                cmd->interface = optarg;
+                cli->interface = optarg;
 
                 break;
 
             case 'p':
-                cmd->pin_maps = atoi(optarg);
+                cli->pin_maps = atoi(optarg);
 
                 break;
 
             case 'u':
-                cmd->update_time = atoi(optarg);
+                cli->update_time = atoi(optarg);
 
                 break;
 
             case 'n':
-                cmd->no_stats = atoi(optarg);
+                cli->no_stats = atoi(optarg);
 
                 break;
 
             case 1:
-                cmd->stats_per_second = atoi(optarg);
+                cli->stats_per_second = atoi(optarg);
 
                 break;
 
             case 2:
-                cmd->stdout_update_time = atoi(optarg);
+                cli->stdout_update_time = atoi(optarg);
                 
                 break;
 

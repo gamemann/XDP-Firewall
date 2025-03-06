@@ -1,4 +1,4 @@
-#include <rule_add/utils/cmdline.h>
+#include <rule_add/utils/cli.h>
 
 const struct option opts[] =
 {
@@ -56,7 +56,7 @@ const struct option opts[] =
     { NULL, 0, NULL, 0 }
 };
 
-void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[])
+void parse_cli(cli_t* cli, int argc, char* argv[])
 {
     int c;
 
@@ -65,202 +65,202 @@ void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[])
         switch (c)
         {
             case 'c':
-                cmd->cfg_file = optarg;
+                cli->cfg_file = optarg;
 
                 break;
 
             case 'h':
-                cmd->help = 1;
+                cli->help = 1;
 
                 break;
 
             case 's':
-                cmd->save = 1;
+                cli->save = 1;
 
                 break;
 
             case 'm':
-                cmd->mode = atoi(optarg);
+                cli->mode = atoi(optarg);
 
                 break;
 
             case 'i':
-                cmd->idx = atoi(optarg);
+                cli->idx = atoi(optarg);
 
                 break;
 
             case 'd':
-                cmd->ip = optarg;
+                cli->ip = optarg;
 
                 break;
 
             case 'v':
-                cmd->v6 = atoi(optarg);
+                cli->v6 = atoi(optarg);
 
                 break;
 
             case 'e':
-                cmd->expires = strtoll(optarg, NULL, 10);
+                cli->expires = strtoll(optarg, NULL, 10);
 
                 break;
 
             case 28:
-                cmd->enabled = atoi(optarg);
+                cli->enabled = atoi(optarg);
 
                 break;
 
             case 29:
-                cmd->action = atoi(optarg);
+                cli->action = atoi(optarg);
 
                 break;
 
             case 30:
-                cmd->log = atoi(optarg);
+                cli->log = atoi(optarg);
 
                 break;
 
             case 31:
-                cmd->block_time = strtoll(optarg, NULL, 10);
+                cli->block_time = strtoll(optarg, NULL, 10);
 
                 break;
 
             case 0:
-                cmd->src_ip = optarg;
+                cli->src_ip = optarg;
 
                 break;
 
             case 1:
-                cmd->dst_ip = optarg;
+                cli->dst_ip = optarg;
 
                 break;
 
             case 2:
-                cmd->src_ip6 = optarg;
+                cli->src_ip6 = optarg;
                 
                 break;
 
             case 3:
-                cmd->dst_ip6 = optarg;
+                cli->dst_ip6 = optarg;
 
                 break;
 
             case 4:
-                cmd->min_ttl = atoi(optarg);
+                cli->min_ttl = atoi(optarg);
 
                 break;
 
             case 5:
-                cmd->max_ttl = atoi(optarg);
+                cli->max_ttl = atoi(optarg);
 
                 break;
 
             case 6:
-                cmd->min_len = atoi(optarg);
+                cli->min_len = atoi(optarg);
 
                 break;
 
             case 7:
-                cmd->max_len = atoi(optarg);
+                cli->max_len = atoi(optarg);
 
                 break;
 
             case 8:
-                cmd->tos = atoi(optarg);
+                cli->tos = atoi(optarg);
 
                 break;
 
             case 9:
-                cmd->pps = strtoll(optarg, NULL, 10);
+                cli->pps = strtoll(optarg, NULL, 10);
 
                 break;
 
             case 10:
-                cmd->bps = strtoll(optarg, NULL, 10);
+                cli->bps = strtoll(optarg, NULL, 10);
 
                 break;
 
             case 11:
-                cmd->tcp_enabled = atoi(optarg);
+                cli->tcp_enabled = atoi(optarg);
 
                 break;
 
             case 12:
-                cmd->tcp_sport = atoi(optarg);
+                cli->tcp_sport = atoi(optarg);
 
                 break;
 
             case 13:
-                cmd->tcp_dport = atoi(optarg);
+                cli->tcp_dport = atoi(optarg);
 
                 break;
 
             case 14:
-                cmd->tcp_urg = atoi(optarg);
+                cli->tcp_urg = atoi(optarg);
 
                 break;
 
             case 15:
-                cmd->tcp_ack = atoi(optarg);
+                cli->tcp_ack = atoi(optarg);
 
                 break;
 
             case 16:
-                cmd->tcp_rst = atoi(optarg);
+                cli->tcp_rst = atoi(optarg);
 
                 break;
 
             case 17:
-                cmd->tcp_psh = atoi(optarg);
+                cli->tcp_psh = atoi(optarg);
 
                 break;
 
             case 18:
-                cmd->tcp_syn = atoi(optarg);
+                cli->tcp_syn = atoi(optarg);
 
                 break;
 
             case 19:
-                cmd->tcp_fin = atoi(optarg);
+                cli->tcp_fin = atoi(optarg);
 
                 break;
 
             case 20:
-                cmd->tcp_ece = atoi(optarg);
+                cli->tcp_ece = atoi(optarg);
 
                 break;
 
             case 21:
-                cmd->tcp_cwr = atoi(optarg);
+                cli->tcp_cwr = atoi(optarg);
 
                 break;
 
             case 22:
-                cmd->udp_enabled = atoi(optarg);
+                cli->udp_enabled = atoi(optarg);
 
                 break;
 
             case 23:
-                cmd->udp_sport = atoi(optarg);
+                cli->udp_sport = atoi(optarg);
 
                 break;
 
             case 24:
-                cmd->udp_dport = atoi(optarg);
+                cli->udp_dport = atoi(optarg);
 
                 break;
 
             case 25:
-                cmd->icmp_enabled = atoi(optarg);
+                cli->icmp_enabled = atoi(optarg);
 
                 break;
 
             case 26:
-                cmd->icmp_code = atoi(optarg);
+                cli->icmp_code = atoi(optarg);
 
                 break;
 
             case 27:
-                cmd->icmp_type = atoi(optarg);
+                cli->icmp_type = atoi(optarg);
 
                 break;
             

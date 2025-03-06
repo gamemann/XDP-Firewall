@@ -11,7 +11,7 @@
  * 
  * @return 1 on yes, 0 on no.
  */
-static __always_inline int IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr)
+static __always_inline int is_ip_in_range(u32 src_ip, u32 net_ip, u8 cidr)
 {
     return !((src_ip ^ net_ip) & htonl(0xFFFFFFFFu << (32 - cidr)));
 }
@@ -24,7 +24,7 @@ static __always_inline int IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr)
  * 
  * @return 1 on yes or 0 on no.
  */
-static __always_inline int CheckIpRangeDrop(u32 ip)
+static __always_inline int check_ip_range_drop(u32 ip)
 {
     LpmTrieKey key =
     {

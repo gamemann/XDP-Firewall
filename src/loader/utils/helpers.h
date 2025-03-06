@@ -17,9 +17,9 @@ struct ip_range
 
 extern int cont;
 
-void PrintHelpMenu();
-void SignalHndl(int code);
-ip_range_t ParseIpCidr(const char* ip);
-const char* GetProtocolStrById(int id);
-void PrintToolInfo();
-u64 GetBootNanoTime();
+void print_help_menu();
+void hdl_signal(int code);
+ip_range_t parse_ip_range(const char* ip);
+const char* get_protocol_str_by_id(int id);
+void print_tool_info();
+u64 get_boot_nano_time();

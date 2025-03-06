@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-struct cmdline
+struct cli
 {
     char *cfg_file;
     unsigned int offload : 1;
@@ -21,6 +21,6 @@ struct cmdline
     int no_stats;
     int stats_per_second;
     int stdout_update_time;
-} typedef cmdline_t;
+} typedef cli_t;
 
-void ParseCommandLine(cmdline_t *cmd, int argc, char *argv[]);
+void parse_cli(cli_t *cli, int argc, char *argv[]);

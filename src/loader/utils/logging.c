@@ -11,7 +11,7 @@
  * 
  * @return void
  */
-static void LogMsgRaw(int req_lvl, int cur_lvl, int error, const char* log_path, const char* msg, va_list args)
+static void log_msgRaw(int req_lvl, int cur_lvl, int error, const char* log_path, const char* msg, va_list args)
 {
     if (cur_lvl < req_lvl)
     {
@@ -86,7 +86,7 @@ static void LogMsgRaw(int req_lvl, int cur_lvl, int error, const char* log_path,
 }
 
 /**
- * Prints a log message using LogMsgRaw().
+ * Prints a log message using log_msgRaw().
  * 
  * @param cfg A pointer to the config structure.
  * @param req_lvl The required level for this message.
@@ -95,12 +95,12 @@ static void LogMsgRaw(int req_lvl, int cur_lvl, int error, const char* log_path,
  * 
  * @return void
  */
-void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
+void log_msg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
 {
     va_list args;
     va_start(args, msg);
 
-    LogMsgRaw(req_lvl, cfg->verbose, error, (const char*)cfg->log_file, msg, args);
+    log_msgRaw(req_lvl, cfg->verbose, error, (const char*)cfg->log_file, msg, args);
 
     va_end(args);
 }
@@ -112,7 +112,7 @@ void LogMsg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
  * 
  * @return void
  */
-void PollFiltersRb(struct ring_buffer* rb)
+void poll_filters_rb(struct ring_buffer* rb)
 {
     if (rb)
     {
@@ -129,7 +129,7 @@ void PollFiltersRb(struct ring_buffer* rb)
  * 
  * @return 0 on success or 1 on failure.
  */
-int HandleRbEvent(void* ctx, void* data, size_t sz)
+int hdl_filters_rb_event(void* ctx, void* data, size_t sz)
 {
     config__t* cfg = (config__t*)ctx;
     filter_log_event_t* e = (filter_log_event_t*)data;
@@ -161,9 +161,9 @@ int HandleRbEvent(void* ctx, void* data, size_t sz)
         action = "Passed";
     }
 
-    const char* protocol_str = GetProtocolStrById(e->protocol);
+    const char* protocol_str = get_protocol_str_by_id(e->protocol);
 
-    LogMsg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id + 1, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->pps, e->bps, filter->block_time);
+    log_msg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu)...", e->filter_id + 1, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->pps, e->bps, filter->block_time);
 
     return 0;
 }
