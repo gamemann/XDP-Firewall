@@ -10,11 +10,12 @@
 
 #include <common/all.h>
 
+#include <xdp/utils/maps.h>
+
 #include <xdp/utils/rl.h>
 #include <xdp/utils/logging.h>
+#include <xdp/utils/stats.h>
 #include <xdp/utils/helpers.h>
-
-#include <xdp/utils/maps.h>
 
 struct 
 {
@@ -29,18 +30,25 @@ int xdp_prog_main(struct xdp_md *ctx)
     void *data_end = (void *)(long)ctx->data_end;
     void *data = (void *)(long)ctx->data;
 
+    // Retrieve stats map value.
+    u32 key = 0;
+    stats_t* stats = bpf_map_lookup_elem(&map_stats, &key);
+
     // Scan ethernet header.
     struct ethhdr *eth = data;
 
     // Check if the ethernet header is valid.
     if (unlikely(eth + 1 > (struct ethhdr *)data_end))
     {
+        inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
         return XDP_DROP;
     }
 
     // Check Ethernet protocol.
     if (unlikely(eth->h_proto != htons(ETH_P_IP) && eth->h_proto != htons(ETH_P_IPV6)))
     {
+        inc_pkt_stats(stats, STATS_TYPE_PASSED);
         return XDP_PASS;
     }
 
@@ -56,6 +64,8 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         if (unlikely(iph6 + 1 > (struct ipv6hdr *)data_end))
         {
+            inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
             return XDP_DROP;
         }
 
@@ -67,6 +77,8 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         if (unlikely(iph + 1 > (struct iphdr *)data_end))
         {
+            inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
             return XDP_DROP;
         }
     }
@@ -74,12 +86,10 @@ int xdp_prog_main(struct xdp_md *ctx)
     // We only want to process TCP, UDP, and ICMP packets.
     if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
     {
+        inc_pkt_stats(stats, STATS_TYPE_PASSED);
+
         return XDP_PASS;
     }
-
-    // Retrieve stats map value.
-    u32 key = 0;
-    stats_t*stats = bpf_map_lookup_elem(&map_stats, &key);
 
     // Retrieve nanoseconds since system boot as timestamp.
     u64 now = bpf_ktime_get_ns();
@@ -114,10 +124,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
 #ifdef DO_STATS_ON_BLOCK_MAP
             // Increase blocked stats entry.
-            if (stats)
-            {
-                stats->dropped++;
-            }
+            inc_pkt_stats(stats, STATS_TYPE_DROPPED);
 #endif
 
             // They're still blocked. Drop the packet.
@@ -129,10 +136,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     if (iph && check_ip_range_drop(iph->saddr))
     {
 #ifdef DO_STATS_ON_IP_RANGE_DROP_MAP
-        if (stats)
-        {
-            stats->dropped++;
-        }
+        inc_pkt_stats(stats, STATS_TYPE_DROPPED);
 #endif
 
         return XDP_DROP;
@@ -170,6 +174,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Check TCP header.
                 if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
                 {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
                     return XDP_DROP;
                 }
 
@@ -188,6 +194,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Check TCP header.
                 if (unlikely(udph + 1 > (struct udphdr *)data_end))
                 {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
                     return XDP_DROP;
                 }
 
@@ -206,6 +214,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Check ICMPv6 header.
                 if (unlikely(icmp6h + 1 > (struct icmp6hdr *)data_end))
                 {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
                     return XDP_DROP;
                 }
 
@@ -225,6 +235,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Check TCP header.
                 if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
                 {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
                     return XDP_DROP;
                 }
 
@@ -243,6 +255,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Check UDP header.
                 if (unlikely(udph + 1 > (struct udphdr *)data_end))
                 {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
                     return XDP_DROP;
                 }
 
@@ -261,6 +275,8 @@ int xdp_prog_main(struct xdp_md *ctx)
                 // Check ICMP header.
                 if (unlikely(icmph + 1 > (struct icmphdr *)data_end))
                 {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
                     return XDP_DROP;
                 }
 
@@ -560,10 +576,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 #endif
 
-    if (stats)
-    {
-        stats->passed++;
-    }
+    inc_pkt_stats(stats, STATS_TYPE_PASSED);
             
     return XDP_PASS;
 
@@ -586,19 +599,13 @@ matched:
             }
         }
 
-        if (stats)
-        {
-            stats->dropped++;
-        }
+        inc_pkt_stats(stats, STATS_TYPE_DROPPED);
 
         return XDP_DROP;
     }
     else
     {
-        if (stats)
-        {
-            stats->allowed++;
-        }
+        inc_pkt_stats(stats, STATS_TYPE_ALLOWED);
     }
 
     return XDP_PASS;
