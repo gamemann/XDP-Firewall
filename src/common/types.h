@@ -2,7 +2,34 @@
 
 #include <common/int_types.h>
 
-struct tcp_opts
+struct filter_ip
+{
+    u32 src_ip;
+    u8 src_cidr;
+
+    u32 dst_ip;
+    u8 dst_cidr;
+
+    u32 src_ip6[4];
+    u32 dst_ip6[4];
+
+    unsigned int do_min_ttl : 1;
+    u8 min_ttl;
+
+    unsigned int do_max_ttl : 1;
+    u8 max_ttl;
+
+    unsigned int do_min_len : 1;
+    u16 min_len;
+
+    unsigned int do_max_len : 1;
+    u16 max_len;
+
+    unsigned int do_tos : 1;
+    u8 tos;
+} typedef filter_ip_t;
+
+struct filter_tcp
 {
     unsigned int enabled : 1;
 
@@ -36,9 +63,9 @@ struct tcp_opts
 
     unsigned int do_cwr : 1;
     unsigned int cwr : 1;
-} typedef tcp_opts_t;
+} typedef filter_tcp_t;
 
-struct udp_opts
+struct filter_udp
 {
     unsigned int enabled : 1;
 
@@ -47,9 +74,9 @@ struct udp_opts
 
     unsigned int do_dport : 1;
     u16 dport;
-} typedef udp_opts_t;
+} typedef filter_udp_t;
 
-struct icmp_opts
+struct filter_icmp
 {
     unsigned int enabled : 1;
 
@@ -58,7 +85,7 @@ struct icmp_opts
 
     unsigned int do_type : 1;
     u8 type;
-} typedef icmp_opts_t;
+} typedef filter_icmp_t;
 
 struct filter
 {
@@ -67,42 +94,19 @@ struct filter
     unsigned int enabled : 1;
 
     u8 action;
-
-    u32 src_ip;
-    u8 src_cidr;
-
-    u32 dst_ip;
-    u8 dst_cidr;
-
-    u32 src_ip6[4];
-    u32 dst_ip6[4];
-
-    unsigned int do_min_ttl : 1;
-    u8 min_ttl;
-
-    unsigned int do_max_ttl : 1;
-    u8 max_ttl;
-
-    unsigned int do_min_len : 1;
-    u16 min_len;
-
-    unsigned int do_max_len : 1;
-    u16 max_len;
-
-    unsigned int do_tos : 1;
-    u8 tos;
+    u16 block_time;
 
     unsigned int do_pps : 1;
     u64 pps;
 
     unsigned int do_bps : 1;
     u64 bps;
+    
+    filter_ip_t ip;
 
-    u64 block_time;
-
-    tcp_opts_t tcpopts;
-    udp_opts_t udpopts;
-    icmp_opts_t icmpopts;
+    filter_tcp_t tcp;
+    filter_udp_t udp;
+    filter_icmp_t icmp;
 } __attribute__((__aligned__(8))) typedef filter_t;
 
 struct stats

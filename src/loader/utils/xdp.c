@@ -45,7 +45,7 @@ int get_map_fd(struct xdp_program *prog, const char *map_name)
  * 
  * @return void
  */
-static int LibBPFSilent(enum libbpf_print_level level, const char *format, va_list args)
+static int libbpf_silent(enum libbpf_print_level level, const char *format, va_list args)
 {
     return 0;
 }
@@ -61,7 +61,7 @@ void set_libbpf_log_mode(int silent)
 {
     if (silent)
     {
-        libbpf_set_print(LibBPFSilent);
+        libbpf_set_print(libbpf_silent);
     }
 }
 
@@ -221,21 +221,239 @@ void delete_filters(int map_filters)
  * Updates a filter rule.
  * 
  * @param map_filters The filters BPF map FD.
- * @param filter A pointer to the filter.
+ * @param filter_cfg A pointer to the filter config rule.
  * @param idx The filter index to insert or update.
  * 
  * @return 0 on success or error value of bpf_map_update_elem().
  */
-int update_filter(int map_filters, filter_t* filter, int idx)
+int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
 {
-    int ret;
+    filter_t filter = {0};
+
+    filter.set = filter_cfg->set;
+    
+    if (filter_cfg->enabled > -1)
+    {
+        filter.enabled = filter_cfg->enabled;
+    }
+
+    if (filter_cfg->log > -1)
+    {
+        filter.log = filter_cfg->log;
+    }
+
+    if (filter_cfg->action > -1)
+    {
+        filter.action = filter_cfg->action;
+    }
+
+    if (filter_cfg->block_time > -1)
+    {
+        filter.block_time = filter_cfg->block_time;
+    }
+
+    if (filter_cfg->pps > -1)
+    {
+        filter.do_pps = 1;
+
+        filter.pps = (u64) filter_cfg->pps;
+    }
+
+    if (filter_cfg->bps > -1)
+    {
+        filter.do_bps = 1;
+
+        filter.bps = (u64) filter_cfg->bps;
+    }
+
+    if (filter_cfg->ip.src_ip)
+    {
+        ip_range_t ip_range = parse_ip_range(filter_cfg->ip.src_ip);
+
+        filter.ip.src_ip = ip_range.ip;
+        filter.ip.src_cidr = ip_range.cidr;
+    }
+
+    if (filter_cfg->ip.dst_ip)
+    {
+        ip_range_t ip_range = parse_ip_range(filter_cfg->ip.dst_ip);
+
+        filter.ip.dst_ip = ip_range.ip;
+        filter.ip.dst_cidr = ip_range.cidr;
+    }
+
+    if (filter_cfg->ip.src_ip6)
+    {
+        struct in6_addr in;
+
+        inet_pton(AF_INET6, filter_cfg->ip.src_ip6, &in);
+
+        memcpy(filter.ip.src_ip6, in.__in6_u.__u6_addr32, 4);
+    }
+
+    if (filter_cfg->ip.dst_ip6)
+    {
+        struct in6_addr in;
+
+        inet_pton(AF_INET6, filter_cfg->ip.dst_ip6, &in);
+
+        memcpy(filter.ip.dst_ip6, in.__in6_u.__u6_addr32, 4);
+    }
+
+    if (filter_cfg->ip.min_ttl > -1)
+    {
+        filter.ip.do_min_ttl = 1;
+
+        filter.ip.min_ttl = filter_cfg->ip.min_ttl;
+    }
+
+    if (filter_cfg->ip.max_ttl > -1)
+    {
+        filter.ip.do_max_ttl = 1;
+
+        filter.ip.max_ttl = filter_cfg->ip.max_ttl;
+    }
+
+    if (filter_cfg->ip.min_len > -1)
+    {
+        filter.ip.do_min_len = 1;
+
+        filter.ip.min_len = filter_cfg->ip.min_len;
+    }
+
+    if (filter_cfg->ip.max_len > -1)
+    {
+        filter.ip.do_max_len = 1;
+
+        filter.ip.max_len = filter_cfg->ip.max_len;
+    }
+
+    if (filter_cfg->ip.tos > -1)
+    {
+        filter.ip.do_tos = 1;
+
+        filter.ip.tos = filter_cfg->ip.tos;
+    }
+
+    if (filter_cfg->tcp.enabled > -1)
+    {
+        filter.tcp.enabled = filter_cfg->tcp.enabled;
+    }
+
+    if (filter_cfg->tcp.sport > -1)
+    {
+        filter.tcp.do_sport = 1;
+
+        filter.tcp.sport = htons((u16)filter_cfg->tcp.sport);
+    }
+
+    if (filter_cfg->tcp.dport > -1)
+    {
+        filter.tcp.do_dport = 1;
+
+        filter.tcp.dport = htons((u16)filter_cfg->tcp.dport);
+    }
+
+    if (filter_cfg->tcp.urg > -1)
+    {
+        filter.tcp.do_urg = 1;
+
+        filter.tcp.urg = filter_cfg->tcp.urg;
+    }
+
+    if (filter_cfg->tcp.ack > -1)
+    {
+        filter.tcp.do_ack = 1;
+
+        filter.tcp.ack = filter_cfg->tcp.ack;
+    }
+
+    if (filter_cfg->tcp.rst > -1)
+    {
+        filter.tcp.do_rst = 1;
+
+        filter.tcp.rst = filter_cfg->tcp.rst;
+    }
+
+    if (filter_cfg->tcp.psh > -1)
+    {
+        filter.tcp.do_psh = 1;
+
+        filter.tcp.psh = filter_cfg->tcp.psh;
+    }
+
+    if (filter_cfg->tcp.syn > -1)
+    {
+        filter.tcp.do_syn = 1;
+
+        filter.tcp.syn = filter_cfg->tcp.syn;
+    }
+
+    if (filter_cfg->tcp.fin > -1)
+    {
+        filter.tcp.do_fin = 1;
+
+        filter.tcp.fin = filter_cfg->tcp.fin;
+    }
+
+    if (filter_cfg->tcp.ece > -1)
+    {
+        filter.tcp.do_ece = 1;
+
+        filter.tcp.ece = filter_cfg->tcp.ece;
+    }
+
+    if (filter_cfg->tcp.cwr > -1)
+    {
+        filter.tcp.do_cwr = 1;
+
+        filter.tcp.cwr = filter_cfg->tcp.cwr;
+    }
+
+    if (filter_cfg->udp.enabled > -1)
+    {
+        filter.udp.enabled = filter_cfg->udp.enabled;
+    }
+
+    if (filter_cfg->udp.sport > -1)
+    {
+        filter.udp.do_sport = 1;
+
+        filter.udp.sport = htons((u16)filter_cfg->udp.sport);
+    }
+
+    if (filter_cfg->udp.dport > -1)
+    {
+        filter.udp.do_dport = 1;
+
+        filter.udp.dport = htons((u16)filter_cfg->udp.dport);
+    }
+
+    if (filter_cfg->icmp.enabled > -1)
+    {
+        filter.icmp.enabled = filter_cfg->icmp.enabled;
+    }
+
+    if (filter_cfg->icmp.code > -1)
+    {
+        filter.icmp.do_code = 1;
+
+        filter.icmp.code = filter_cfg->icmp.code;
+    }
+
+    if (filter_cfg->icmp.type > -1)
+    {
+        filter.icmp.do_type = 1;
+
+        filter.icmp.type = filter_cfg->icmp.type;
+    }
 
     filter_t filter_cpus[MAX_CPUS];
     memset(filter_cpus, 0, sizeof(filter_cpus));
 
     for (int j = 0; j < MAX_CPUS; j++)
     {
-        filter_cpus[j] = *filter;
+        filter_cpus[j] = filter;
     }
 
     return bpf_map_update_elem(map_filters, &idx, &filter_cpus, BPF_ANY);
@@ -261,7 +479,7 @@ void update_filters(int map_filters, config__t *cfg)
         // We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.
         delete_filter(map_filters, i);
 
-        filter_t* filter = &cfg->filters[i];
+        filter_rule_cfg_t* filter = &cfg->filters[i];
 
         // Only insert set and enabled filters.
         if (!filter->set || !filter->enabled)

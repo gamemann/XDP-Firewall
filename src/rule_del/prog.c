@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
         // So we need to loop through each and ignore disabled rules.
         for (int i = 0; i < MAX_FILTERS; i++)
         {
-            filter_t* filter = &cfg.filters[i];
+            filter_rule_cfg_t* filter = &cfg.filters[i];
 
             if (!filter->set || !filter->enabled)
             {

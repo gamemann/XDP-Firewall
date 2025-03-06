@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
         printf("Using 'map_filters' FD => %d...\n", map_filters);
 
         // Create new base filter and set its defaults.
-        filter_t new_filter = {0};
+        filter_rule_cfg_t new_filter = {0};
         set_filter_defaults(&new_filter);
 
         new_filter.set = 1;
@@ -205,189 +205,144 @@ int main(int argc, char *argv[])
 
         if (cli.src_ip)
         {
-            ip_range_t range = parse_ip_range(cli.src_ip);
-
-            new_filter.src_ip = range.ip;
-            new_filter.src_cidr = range.cidr;
+            new_filter.ip.src_ip = cli.src_ip;
         }
 
         if (cli.dst_ip)
         {
-            ip_range_t range = parse_ip_range(cli.dst_ip);
-
-            new_filter.dst_ip = range.ip;
-            new_filter.dst_cidr = range.cidr;
+            new_filter.ip.dst_ip = cli.dst_ip;
         }
 
         if (cli.src_ip6)
         {
-            struct in6_addr addr;
-
-            if ((ret = inet_pton(AF_INET6, cli.src_ip6, &addr)) != 1)
-            {
-                fprintf(stderr, "Failed to convert source IPv6 address to decimal (%d).\n", ret);
-
-                return EXIT_FAILURE;
-            }
-
-            memcpy(new_filter.src_ip6, addr.s6_addr, sizeof(new_filter.src_ip6));
+            new_filter.ip.src_ip6 = cli.src_ip6;
         }
 
         if (cli.dst_ip6)
         {
-            struct in6_addr addr;
-
-            if ((ret = inet_pton(AF_INET6, cli.dst_ip6, &addr)) != 1)
-            {
-                fprintf(stderr, "Failed to convert destination IPv6 address to decimal (%d).\n", ret);
-
-                return EXIT_FAILURE;
-            }
-
-            memcpy(new_filter.dst_ip6, addr.s6_addr, sizeof(new_filter.dst_ip6));
+            new_filter.ip.dst_ip6 = cli.dst_ip6;
         }
 
         // To Do: See if I can create a macro for below.
         // As long as the naming convention lines up, it should be easily possible.
         if (cli.pps > -1)
         {
-            new_filter.do_pps = 1;
             new_filter.pps = cli.pps;
         }
 
         if (cli.bps > -1)
         {
-            new_filter.do_bps = 1;
             new_filter.bps = cli.bps;
         }
 
         if (cli.min_ttl > -1)
         {
-            new_filter.do_min_ttl = 1;
-            new_filter.min_ttl = cli.min_ttl;
+            new_filter.ip.min_ttl = cli.min_ttl;
         }
 
         if (cli.max_ttl > -1)
         {
-            new_filter.do_max_ttl = 1;
-            new_filter.max_ttl = cli.max_ttl;
+            new_filter.ip.max_ttl = cli.max_ttl;
         }
 
         if (cli.min_len > -1)
         {
-            new_filter.do_min_len = 1;
-            new_filter.min_len = cli.min_len;
+            new_filter.ip.min_len = cli.min_len;
         }
 
         if (cli.max_len > -1)
         {
-            new_filter.do_max_len = 1;
-            new_filter.max_len = cli.max_len;
+            new_filter.ip.max_len = cli.max_len;
         }
 
         if (cli.tos > -1)
         {
-            new_filter.do_tos = 1;
-            new_filter.tos = cli.tos;
+            new_filter.ip.tos = cli.tos;
         }
 
         if (cli.tcp_enabled > -1)
         {
-            new_filter.tcpopts.enabled = cli.tcp_enabled;
+            new_filter.tcp.enabled = cli.tcp_enabled;
         }
 
         if (cli.tcp_sport > -1)
         {
-            new_filter.tcpopts.do_sport = 1;
-            new_filter.tcpopts.sport = cli.tcp_sport;
+            new_filter.tcp.sport = cli.tcp_sport;
         }
 
         if (cli.tcp_dport > -1)
         {
-            new_filter.tcpopts.do_dport = 1;
-            new_filter.tcpopts.dport = cli.tcp_dport;
+            new_filter.tcp.dport = cli.tcp_dport;
         }
 
         if (cli.tcp_urg > -1)
         {
-            new_filter.tcpopts.do_urg = 1;
-            new_filter.tcpopts.urg = cli.tcp_urg;
+            new_filter.tcp.urg = cli.tcp_urg;
         }
 
         if (cli.tcp_ack > -1)
         {
-            new_filter.tcpopts.do_ack = 1;
-            new_filter.tcpopts.ack = cli.tcp_ack;
+            new_filter.tcp.ack = cli.tcp_ack;
         }
 
         if (cli.tcp_rst > -1)
         {
-            new_filter.tcpopts.do_rst = 1;
-            new_filter.tcpopts.rst = cli.tcp_rst;
+            new_filter.tcp.rst = cli.tcp_rst;
         }
 
         if (cli.tcp_psh > -1)
         {
-            new_filter.tcpopts.do_psh = 1;
-            new_filter.tcpopts.psh = cli.tcp_psh;
+            new_filter.tcp.psh = cli.tcp_psh;
         }
 
         if (cli.tcp_syn > -1)
         {
-            new_filter.tcpopts.do_syn = 1;
-            new_filter.tcpopts.syn = cli.tcp_syn;
+            new_filter.tcp.syn = cli.tcp_syn;
         }
 
         if (cli.tcp_fin > -1)
         {
-            new_filter.tcpopts.do_fin = 1;
-            new_filter.tcpopts.fin = cli.tcp_fin;
+            new_filter.tcp.fin = cli.tcp_fin;
         }
 
         if (cli.tcp_ece > -1)
         {
-            new_filter.tcpopts.do_ece = 1;
-            new_filter.tcpopts.ece = cli.tcp_ece;
+            new_filter.tcp.ece = cli.tcp_ece;
         }
 
         if (cli.tcp_cwr > -1)
         {
-            new_filter.tcpopts.do_cwr = 1;
-            new_filter.tcpopts.cwr = cli.tcp_cwr;
+            new_filter.tcp.cwr = cli.tcp_cwr;
         }
 
         if (cli.udp_enabled > -1)
         {
-            new_filter.udpopts.enabled = cli.udp_enabled;
+            new_filter.udp.enabled = cli.udp_enabled;
         }
 
         if (cli.udp_sport > -1)
         {
-            new_filter.udpopts.do_sport = 1;
-            new_filter.udpopts.sport = cli.udp_sport;
+            new_filter.udp.sport = cli.udp_sport;
         }
 
         if (cli.udp_dport > -1)
         {
-            new_filter.udpopts.do_dport = 1;
-            new_filter.udpopts.dport = cli.udp_dport;
+            new_filter.udp.dport = cli.udp_dport;
         }
 
         if (cli.icmp_enabled > -1)
         {
-            new_filter.icmpopts.enabled = cli.icmp_enabled;
+            new_filter.icmp.enabled = cli.icmp_enabled;
         }
 
         if (cli.icmp_code > -1)
         {
-            new_filter.icmpopts.do_code = 1;
-            new_filter.icmpopts.code = cli.icmp_code;
+            new_filter.icmp.code = cli.icmp_code;
         }
 
         if (cli.icmp_type > -1)
         {
-            new_filter.icmpopts.do_type = 1;
-            new_filter.icmpopts.type = cli.icmp_type;
+            new_filter.icmp.type = cli.icmp_type;
         }
 
         // Set filter at index.

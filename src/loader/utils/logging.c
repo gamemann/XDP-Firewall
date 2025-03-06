@@ -134,7 +134,7 @@ int hdl_filters_rb_event(void* ctx, void* data, size_t sz)
     config__t* cfg = (config__t*)ctx;
     filter_log_event_t* e = (filter_log_event_t*)data;
 
-    filter_t* filter = &cfg->filters[e->filter_id];
+    filter_rule_cfg_t* filter = &cfg->filters[e->filter_id];
 
     if (filter == NULL)
     {

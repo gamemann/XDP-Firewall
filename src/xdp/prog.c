@@ -299,44 +299,44 @@ int xdp_prog_main(struct xdp_md *ctx)
         if (iph6)
         {
             // Source address.
-            if (filter->src_ip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->src_ip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->src_ip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->src_ip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->src_ip6[3]))
+            if (filter->ip.src_ip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->ip.src_ip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->ip.src_ip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->ip.src_ip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->ip.src_ip6[3]))
             {
                 continue;
             }
 
             // Destination address.
-            if (filter->dst_ip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->dst_ip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->dst_ip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->dst_ip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->dst_ip6[3]))
+            if (filter->ip.dst_ip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->ip.dst_ip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->ip.dst_ip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->ip.dst_ip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->ip.dst_ip6[3]))
             {
                 continue;
             }
 
 #ifdef ALLOW_SINGLE_IP_V4_V6
-            if (filter->src_ip != 0 || filter->dst_ip != 0)
+            if (filter->ip.src_ip != 0 || filter->ip.dst_ip != 0)
             {
                 continue;
             }
 #endif
 
             // Max TTL length.
-            if (filter->do_max_ttl && filter->max_ttl > iph6->hop_limit)
+            if (filter->ip.do_max_ttl && filter->ip.max_ttl > iph6->hop_limit)
             {
                 continue;
             }
 
             // Min TTL length.
-            if (filter->do_min_ttl && filter->min_ttl < iph6->hop_limit)
+            if (filter->ip.do_min_ttl && filter->ip.min_ttl < iph6->hop_limit)
             {
                 continue;
             }
 
             // Max packet length.
-            if (filter->do_max_len && filter->max_len > (ntohs(iph6->payload_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_max_len && filter->ip.max_len > (ntohs(iph6->payload_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
 
             // Min packet length.
-            if (filter->do_min_len && filter->min_len < (ntohs(iph6->payload_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_min_len && filter->ip.min_len < (ntohs(iph6->payload_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
@@ -344,68 +344,66 @@ int xdp_prog_main(struct xdp_md *ctx)
         else if (iph)
         {
             // Source address.
-            if (filter->src_ip)
+            if (filter->ip.src_ip)
             {
-                if (filter->src_cidr == 32 && iph->saddr != filter->src_ip)
+                if (filter->ip.src_cidr == 32 && iph->saddr != filter->ip.src_ip)
                 {
                     continue;
                 }
 
-                if (!is_ip_in_range(iph->saddr, filter->src_ip, filter->src_cidr))
+                if (!is_ip_in_range(iph->saddr, filter->ip.src_ip, filter->ip.src_cidr))
                 {
                     continue;
                 }
-
-                
             }
 
             // Destination address.
-            if (filter->dst_ip)
+            if (filter->ip.dst_ip)
             {
-                if (filter->dst_cidr == 32 && iph->daddr != filter->dst_ip)
+                if (filter->ip.dst_cidr == 32 && iph->daddr != filter->ip.dst_ip)
                 {
                     continue;
                 }
                 
-                if (!is_ip_in_range(iph->daddr, filter->dst_ip, filter->dst_cidr))
+                if (!is_ip_in_range(iph->daddr, filter->ip.dst_ip, filter->ip.dst_cidr))
                 {
                     continue;
                 }
             }
 
 #ifdef ALLOW_SINGLE_IP_V4_V6
-            if ((filter->src_ip6[0] != 0 || filter->src_ip6[1] != 0 || filter->src_ip6[2] != 0 || filter->src_ip6[3] != 0) || (filter->dst_ip6[0] != 0 || filter->dst_ip6[1] != 0 || filter->dst_ip6[2] != 0 || filter->dst_ip6[3] != 0))
+            if ((filter->ip.src_ip6[0] != 0 || filter->ip.src_ip6[1] != 0 || filter->ip.src_ip6[2] != 0 || filter->ip.src_ip6[3] != 0) || (filter->ip.dst_ip6[0] != 0 || filter->ip.dst_ip6[1] != 0 || filter->ip.dst_ip6[2] != 0 || filter->ip.dst_ip6[3] != 0))
             {
                 continue;
             }
 #endif
 
             // TOS.
-            if (filter->do_tos && filter->tos != iph->tos)
+            if (filter->ip.do_tos && filter->ip.tos != iph->tos)
             {
                 continue;
             }
 
             // Max TTL length.
-            if (filter->do_max_ttl && filter->max_ttl < iph->ttl)
+            if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph->ttl)
             {
                 continue;
             }
 
             // Min TTL length.
-            if (filter->do_min_ttl && filter->min_ttl > iph->ttl)
+            if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph->ttl)
             {
                 continue;
             }
 
             // Max packet length.
-            if (filter->do_max_len && filter->max_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_max_len && filter->ip.max_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
 
             // Min packet length.
-            if (filter->do_min_len && filter->min_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_min_len && filter->ip.min_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
             {
                 continue;
             }
@@ -424,7 +422,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
         
         // Do TCP options.
-        if (filter->tcpopts.enabled)
+        if (filter->tcp.enabled)
         {
             if (!tcph)
             {
@@ -432,66 +430,66 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Source port.
-            if (filter->tcpopts.do_sport && htons(filter->tcpopts.sport) != tcph->source)
+            if (filter->tcp.do_sport && filter->tcp.sport != tcph->source)
             {
                 continue;
             }
 
             // Destination port.
-            if (filter->tcpopts.do_dport && htons(filter->tcpopts.dport) != tcph->dest)
+            if (filter->tcp.do_dport && filter->tcp.dport != tcph->dest)
             {
                 continue;
             }
 
             // URG flag.
-            if (filter->tcpopts.do_urg && filter->tcpopts.urg != tcph->urg)
+            if (filter->tcp.do_urg && filter->tcp.urg != tcph->urg)
             {
                 continue;
             }
 
             // ACK flag.
-            if (filter->tcpopts.do_ack && filter->tcpopts.ack != tcph->ack)
+            if (filter->tcp.do_ack && filter->tcp.ack != tcph->ack)
             {
                 continue;
             }
 
             // RST flag.
-            if (filter->tcpopts.do_rst && filter->tcpopts.rst != tcph->rst)
+            if (filter->tcp.do_rst && filter->tcp.rst != tcph->rst)
             {
                 continue;
             }
 
             // PSH flag.
-            if (filter->tcpopts.do_psh && filter->tcpopts.psh != tcph->psh)
+            if (filter->tcp.do_psh && filter->tcp.psh != tcph->psh)
             {
                 continue;
             }
 
             // SYN flag.
-            if (filter->tcpopts.do_syn && filter->tcpopts.syn != tcph->syn)
+            if (filter->tcp.do_syn && filter->tcp.syn != tcph->syn)
             {
                 continue;
             }
 
             // FIN flag.
-            if (filter->tcpopts.do_fin && filter->tcpopts.fin != tcph->fin)
+            if (filter->tcp.do_fin && filter->tcp.fin != tcph->fin)
             {
                 continue;
             }
 
             // ECE flag.
-            if (filter->tcpopts.do_ece && filter->tcpopts.ece != tcph->ece)
+            if (filter->tcp.do_ece && filter->tcp.ece != tcph->ece)
             {
                 continue;
             }
 
             // CWR flag.
-            if (filter->tcpopts.do_cwr && filter->tcpopts.cwr != tcph->cwr)
+            if (filter->tcp.do_cwr && filter->tcp.cwr != tcph->cwr)
             {
                 continue;
             }
         }
-        else if (filter->udpopts.enabled)
+        else if (filter->udp.enabled)
         {
             if (!udph)
             {
@@ -499,30 +497,30 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Source port.
-            if (filter->udpopts.do_sport && htons(filter->udpopts.sport) != udph->source)
+            if (filter->udp.do_sport && filter->udp.sport != udph->source)
             {
                 continue;
             }
 
             // Destination port.
-            if (filter->udpopts.do_dport && htons(filter->udpopts.dport) != udph->dest)
+            if (filter->udp.do_dport && filter->udp.dport != udph->dest)
             {
 
                 continue;
             }
         }
-        else if (filter->icmpopts.enabled)
+        else if (filter->icmp.enabled)
         {
             if (icmph)
             {
                 // Code.
-                if (filter->icmpopts.do_code && filter->icmpopts.code != icmph->code)
+                if (filter->icmp.do_code && filter->icmp.code != icmph->code)
                 {
                     continue;
                 }
 
                 // Type.
-                if (filter->icmpopts.do_type && filter->icmpopts.type != icmph->type)
+                if (filter->icmp.do_type && filter->icmp.type != icmph->type)
                 {
                     continue;
                 }  
@@ -530,13 +528,13 @@ int xdp_prog_main(struct xdp_md *ctx)
             else if (icmp6h)
             {
                 // Code.
-                if (filter->icmpopts.do_code && filter->icmpopts.code != icmp6h->icmp6_code)
+                if (filter->icmp.do_code && filter->icmp.code != icmp6h->icmp6_code)
                 {
                     continue;
                 }
 
                 // Type.
-                if (filter->icmpopts.do_type && filter->icmpopts.type != icmp6h->icmp6_type)
+                if (filter->icmp.do_type && filter->icmp.type != icmp6h->icmp6_type)
                 {
                     continue;
                 }
