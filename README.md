@@ -157,7 +157,7 @@ Here are more details on the layout of the runtime configuration.
 | ---- | ---- | ------- | ----------- |
 | verbose | int | `2` | The verbose level for logging (0 - 5 supported so far). |
 | log_file | string | `/var/log/xdpfw.log` | The log file location. If the string is empty (`""`), the log file is disabled. |
-| interfaces | string \| list of strings | `NULL` | The network interface(s) to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
+| interface | string \| list of strings | `NULL` | The network interface(s) to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
 | pin_maps | bool | `true` | Pins main BPF maps to `/sys/fs/bpf/xdpfw/[map_name]` on the file system. |
 | update_time | int | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
@@ -234,7 +234,7 @@ Here's a runtime config example.
 ```squidconf
 verbose = 5;
 log_file = "";
-interfaces = "ens18";
+interface = "ens18";
 pin_maps = true;
 update_time = 15;
 no_stats = false;

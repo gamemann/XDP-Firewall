@@ -210,7 +210,7 @@ int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
     }
 
     // Get interface(s).
-    config_setting_t* interfaces = config_lookup(&conf, "interfaces");
+    config_setting_t* interfaces = config_lookup(&conf, "interface");
 
     if (interfaces)
     {
@@ -252,7 +252,7 @@ int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
         {
             const char* interface;
 
-            if (config_lookup_string(&conf, "interfaces", &interface) == CONFIG_TRUE)
+            if (config_lookup_string(&conf, "interface", &interface) == CONFIG_TRUE)
             {
                 if (cfg->interfaces[0])
                 {
