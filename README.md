@@ -134,7 +134,7 @@ Additionally, there are command line overrides for base config options you may i
 | ---- | ------- | ----------- |
 | -v, --verbose | `-v 3` | Overrides the config's verbose value. |
 | --log-file | `--log-file ./test.log` | Overrides the config's log file value. |
-| -i, --interface | `-i enp1s0` | Overrides the config's interface value. |
+| -i, --interface | `-i enp1s0` | Overrides the config's first interface value. |
 | -p, --pin-maps | `-p 0` | Overrides the config's pin maps value. |
 | -u, --update-time | `-u 30` | Overrides the config's update time value. |
 | -n, --no-stats | `-n 1` | Overrides the config's no stats value. |
@@ -170,14 +170,14 @@ The following table quickly explains the data types used within the configuratio
 | ---- | ---- | ------- | ----------- |
 | verbose | int | `2` | The verbose level for logging (0 - 5 supported so far). |
 | log_file | string | `/var/log/xdpfw.log` | The log file location. If the string is empty (`""`), the log file is disabled. |
-| interface | string | `NULL` | The network interface name to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
+| interfaces | string \| list of strings | `NULL` | The network interface(s) to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
 | pin_maps | bool | `true` | Pins main BPF maps to `/sys/fs/bpf/xdpfw/[map_name]` on the file system. |
 | update_time | uint | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
 | stats_per_second | bool | `false` | If true, packet counters and stats are calculated per second. `stdout_update_time` must be 1000 or less for this to work properly. |
 | stdout_update_time | uint | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
-| filters | Array of Filter Object(s) | `NULL` | An array of filters to use with the XDP Firewall. |
-| ip_drop_ranges | Array Of IP Ranges | `NULL` | An array of IP ranges (strings) to drop if the IP range drop feature is enabled. | 
+| filters | list of filter object(s) | `()` | A list of filters to use with the XDP Firewall. |
+| ip_drop_ranges | list of strings | `()` | A list of IP ranges (strings) to drop if the IP range drop feature is enabled. | 
 
 ### Filter Object
 | Name | Type | Default | Description |
@@ -244,7 +244,7 @@ Here's a runtime config example.
 ```squidconf
 verbose = 5;
 log_file = "";
-interface = "ens18";
+interfaces = "ens18";
 pin_maps = true;
 update_time = 15;
 no_stats = false;
