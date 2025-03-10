@@ -152,19 +152,6 @@ The [`libconfig`](https://hyperrealm.github.io/libconfig/libconfig_manual.html) 
 
 Here are more details on the layout of the runtime configuration.
 
-### Data Types
-The following table quickly explains the data types used within the configuration documentation below (known data types which are not used within the configuration below will **not** be listed).
-
-| Name | Size (Bytes) | Description |
-| ---- | ---- | ----------- |
-| bool | 1 | A simple `true` or `false` field. |
-| byte | 1 | A number from `0` to `255`. |
-| string | N/A | An array of characters with no known size (values should be within quotes, `""`). |
-| uint | 4 | A number from `0` to `4294967295`. |
-| ulong | 8 | A number from `0` to `18446744073709551615 `. |
-| ushort | 2 | A number from `0` to `65535`. |
-| NULL | N/A | No address/value; Empty or 0. |
-
 ### Main
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
@@ -172,31 +159,34 @@ The following table quickly explains the data types used within the configuratio
 | log_file | string | `/var/log/xdpfw.log` | The log file location. If the string is empty (`""`), the log file is disabled. |
 | interfaces | string \| list of strings | `NULL` | The network interface(s) to attach the XDP program to (usually retrieved with `ip a` or `ifconfig`). |
 | pin_maps | bool | `true` | Pins main BPF maps to `/sys/fs/bpf/xdpfw/[map_name]` on the file system. |
-| update_time | uint | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
+| update_time | int | `0` | How often to update the config and filtering rules from the file system in seconds (0 disables). |
 | no_stats | bool | `false` | Whether to enable or disable packet counters. Disabling packet counters will improve performance, but result in less visibility on what the XDP Firewall is doing. |
 | stats_per_second | bool | `false` | If true, packet counters and stats are calculated per second. `stdout_update_time` must be 1000 or less for this to work properly. |
-| stdout_update_time | uint | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
-| filters | list of filter object(s) | `()` | A list of filters to use with the XDP Firewall. |
+| stdout_update_time | int | `1000` | How often to update `stdout` when displaying packet counters in milliseconds. |
+| filters | list of filter objects | `()` | A list of filters to use with the XDP Firewall. |
 | ip_drop_ranges | list of strings | `()` | A list of IP ranges (strings) to drop if the IP range drop feature is enabled. | 
 
 ### Filter Object
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | enabled | bool | `true` | Whether the rule is enabled or not. |
-| action | uint | `1` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
 | log | bool | `false` | Whether to log packets that are matched. |
-| block_time | uint | `1` | The amount of seconds to block the source IP for if matched. |
+| action | int | `1` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
+| block_time | int | `1` | The amount of seconds to block the source IP for if matched. |
+| pps | int64 | `NULL` | Matches if this threshold of packets per second is exceeded for a source IP. |
+| bps | int64 | `NULL` | Matches if this threshold of bytes per second is exceeded for a source IP. |
+
+#### IP Options
+| Name | Type | Default | Description |
+| ---- | ---- | ------- | ----------- |
 | src_ip | string | `NULL` | The source IPv4 address to match (e.g. `10.50.0.3`). CIDRs are also supported (e.g. `10.50.0.0/24`)! |
 | dst_ip | string | `NULL` | The destination IPv4 address to match (e.g. `10.50.0.4`). CIDRs are also supported (e.g. `10.50.0.0/24`)! |
 | src_ip6 | string | `NULL` | The source IPv6 address to match (e.g. `fe80::18c4:dfff:fe70:d8a6`). |
 | dst_ip6 | string | `NULL` | The destination IPv6 address to match (e.g. `fe80::ac21:14ff:fe4b:3a6d`). |
-| min_ttl | byte | `NULL` | The minimum TTL (time-to-live) to match. |
-| max_ttl | byte | `NULL` | The maximum TTL (time-to-live) to match. |
-| min_len | ushort | `NULL` | The minimum packet length to match (includes the entire packet including the ethernet header and payload). |
-| max_len | ushort | `NULL` | The maximum packet length to match (includes the entire packet including the ethernet header and payload). |
-| tos | byte | `NULL` | The ToS (type-of-service) to match. |
-| pps | ulong | `NULL` | Matches if this threshold of packets per second is exceeded for a source IP. |
-| bps | ulong | `NULL` | Matches if this threshold of bytes per second is exceeded for a source IP. |
+| min_ttl | int | `NULL` | The minimum TTL (time-to-live) to match. |
+| max_ttl | int | `NULL` | The maximum TTL (time-to-live) to match. |
+| max_len | int | `NULL` | The maximum packet length to match (includes the entire packet including the ethernet header and payload). |
+| tos | int | `NULL` | The ToS (type-of-service) to match. |
 
 #### TCP Options
 You may additionally specified TCP header options for a filter rule which start with `tcp_`.
@@ -204,8 +194,8 @@ You may additionally specified TCP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | tcp_enabled | bool | `false` | Whether to enable TCP on this filter rule. |
-| tcp_sport | ushort | `NULL` | The TCP source port to match. |
-| tcp_dport | ushort | `NULL` | The TCP destination port to match. |
+| tcp_sport | int | `NULL` | The TCP source port to match. |
+| tcp_dport | int | `NULL` | The TCP destination port to match. |
 | tcp_syn | bool | `false` | Matches if the TCP SYN flag is set. |
 | tcp_ack | bool | `false` | Matches if the TCP ACK flag is set. |
 | tcp_rst | bool | `false` | Matches if the TCP RST flag is set. |
@@ -221,8 +211,8 @@ You may additionally specified UDP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | udp_enabled | bool | `false` | Whether to enable UDP on this filter rule. |
-| udp_sport | ushort | `NULL` | The UDP source port to match. |
-| udp_dport | ushort | `NULL` | The UDP destination port to match. |
+| udp_sport | int | `NULL` | The UDP source port to match. |
+| udp_dport | int | `NULL` | The UDP destination port to match. |
 
 #### ICMP Options
 You may additionally specified UDP header options for a filter rule which start with `icmp_`.
@@ -230,13 +220,13 @@ You may additionally specified UDP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | icmp_enabled | bool | `false` | Whether to enable ICMP on this filter rule. |
-| icmp_code | byte | `NULL` | The ICMP code to match. |
-| icmp_type | byte | `NULL` | The ICMP type to match. |
+| icmp_code | int | `NULL` | The ICMP code to match. |
+| icmp_type | int | `NULL` | The ICMP type to match. |
 
 #### Notes
-* All settings within a filter rule other than `enabled` and `action` are **not** required. This means you do not have to define them within your config.
-* When a filter rule's setting is set (not `NULL`), but doesn't match the packet, the program moves onto the next filter rule. Therefore, all of the filter rule's settings that are set must match the packet in order to perform the action specified. Think of it as something like `if src_ip == "10.50.0.3" and udp_dport == 27015: action`. 
-* As of right now, you can specify up to **60 total** dynamic filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Forwarding/tree/master/patches) README from my XDP Forwarding project.
+* When a setting field inside of a filter rule is not set or if it's set to `-1` (or `NULL`), the default setting value will be used (see [`set_filter_defaults()`](https://github.com/gamemann/XDP-Firewall/blob/master/src/loader/utils/config.c#L1047)).
+* When a filter rule's setting is set, but doesn't match the packet, the program moves onto the next filter rule. Therefore, all of the filter rule's settings that are set must match the packet in order to perform the action specified. Think of it as something like `if src_ip == "10.50.0.3" and udp_dport == 27015: action`. 
+* As of right now, you can specify up to **60 total** dynamic filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Proxy/tree/master/patches) from my XDP Proxy project.
 
 ### Runtime Example
 Here's a runtime config example.
