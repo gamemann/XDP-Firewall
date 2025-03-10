@@ -187,6 +187,7 @@ int main(int argc, char *argv[])
     }
 
     int if_idx[MAX_INTERFACES] = {0};
+    int attach_success = 0;
 
     // Attach XDP program to interface(s).
     for (int i = 0; i < cfg.interfaces_cnt; i++)
@@ -228,6 +229,18 @@ int main(int argc, char *argv[])
         {
             log_msg(&cfg, 1, 0, "Attached XDP program to interface '%s' using mode '%s'...", interface, mode_used);
         }
+
+        if (!attach_success)
+        {
+            attach_success = 1;
+        }
+    }
+
+    if (!attach_success)
+    {
+        log_msg(&cfg, 0, 1, "[ERROR] Failed to attach XDP program to any configured interfaces.");
+
+        return EXIT_FAILURE;
     }
 
     log_msg(&cfg, 2, 0, "Retrieving BPF map FDs...");
@@ -425,7 +438,7 @@ int main(int argc, char *argv[])
                 else
                 {
                     log_msg(&cfg, 4, 0, "Config reloaded successfully...");
-                    
+
                     // Make sure we set doing_stats properly.
                     if (!cfg.no_stats && !doing_stats)
                     {

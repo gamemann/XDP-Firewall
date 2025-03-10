@@ -11,7 +11,7 @@
  * 
  * @return void
  */
-static void log_msgRaw(int req_lvl, int cur_lvl, int error, const char* log_path, const char* msg, va_list args)
+static void log_msg_raw(int req_lvl, int cur_lvl, int error, const char* log_path, const char* msg, va_list args)
 {
     if (cur_lvl < req_lvl)
     {
@@ -86,7 +86,7 @@ static void log_msgRaw(int req_lvl, int cur_lvl, int error, const char* log_path
 }
 
 /**
- * Prints a log message using log_msgRaw().
+ * Prints a log message using log_msg_raw().
  * 
  * @param cfg A pointer to the config structure.
  * @param req_lvl The required level for this message.
@@ -100,7 +100,7 @@ void log_msg(config__t* cfg, int req_lvl, int error, const char* msg, ...)
     va_list args;
     va_start(args, msg);
 
-    log_msgRaw(req_lvl, cfg->verbose, error, (const char*)cfg->log_file, msg, args);
+    log_msg_raw(req_lvl, cfg->verbose, error, (const char*)cfg->log_file, msg, args);
 
     va_end(args);
 }
