@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     }
 
     // Check first interface.
-    if (cfg.interfaces[0] == NULL)
+    if (!cfg.interfaces[0])
     {
         log_msg(&cfg, 0, 1, "[ERROR] No interface(s) specified in config or CLI override.");
 

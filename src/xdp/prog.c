@@ -49,6 +49,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     if (unlikely(eth->h_proto != htons(ETH_P_IP) && eth->h_proto != htons(ETH_P_IPV6)))
     {
         inc_pkt_stats(stats, STATS_TYPE_PASSED);
+        
         return XDP_PASS;
     }
 
