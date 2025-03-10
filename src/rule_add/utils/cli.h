@@ -8,9 +8,9 @@
 
 #include <string.h>
 
-struct cmdline
+struct cli
 {
-    const char* cfg_file;
+    char* cfg_file;
 
     int help;
 
@@ -20,7 +20,7 @@ struct cmdline
 
     int idx;
 
-    const char* ip;
+    char* ip;
     int v6;
 
     s64 expires;
@@ -30,11 +30,11 @@ struct cmdline
     int action;
     s64 block_time;
 
-    const char* src_ip;
-    const char* dst_ip;
+    char* src_ip;
+    char* dst_ip;
 
-    const char* src_ip6;
-    const char* dst_ip6;
+    char* src_ip6;
+    char* dst_ip6;
 
     s64 pps;
     s64 bps;
@@ -64,6 +64,6 @@ struct cmdline
     int icmp_enabled;
     int icmp_code;
     int icmp_type;
-} typedef cmdline_t;
+} typedef cli_t;
 
-void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[]);
+void parse_cli(cli_t* cli, int argc, char* argv[]);

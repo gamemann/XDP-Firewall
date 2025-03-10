@@ -15,7 +15,7 @@ u64 last_passed = 0;
  * 
  * @return 0 on success or 1 on failure.
  */
-int CalculateStats(int map_stats, int cpus, int per_second)
+int calc_stats(int map_stats, int cpus, int per_second)
 {
     u32 key = 0;
 

@@ -7,7 +7,7 @@
 #include <loader/utils/xdp.h>
 #include <loader/utils/config.h>
 
-#include <rule_del/utils/cmdline.h>
+#include <rule_del/utils/cli.h>
 
 // These are required due to being extern with Loader.
 // To Do: Figure out a way to not require the below without requiring separate object files.
@@ -19,12 +19,12 @@ int main(int argc, char *argv[])
     int ret;
 
     // Parse command line.
-    cmdline_t cmd = {0};
-    cmd.cfg_file = CONFIG_DEFAULT_PATH;
+    cli_t cli = {0};
+    cli.cfg_file = CONFIG_DEFAULT_PATH;
 
-    ParseCommandLine(&cmd, argc, argv);
+    parse_cli(&cli, argc, argv);
 
-    if (!cmd.help)
+    if (!cli.help)
     {
         printf("Parsed command line...\n");
     } else
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     }
 
     // Check for config file path.
-    if ((cmd.save || cmd.mode == 0) && (!cmd.cfg_file || strlen(cmd.cfg_file) < 1))
+    if ((cli.save || cli.mode == 0) && (!cli.cfg_file || strlen(cli.cfg_file) < 1))
     {
         fprintf(stderr, "[ERROR] CFG file not specified or empty. This is required for current mode or options set.\n");
 
@@ -52,11 +52,11 @@ int main(int argc, char *argv[])
     // Load config.
     config__t cfg = {0};
     
-    if (cmd.save || cmd.mode == 0)
+    if (cli.save || cli.mode == 0)
     {
-        if ((ret = LoadConfig(&cfg, cmd.cfg_file, NULL)) != 0)
+        if ((ret = load_cfg(&cfg, cli.cfg_file, 1, NULL)) != 0)
         {
-            fprintf(stderr, "[ERROR] Failed to load config at '%s' (%d)\n", cmd.cfg_file, ret);
+            fprintf(stderr, "[ERROR] Failed to load config at '%s' (%d)\n", cli.cfg_file, ret);
 
             return EXIT_FAILURE;
         }
@@ -65,12 +65,12 @@ int main(int argc, char *argv[])
     }
 
     // Handle filters mode.
-    if (cmd.mode == 0)
+    if (cli.mode == 0)
     {
         printf("Using filters mode (0)...\n");
 
         // Check index.
-        if (cmd.idx < 1)
+        if (cli.idx < 1)
         {
             fprintf(stderr, "Invalid filter index. Index must start from 1.\n");
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
         }
 
         // Retrieve filters map FD.
-        int map_filters = GetMapPinFd(XDP_MAP_PIN_DIR, "map_filters");
+        int map_filters = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_filters");
 
         if (map_filters < 0)
         {
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
         printf("Using 'map_filters' FD => %d...\n", map_filters);
 
         int idx = -1;
-        int cfg_idx = cmd.idx - 1;
+        int cfg_idx = cli.idx - 1;
         int cur_idx = 0;
 
         // This is where things are a bit tricky due to the layout of our filtering system in XDP.
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
         // So we need to loop through each and ignore disabled rules.
         for (int i = 0; i < MAX_FILTERS; i++)
         {
-            filter_t* filter = &cfg.filters[i];
+            filter_rule_cfg_t* filter = &cfg.filters[i];
 
             if (!filter->set || !filter->enabled)
             {
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
         }
 
         // Unset affected filter in config.
-        if (cmd.save)
+        if (cli.save)
         {
             cfg.filters[cfg_idx].set = 0;
         }
@@ -132,15 +132,15 @@ int main(int argc, char *argv[])
         // Update filters.
         fprintf(stdout, "Updating filters...\n");
 
-        UpdateFilters(map_filters, &cfg);
+        update_filters(map_filters, &cfg);
     }
     // Handle IPv4 range drop mode.
-    else if (cmd.mode == 1)
+    else if (cli.mode == 1)
     {
         printf("Using IPv4 range drop mode (1)...\n");
 
         // Make sure IP range is specified.
-        if (!cmd.ip)
+        if (!cli.ip)
         {
             fprintf(stderr, "No IP address or range specified. Please set an IP range using -s, --ip arguments.\n");
 
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
         }
 
         // Get range map.
-        int map_range_drop = GetMapPinFd(XDP_MAP_PIN_DIR, "map_range_drop");
+        int map_range_drop = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_range_drop");
 
         if (map_range_drop < 0)
         {
@@ -160,19 +160,19 @@ int main(int argc, char *argv[])
         printf("Using 'map_range_drop' FD => %d.\n", map_range_drop);
 
         // Parse IP range.
-        ip_range_t range = ParseIpCidr(cmd.ip);
+        ip_range_t range = parse_ip_range(cli.ip);
 
         // Attempt to delete range.
-        if ((ret = DeleteRangeDrop(map_range_drop, range.ip, range.cidr)) != 0)
+        if ((ret = delete_range_drop(map_range_drop, range.ip, range.cidr)) != 0)
         {
             fprintf(stderr, "Error deleting range from BPF map (%d).\n", ret);
 
             return EXIT_FAILURE;
         }
 
-        printf("Removed IP range '%s'...\n", cmd.ip);
+        printf("Removed IP range '%s'...\n", cli.ip);
 
-        if (cmd.save)
+        if (cli.save)
         {
             // Loop through IP drop ranges and unset if found.
             for (int i = 0; i < MAX_IP_RANGES; i++)
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
                     continue;
                 }
 
-                if (strcmp(cur_range, cmd.ip) != 0)
+                if (strcmp(cur_range, cli.ip) != 0)
                 {
                     continue;
                 }
@@ -199,17 +199,17 @@ int main(int argc, char *argv[])
     {
         printf("Using source IP block mode (2)...\n");
 
-        if (!cmd.ip)
+        if (!cli.ip)
         {
             fprintf(stderr, "No source IP address specified. Please set an IP using -s, --ip arguments.\n");
 
             return EXIT_FAILURE;
         }
 
-        int map_block = GetMapPinFd(XDP_MAP_PIN_DIR, "map_block");
-        int map_block6 = GetMapPinFd(XDP_MAP_PIN_DIR, "map_block6");
+        int map_block = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_block");
+        int map_block6 = get_map_fd_pin(XDP_MAP_PIN_DIR, "map_block6");
 
-        if (cmd.v6)
+        if (cli.v6)
         {
             if (map_block6 < 0)
             {
@@ -222,9 +222,9 @@ int main(int argc, char *argv[])
 
             struct in6_addr addr;
 
-            if ((ret = inet_pton(AF_INET6, cmd.ip, &addr)) != 1)
+            if ((ret = inet_pton(AF_INET6, cli.ip, &addr)) != 1)
             {
-                fprintf(stderr, "Failed to convert IPv6 address '%s' to decimal (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to convert IPv6 address '%s' to decimal (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
@@ -236,9 +236,9 @@ int main(int argc, char *argv[])
                 ip = (ip << 8) | addr.s6_addr[i];
             }
 
-            if ((ret = DeleteBlock6(map_block6, ip)) != 0)
+            if ((ret = delete_block6(map_block6, ip)) != 0)
             {
-                fprintf(stderr, "Failed to delete IP '%s' from BPF map (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to delete IP '%s' from BPF map (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
@@ -256,30 +256,30 @@ int main(int argc, char *argv[])
 
             struct in_addr addr;
 
-            if ((ret = inet_pton(AF_INET, cmd.ip, &addr)) != 1)
+            if ((ret = inet_pton(AF_INET, cli.ip, &addr)) != 1)
             {
-                fprintf(stderr, "Failed to convert IP address '%s' to decimal (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to convert IP address '%s' to decimal (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
 
-            if ((ret = DeleteBlock(map_block, addr.s_addr)) != 0)
+            if ((ret = delete_block(map_block, addr.s_addr)) != 0)
             {
-                fprintf(stderr, "Failed to delete IP '%s' from BPF map (%d).\n", cmd.ip, ret);
+                fprintf(stderr, "Failed to delete IP '%s' from BPF map (%d).\n", cli.ip, ret);
 
                 return EXIT_FAILURE;
             }
 
-            printf("Deleted IP '%s'...\n", cmd.ip);
+            printf("Deleted IP '%s'...\n", cli.ip);
         }
     }
 
-    if (cmd.save)
+    if (cli.save)
     {
         // Save config.
         printf("Saving config...\n");
 
-        if ((ret = SaveCfg(&cfg, cmd.cfg_file)) != 0)
+        if ((ret = save_cfg(&cfg, cli.cfg_file)) != 0)
         {
             fprintf(stderr, "[ERROR] Failed to save config.\n");
 

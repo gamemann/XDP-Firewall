@@ -32,10 +32,10 @@
 #define memcpy(dest, src, n) __builtin_memcpy((dest), (src), (n))
 #endif
 
-static __always_inline int IsIpInRange(u32 src_ip, u32 net_ip, u8 cidr);
+static __always_inline int is_ip_in_range(u32 src_ip, u32 net_ip, u8 cidr);
 
 #ifdef ENABLE_IP_RANGE_DROP
-static __always_inline int CheckIpRangeDrop(u32 ip);
+static __always_inline int check_ip_range_drop(u32 ip);
 #endif
 
 // The source file is included directly below instead of compiled and linked as an object because when linking, there is no guarantee the compiler will inline the function (which is crucial for performance).

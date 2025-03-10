@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-struct cmdline
+struct cli
 {
     const char* cfg_file;
 
@@ -18,6 +18,6 @@ struct cmdline
 
     const char* ip;
     int v6;
-} typedef cmdline_t;
+} typedef cli_t;
 
-void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[]);
+void parse_cli(cli_t* cli, int argc, char* argv[]);

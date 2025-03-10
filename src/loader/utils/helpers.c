@@ -5,7 +5,7 @@
  * 
  * @return void
  */
-void PrintHelpMenu()
+void print_help_menu()
 {
     printf("Usage: xdpfw [OPTIONS]\n\n");
 
@@ -31,7 +31,7 @@ void PrintHelpMenu()
  * 
  * @return void
  */
-void SignalHndl(int code)
+void hdl_signal(int code)
 {
     cont = 0;
 }
@@ -43,7 +43,7 @@ void SignalHndl(int code)
  * 
  * @return Returns an IP structure with IP and CIDR. 
  */
-ip_range_t ParseIpCidr(const char *ip)
+ip_range_t parse_ip_range(const char *ip)
 {
     ip_range_t ret = {0};
     ret.cidr = 32;
@@ -52,7 +52,7 @@ ip_range_t ParseIpCidr(const char *ip)
     strncpy(ip_copy, ip, sizeof(ip_copy) - 1);
     ip_copy[sizeof(ip_copy) - 1] = '\0';
 
-    char *token = strtok((char *) ip_copy, "/");
+    char *token = strtok(ip_copy, "/");
 
     if (token)
     {
@@ -76,7 +76,7 @@ ip_range_t ParseIpCidr(const char *ip)
  * 
  * @return The protocol string. 
  */
-const char* GetProtocolStrById(int id)
+const char* get_protocol_str_by_id(int id)
 {
     switch (id)
     {
@@ -98,7 +98,7 @@ const char* GetProtocolStrById(int id)
  * 
  * @return void
  */
-void PrintToolInfo()
+void print_tool_info()
 {
     printf(
         " __  ______  ____    _____ _                        _ _ \n"
@@ -115,7 +115,7 @@ void PrintToolInfo()
  * 
  * @return The current nanoseconds since the system last booted.
  */
-u64 GetBootNanoTime()
+u64 get_boot_nano_time()
 {
     struct sysinfo sys;
     sysinfo(&sys);

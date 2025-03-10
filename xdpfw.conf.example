@@ -1,6 +1,6 @@
 verbose = 2;
 log_file = "/var/log/xdpfw.log";
-interface = "ens18";
+interfaces = "ens18";
 update_time = 15;
 no_stats = false;
 stats_per_second = false;

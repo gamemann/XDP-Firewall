@@ -10,30 +10,30 @@
 #define XDP_OBJ_PATH "/etc/xdpfw/xdp_prog.o"
 #define XDP_MAP_PIN_DIR "/sys/fs/bpf/xdpfw"
 
-int FindMapFd(struct xdp_program *prog, const char *map_name);
-void SetLibBPFLogMode(int silent);
+int get_map_fd(struct xdp_program *prog, const char *map_name);
+void set_libbpf_log_mode(int silent);
 
-struct xdp_program *LoadBpfObj(const char *file_name);
-struct bpf_object* GetBpfObj(struct xdp_program* prog);
+struct xdp_program *load_bpf_obj(const char *file_name);
+struct bpf_object* get_bpf_obj(struct xdp_program* prog);
 
-int AttachXdp(struct xdp_program *prog, char** mode, int ifidx, int detach, int force_skb, int force_offload);
+int attach_xdp(struct xdp_program *prog, char** mode, int ifidx, int detach, int force_skb, int force_offload);
 
-int DeleteFilter(int map_filters, u32 idx);
-void DeleteFilters(int map_filters);
+int delete_filter(int map_filters, u32 idx);
+void delete_filters(int map_filters);
 
-int UpdateFilter(int map_filters, filter_t* filter, int idx);
-void UpdateFilters(int map_filters, config__t *cfg);
+int update_filter(int map_filters, filter_rule_cfg_t* filter, int idx);
+void update_filters(int map_filters, config__t *cfg);
 
-int PinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name);
-int UnpinBpfMap(struct bpf_object* obj, const char* pin_dir, const char* map_name);
-int GetMapPinFd(const char* pin_dir, const char* map_name);
+int pin_bpf_map(struct bpf_object* obj, const char* pin_dir, const char* map_name);
+int unpin_bpf_map(struct bpf_object* obj, const char* pin_dir, const char* map_name);
+int get_map_fd_pin(const char* pin_dir, const char* map_name);
 
-int DeleteBlock(int map_block, u32 ip);
-int AddBlock(int map_block, u32 ip, u64 expires);
+int delete_block(int map_block, u32 ip);
+int add_block(int map_block, u32 ip, u64 expires);
 
-int DeleteBlock6(int map_block6, u128 ip);
-int AddBlock6(int map_block6, u128 ip, u64 expires);
+int delete_block6(int map_block6, u128 ip);
+int add_block6(int map_block6, u128 ip, u64 expires);
 
-int DeleteRangeDrop(int map_range_drop, u32 net, u8 cidr);
-int AddRangeDrop(int map_range_drop, u32 net, u8 cidr);
-void UpdateRangeDrops(int map_range_drop, config__t* cfg);
+int delete_range_drop(int map_range_drop, u32 net, u8 cidr);
+int add_range_drop(int map_range_drop, u32 net, u8 cidr);
+void update_range_drops(int map_range_drop, config__t* cfg);

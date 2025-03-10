@@ -9,4 +9,4 @@
 
 #include <time.h>
 
-int CalculateStats(int map_stats, int cpus, int per_second);
+int calc_stats(int map_stats, int cpus, int per_second);

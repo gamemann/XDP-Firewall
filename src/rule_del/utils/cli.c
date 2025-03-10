@@ -1,4 +1,4 @@
-#include <rule_del/utils/cmdline.h>
+#include <rule_del/utils/cli.h>
 
 const struct option opts[] =
 {
@@ -16,7 +16,7 @@ const struct option opts[] =
     { NULL, 0, NULL, 0 }
 };
 
-void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[])
+void parse_cli(cli_t* cli, int argc, char* argv[])
 {
     int c;
 
@@ -25,37 +25,37 @@ void ParseCommandLine(cmdline_t* cmd, int argc, char* argv[])
         switch (c)
         {
             case 'c':
-                cmd->cfg_file = optarg;
+                cli->cfg_file = optarg;
 
                 break;
 
             case 'h':
-                cmd->help = 1;
+                cli->help = 1;
 
                 break;
 
             case 's':
-                cmd->save = 1;
+                cli->save = 1;
 
                 break;
 
             case 'm':
-                cmd->mode = atoi(optarg);
+                cli->mode = atoi(optarg);
 
                 break;
 
             case 'i':
-                cmd->idx = atoi(optarg);
+                cli->idx = atoi(optarg);
 
                 break;
 
             case 'd':
-                cmd->ip = optarg;
+                cli->ip = optarg;
 
                 break;
 
             case 'v':
-                cmd->v6 = 1;
+                cli->v6 = 1;
 
                 break;
             

@@ -52,8 +52,8 @@ LOADER_UTILS_DIR = $(LOADER_DIR)/utils
 LOADER_UTILS_CONFIG_SRC = config.c
 LOADER_UTILS_CONFIG_OBJ = config.o
 
-LOADER_UTILS_CMDLINE_SRC = cmdline.c
-LOADER_UTILS_CMDLINE_OBJ = cmdline.o
+LOADER_UTILS_cli_SRC = cli.c
+LOADER_UTILS_cli_OBJ = cli.o
 
 LOADER_UTILS_XDP_SRC = xdp.c
 LOADER_UTILS_XDP_OBJ = xdp.o
@@ -68,7 +68,7 @@ LOADER_UTILS_HELPERS_SRC = helpers.c
 LOADER_UTILS_HELPERS_OBJ = helpers.o
 
 # Loader objects.
-LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_LOGGING_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_STATS_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
+LOADER_OBJS = $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_cli_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_LOGGING_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_STATS_OBJ) $(BUILD_LOADER_DIR)/$(LOADER_UTILS_HELPERS_OBJ)
 
 ifeq ($(LIBXDP_STATIC), 1)
 	LOADER_OBJS := $(LIBBPF_OBJS) $(LIBXDP_OBJS) $(LOADER_OBJS)
@@ -92,10 +92,10 @@ RULE_ADD_OUT = xdpfw-add
 RULE_ADD_UTILS_DIR = $(RULE_ADD_DIR)/utils
 
 # Rule add utils.
-RULE_ADD_UTILS_CMDLINE_SRC = cmdline.c
-RULE_ADD_UTILS_CMDLINE_OBJ = cmdline.o
+RULE_ADD_UTILS_cli_SRC = cli.c
+RULE_ADD_UTILS_cli_OBJ = cli.o
 
-RULE_ADD_OBJS = $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_UTILS_CMDLINE_OBJ)
+RULE_ADD_OBJS = $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_UTILS_cli_OBJ)
 
 # Rule delete.
 RULE_DEL_SRC = prog.c
@@ -104,10 +104,10 @@ RULE_DEL_OUT = xdpfw-del
 RULE_DEL_UTILS_DIR = $(RULE_DEL_DIR)/utils
 
 # Rule delete utils.
-RULE_DEL_UTILS_CMDLINE_SRC = cmdline.c
-RULE_DEL_UTILS_CMDLINE_OBJ = cmdline.o
+RULE_DEL_UTILS_cli_SRC = cli.c
+RULE_DEL_UTILS_cli_OBJ = cli.o
 
-RULE_DEL_OBJS = $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_UTILS_CMDLINE_OBJ)
+RULE_DEL_OBJS = $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_UTILS_cli_OBJ)
 
 # Includes.
 INCS = -I $(SRC_DIR) -I /usr/include -I /usr/local/include
@@ -133,13 +133,13 @@ all: loader xdp rule_add rule_del
 loader: loader_utils
 	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_LOADER_DIR)/$(LOADER_OUT) $(LOADER_OBJS) $(LOADER_DIR)/$(LOADER_SRC)
 
-loader_utils: loader_utils_config loader_utils_cmdline loader_utils_helpers loader_utils_xdp loader_utils_logging loader_utils_stats
+loader_utils: loader_utils_config loader_utils_cli loader_utils_helpers loader_utils_xdp loader_utils_logging loader_utils_stats
 
 loader_utils_config:
 	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CONFIG_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_CONFIG_SRC)
 
-loader_utils_cmdline:
-	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_CMDLINE_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_CMDLINE_SRC)
+loader_utils_cli:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_cli_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_cli_SRC)
 
 loader_utils_xdp:
 	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_LOADER_DIR)/$(LOADER_UTILS_XDP_OBJ) $(LOADER_UTILS_DIR)/$(LOADER_UTILS_XDP_SRC)
@@ -161,19 +161,19 @@ xdp:
 rule_add: loader_utils rule_add_utils
 	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_OUT) $(RULE_OBJS) $(RULE_ADD_OBJS) $(RULE_ADD_DIR)/$(RULE_ADD_SRC)
 
-rule_add_utils: rule_add_utils_cmdline
+rule_add_utils: rule_add_utils_cli
 
-rule_add_utils_cmdline:
-	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_UTILS_CMDLINE_OBJ) $(RULE_ADD_UTILS_DIR)/$(RULE_ADD_UTILS_CMDLINE_SRC)
+rule_add_utils_cli:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_RULE_ADD_DIR)/$(RULE_ADD_UTILS_cli_OBJ) $(RULE_ADD_UTILS_DIR)/$(RULE_ADD_UTILS_cli_SRC)
 
 # Rule delete.
 rule_del: loader_utils rule_del_utils
 	$(CC) $(INCS) $(FLAGS) $(FLAGS_LOADER) -o $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_OUT) $(RULE_OBJS) $(RULE_DEL_OBJS) $(RULE_DEL_DIR)/$(RULE_DEL_SRC)
 
-rule_del_utils: rule_del_utils_cmdline
+rule_del_utils: rule_del_utils_cli
 
-rule_del_utils_cmdline:
-	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_UTILS_CMDLINE_OBJ) $(RULE_DEL_UTILS_DIR)/$(RULE_DEL_UTILS_CMDLINE_SRC)
+rule_del_utils_cli:
+	$(CC) $(INCS) $(FLAGS) -c -o $(BUILD_RULE_DEL_DIR)/$(RULE_DEL_UTILS_cli_OBJ) $(RULE_DEL_UTILS_DIR)/$(RULE_DEL_UTILS_cli_SRC)
 
 # LibXDP chain. We need to install objects here since our program relies on installed object files and such.
 libxdp:
