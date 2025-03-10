@@ -24,17 +24,19 @@ int main(int argc, char *argv[])
 
     // We need to set integers for dynamic filters to -1 since we consider -1 as 'unset'.
     cli.enabled = -1;
-    cli.action = -1;
     cli.log = -1;
+
+    cli.action = -1;
+    cli.block_time = -1;
+
+    cli.pps = -1;
+    cli.bps = -1;
 
     cli.min_ttl = -1;
     cli.max_ttl = -1;
     cli.min_len = -1;
     cli.max_len = -1;
     cli.tos = -1;
-
-    cli.pps = -1;
-    cli.bps = -1;
 
     cli.tcp_enabled = -1;
     cli.tcp_sport = -1;

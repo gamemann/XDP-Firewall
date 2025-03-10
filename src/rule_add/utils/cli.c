@@ -120,7 +120,7 @@ void parse_cli(cli_t* cli, int argc, char* argv[])
                 break;
 
             case 31:
-                cli->block_time = strtoll(optarg, NULL, 10);
+                cli->block_time = atoi(optarg);
 
                 break;
 

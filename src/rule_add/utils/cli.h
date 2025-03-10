@@ -28,7 +28,7 @@ struct cli
     int enabled;
     int log;
     int action;
-    s64 block_time;
+    int block_time;
 
     char* src_ip;
     char* dst_ip;

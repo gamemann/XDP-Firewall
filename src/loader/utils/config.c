@@ -794,8 +794,8 @@ int save_cfg(config__t* cfg, const char* file_path)
                 // Add block time.
                 if (filter->block_time > -1)
                 {
-                    config_setting_t* block_time = config_setting_add(filter_cfg, "block_time", CONFIG_TYPE_INT64);
-                    config_setting_set_int64(block_time, filter->block_time);
+                    config_setting_t* block_time = config_setting_add(filter_cfg, "block_time", CONFIG_TYPE_INT);
+                    config_setting_set_int(block_time, filter->block_time);
                 }
 
                 // Add PPS.
