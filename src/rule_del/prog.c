@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     
     if (cli.save || cli.mode == 0)
     {
-        if ((ret = load_cfg(&cfg, cli.cfg_file, NULL)) != 0)
+        if ((ret = load_cfg(&cfg, cli.cfg_file, 1, NULL)) != 0)
         {
             fprintf(stderr, "[ERROR] Failed to load config at '%s' (%d)\n", cli.cfg_file, ret);
 

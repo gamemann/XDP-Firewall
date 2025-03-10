@@ -15,11 +15,11 @@
 
 struct filter_rule_ip_opts
 {
-    const char* src_ip;
-    const char* dst_ip;
+    char* src_ip;
+    char* dst_ip;
 
-    const char* src_ip6;
-    const char* dst_ip6;
+    char* src_ip6;
+    char* dst_ip6;
 
     int min_ttl;
     int max_ttl;
@@ -86,15 +86,20 @@ struct config
 {
     int verbose;
     char *log_file;
-    char *interface;
     unsigned int pin_maps : 1;
     int update_time;
     unsigned int no_stats : 1;
     unsigned int stats_per_second : 1;
     int stdout_update_time;
 
+    int interfaces_cnt;
+    char* interfaces[MAX_INTERFACES];
+
+    int filters_cnt;
     filter_rule_cfg_t filters[MAX_FILTERS];
-    const char* drop_ranges[MAX_IP_RANGES];
+    
+    int drop_ranges_cnt;
+    char* drop_ranges[MAX_IP_RANGES];
 } typedef config__t; // config_t is taken by libconfig -.-
 
 struct config_overrides
@@ -115,7 +120,7 @@ void set_filter_defaults(filter_rule_cfg_t* filter);
 void print_cfg(config__t* cfg);
 void print_filter(filter_rule_cfg_t* filter, int idx);
 
-int load_cfg(config__t *cfg, const char* cfg_file, config_overrides_t* overrides);
+int load_cfg(config__t *cfg, const char* cfg_file, int load_defaults, config_overrides_t* overrides);
 int save_cfg(config__t* cfg, const char* file_path);
 
 int open_cfg(FILE** file, const char *file_name);

@@ -473,7 +473,7 @@ void update_filters(int map_filters, config__t *cfg)
     int cur_idx = 0;
 
     // Add a filter to the filter maps.
-    for (int i = 0; i < MAX_FILTERS; i++)
+    for (int i = 0; i < cfg->filters_cnt; i++)
     {
         // Delete previous rule from BPF map.
         // We do this in the case rules were edited and were put out of order since the key doesn't uniquely map to a specific rule.

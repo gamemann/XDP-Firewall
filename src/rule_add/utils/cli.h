@@ -10,7 +10,7 @@
 
 struct cli
 {
-    const char* cfg_file;
+    char* cfg_file;
 
     int help;
 
@@ -20,7 +20,7 @@ struct cli
 
     int idx;
 
-    const char* ip;
+    char* ip;
     int v6;
 
     s64 expires;
@@ -30,11 +30,11 @@ struct cli
     int action;
     s64 block_time;
 
-    const char* src_ip;
-    const char* dst_ip;
+    char* src_ip;
+    char* dst_ip;
 
-    const char* src_ip6;
-    const char* dst_ip6;
+    char* src_ip6;
+    char* dst_ip6;
 
     s64 pps;
     s64 bps;

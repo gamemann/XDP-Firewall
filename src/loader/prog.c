@@ -111,8 +111,6 @@ int main(int argc, char *argv[])
     // Initialize config.
     config__t cfg = {0};
 
-    set_cfg_defaults(&cfg);
-
     // Create overrides for config and set arguments from CLI.
     config_overrides_t cfg_overrides = {0};
     cfg_overrides.verbose = cli.verbose;
@@ -125,7 +123,7 @@ int main(int argc, char *argv[])
     cfg_overrides.stdout_update_time = cli.stdout_update_time;
 
     // Load config.
-    if ((ret = load_cfg(&cfg, cli.cfg_file, &cfg_overrides)) != 0)
+    if ((ret = load_cfg(&cfg, cli.cfg_file, 1, &cfg_overrides)) != 0)
     {
         fprintf(stderr, "[ERROR] Failed to load config from file system (%s)(%d).\n", cli.cfg_file, ret);
 
@@ -146,10 +144,10 @@ int main(int argc, char *argv[])
         print_tool_info();
     }
 
-    // Check interface.
-    if (cfg.interface == NULL)
+    // Check first interface.
+    if (cfg.interfaces[0] == NULL)
     {
-        log_msg(&cfg, 0, 1, "[ERROR] No interface specified in config or CLI override.");
+        log_msg(&cfg, 0, 1, "[ERROR] No interface(s) specified in config or CLI override.");
 
         return EXIT_FAILURE;
     }
@@ -162,18 +160,6 @@ int main(int argc, char *argv[])
     if (setrlimit(RLIMIT_MEMLOCK, &rl)) 
     {
         log_msg(&cfg, 0, 1, "[ERROR] Failed to raise rlimit. Please make sure this program is ran as root!\n");
-
-        return EXIT_FAILURE;
-    }
-
-    log_msg(&cfg, 2, 0, "Retrieving interface index for '%s'...", cfg.interface);
-
-    // Get interface index.
-    int ifidx = if_nametoindex(cfg.interface);
-
-    if (ifidx < 0)
-    {
-        log_msg(&cfg, 0, 1, "[ERROR] Failed to retrieve index of network interface '%s'.\n", cfg.interface);
 
         return EXIT_FAILURE;
     }
@@ -200,21 +186,48 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    log_msg(&cfg, 2, 0, "Attaching XDP program to interface '%s'...", cfg.interface);
+    int if_idx[MAX_INTERFACES] = {0};
+
+    // Attach XDP program to interface(s).
+    for (int i = 0; i < cfg.interfaces_cnt; i++)
+    {
+        const char* interface = cfg.interfaces[i];
+
+        if (!interface)
+        {
+            continue;
+        }
+
+        log_msg(&cfg, 4, 0, "Retrieving interface index for '%s'...", interface);
+
+        // Get interface index.
+        if_idx[i] = if_nametoindex(interface);
     
-    // Attach XDP program.
-    char *mode_used = NULL;
+        if (if_idx[i] < 0)
+        {
+            log_msg(&cfg, 0, 1, "[WARNING] Failed to retrieve index of network interface '%s'.\n", interface);
+    
+            continue;
+        }
 
-    if ((ret = attach_xdp(prog, &mode_used, ifidx, 0, cli.skb, cli.offload)) != 0)
-    {
-        log_msg(&cfg, 0, 1, "[ERROR] Failed to attach XDP program to interface '%s' using available modes (%d).\n", cfg.interface, ret);
+        log_msg(&cfg, 3, 0, "Interface index for '%s' => %d.", interface, if_idx[i]);
 
-        return EXIT_FAILURE;
-    }
+        log_msg(&cfg, 2, 0, "Attaching XDP program to interface '%s'...", interface);
+    
+        // Attach XDP program.
+        char* mode_used = NULL;
+    
+        if ((ret = attach_xdp(prog, &mode_used, if_idx[i], 0, cli.skb, cli.offload)) != 0)
+        {
+            log_msg(&cfg, 0, 1, "[WARNING] Failed to attach XDP program to interface '%s' using available modes (%d).\n", interface, ret);
 
-    if (mode_used != NULL)
-    {
-        log_msg(&cfg, 1, 0, "Attached XDP program using mode '%s'...", mode_used);
+            continue;
+        }
+    
+        if (mode_used != NULL)
+        {
+            log_msg(&cfg, 1, 0, "Attached XDP program to interface '%s' using mode '%s'...", interface, mode_used);
+        }
     }
 
     log_msg(&cfg, 2, 0, "Retrieving BPF map FDs...");
@@ -398,27 +411,39 @@ int main(int argc, char *argv[])
         // Check for auto-update.
         if (cfg.update_time > 0 && (cur_time - last_update_check) > cfg.update_time)
         {
+            log_msg(&cfg, 6, 0, "Checking for config updates...");
+
             // Check if config file have been modified
             if (stat(cli.cfg_file, &conf_stat) == 0 && conf_stat.st_mtime > last_config_check) {
+                log_msg(&cfg, 3, 0, "Config file change detected during update. Attempting to reload config...");
+                
                 // Reload config.
-                if ((ret = load_cfg(&cfg, cli.cfg_file, &cfg_overrides)) != 0)
+                if ((ret = load_cfg(&cfg, cli.cfg_file, 1, &cfg_overrides)) != 0)
                 {
                     log_msg(&cfg, 1, 0, "[WARNING] Failed to load config after update check (%d)...\n", ret);
                 }
+                else
+                {
+                    log_msg(&cfg, 4, 0, "Config reloaded successfully...");
+                    
+                    // Make sure we set doing_stats properly.
+                    if (!cfg.no_stats && !doing_stats)
+                    {
+                        doing_stats = 1;
+                    }
+                    else if (cfg.no_stats && doing_stats)
+                    {
+                        doing_stats = 0;
+                    }
 
 #ifdef ENABLE_FILTERS
-                // Update filters.
-                update_filters(map_filters, &cfg);
+                    // Update filters.
+                    update_filters(map_filters, &cfg);
 #endif
+                }
 
                 // Update last check timer
                 last_config_check = time(NULL);
-
-                // Make sure we set doing stats if needed.
-                if (!cfg.no_stats && !doing_stats)
-                {
-                    doing_stats = 1;
-                }
             }
 
             // Update last updated variable.
@@ -452,12 +477,22 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    // Detach XDP program.
-    if (attach_xdp(prog, &mode_used, ifidx, 1, cli.skb, cli.offload))
+    // Detach XDP program from interfaces.
+    for (int i = 0; i < MAX_INTERFACES; i++)
     {
-        log_msg(&cfg, 0, 1, "[ERROR] Failed to detach XDP program from interface '%s'.\n", cfg.interface);
+        const char* interface = cfg.interfaces[i];
+    
+        if (!interface)
+        {
+            continue;
+        }
 
-        return EXIT_FAILURE;
+        char* mode_used = NULL;
+
+        if (attach_xdp(prog, &mode_used, if_idx[i], 1, cli.skb, cli.offload))
+        {
+            log_msg(&cfg, 0, 0, "[WARNING] Failed to detach XDP program from interface '%s'.\n", interface);
+        }
     }
 
     // Unpin maps from file system.
