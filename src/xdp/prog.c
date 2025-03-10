@@ -334,25 +334,25 @@ int xdp_prog_main(struct xdp_md *ctx)
 #endif
 
             // Max TTL length.
-            if (filter->ip.do_max_ttl && filter->ip.max_ttl > iph6->hop_limit)
+            if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph6->hop_limit)
             {
                 continue;
             }
 
             // Min TTL length.
-            if (filter->ip.do_min_ttl && filter->ip.min_ttl < iph6->hop_limit)
+            if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph6->hop_limit)
             {
                 continue;
             }
 
             // Max packet length.
-            if (filter->ip.do_max_len && filter->ip.max_len > (ntohs(iph6->payload_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_max_len && filter->ip.max_len < pkt_len)
             {
                 continue;
             }
 
             // Min packet length.
-            if (filter->ip.do_min_len && filter->ip.min_len < (ntohs(iph6->payload_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_min_len && filter->ip.min_len > pkt_len)
             {
                 continue;
             }
@@ -400,33 +400,33 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-            // Max TTL length.
+            // Max TTL.
             if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph->ttl)
             {
                 continue;
             }
 
-            // Min TTL length.
+            // Min TTL.
             if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph->ttl)
             {
                 continue;
             }
 
             // Max packet length.
-            if (filter->ip.do_max_len && filter->ip.max_len < (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_max_len && filter->ip.max_len < pkt_len)
             {
                 continue;
             }
 
             // Min packet length.
-            if (filter->ip.do_min_len && filter->ip.min_len > (ntohs(iph->tot_len) + sizeof(struct ethhdr)))
+            if (filter->ip.do_min_len && filter->ip.min_len > pkt_len)
             {
                 continue;
             }
         }
 
         // PPS.
-        if (filter->do_pps &&  pps < filter->pps)
+        if (filter->do_pps && pps < filter->pps)
         {
             continue;
         }
@@ -564,7 +564,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 #ifdef ENABLE_FILTER_LOGGING
         if (filter->log > 0)
         {
-            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, pps, bps, i);
+            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, pps, bps, pkt_len, i);
         }
 #endif
         

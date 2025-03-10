@@ -142,6 +142,8 @@ struct filter_log_event
     u64 ts;
     int filter_id;
 
+    int length;
+
     u32 src_ip;
     u32 src_ip6[4];
 
@@ -158,7 +160,8 @@ struct filter_log_event
     u64 bps;
 } typedef filter_log_event_t;
 
-struct lpm_trie_key {
+struct lpm_trie_key
+{
     u32 prefix_len;
     u32 data;
 } typedef LpmTrieKey;

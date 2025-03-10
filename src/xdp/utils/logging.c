@@ -16,11 +16,12 @@
  * @param now The timestamp.
  * @param pps The current PPS rate.
  * @param bps The current BPS rate.
+ * @param pkt_len The full packet length.
  * @param filter_id The filter ID that matched.
  * 
  * @return always 0
  */
-static __always_inline int log_filter_msg(struct iphdr* iph, struct ipv6hdr* iph6, u16 src_port, u16 dst_port, u8 protocol, u64 now, u64 pps, u64 bps, int filter_id)
+static __always_inline int log_filter_msg(struct iphdr* iph, struct ipv6hdr* iph6, u16 src_port, u16 dst_port, u8 protocol, u64 now, u64 pps, u64 bps, int pkt_len, int filter_id)
 {
     filter_log_event_t* e = bpf_ringbuf_reserve(&map_filter_log, sizeof(*e), 0);
 
@@ -46,6 +47,8 @@ static __always_inline int log_filter_msg(struct iphdr* iph, struct ipv6hdr* iph
 
         e->pps = pps;
         e->bps = bps;
+
+        e->length = pkt_len;
 
         bpf_ringbuf_submit(e, 0);
     }
