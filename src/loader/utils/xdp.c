@@ -628,10 +628,10 @@ int add_block6(int map_block6, u128 ip, u64 expires)
  */
 int delete_range_drop(int map_range_drop, u32 net, u8 cidr)
 {
-    u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
+    u32 bit_mask = htonl(( ~( (1 << (32 - cidr) ) - 1) ));
     u32 start = net & bit_mask;
 
-    LpmTrieKey key = {0};
+    lpm_trie_key_t key = {0};
     key.prefix_len = cidr;
     key.data = start;
 
@@ -649,10 +649,10 @@ int delete_range_drop(int map_range_drop, u32 net, u8 cidr)
  */
 int add_range_drop(int map_range_drop, u32 net, u8 cidr)
 {
-    u32 bit_mask = ( ~( (1 << (32 - cidr) ) - 1) );
+    u32 bit_mask = htonl(( ~( (1 << (32 - cidr) ) - 1) ));
     u32 start = net & bit_mask;
 
-    LpmTrieKey key = {0};
+    lpm_trie_key_t key = {0};
     key.prefix_len = cidr;
     key.data = start;
 

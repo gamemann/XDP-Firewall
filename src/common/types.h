@@ -164,4 +164,4 @@ struct lpm_trie_key
 {
     u32 prefix_len;
     u32 data;
-} typedef LpmTrieKey;
+} typedef lpm_trie_key_t;

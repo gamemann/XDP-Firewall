@@ -10,12 +10,12 @@
 
 #include <common/all.h>
 
-#include <xdp/utils/maps.h>
-
 #include <xdp/utils/rl.h>
 #include <xdp/utils/logging.h>
 #include <xdp/utils/stats.h>
 #include <xdp/utils/helpers.h>
+
+#include <xdp/utils/maps.h>
 
 struct 
 {

@@ -30,11 +30,12 @@ struct
 } map_block6 SEC(".maps");
 
 #ifdef ENABLE_IP_RANGE_DROP
-struct {
+struct
+{
     __uint(type, BPF_MAP_TYPE_LPM_TRIE);
     __uint(max_entries, MAX_IP_RANGES);
     __uint(map_flags, BPF_F_NO_PREALLOC);
-    __type(key, LpmTrieKey);
+    __type(key, lpm_trie_key_t);
     __type(value, u64);
 } map_range_drop SEC(".maps");
 #endif

@@ -1,7 +1,5 @@
 #include <xdp/utils/helpers.h>
 
-#include <xdp/utils/maps.h>
-
 /**
  * Checks if an IP is within a specific CIDR range.
  * 
@@ -26,11 +24,9 @@ static __always_inline int is_ip_in_range(u32 src_ip, u32 net_ip, u8 cidr)
  */
 static __always_inline int check_ip_range_drop(u32 ip)
 {
-    LpmTrieKey key =
-    {
-        .prefix_len = 32,
-        .data = ip
-    };
+    lpm_trie_key_t key = {0};
+    key.prefix_len = 32;
+    key.data = ip;
 
     u64 *lookup = bpf_map_lookup_elem(&map_range_drop, &key);
 
