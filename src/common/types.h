@@ -33,11 +33,17 @@ struct filter_tcp
 {
     unsigned int enabled : 1;
 
-    unsigned int do_sport : 1;
-    u16 sport;
+    unsigned int do_sport_min : 1;
+    u16 sport_min;
 
-    unsigned int do_dport : 1;
-    u16 dport;
+    unsigned int do_sport_max : 1;
+    u16 sport_max;
+
+    unsigned int do_dport_min : 1;
+    u16 dport_min;
+
+    unsigned int do_dport_max : 1;
+    u16 dport_max;
 
     // TCP flags.
     unsigned int do_urg : 1;
@@ -69,11 +75,17 @@ struct filter_udp
 {
     unsigned int enabled : 1;
 
-    unsigned int do_sport : 1;
-    u16 sport;
+    unsigned int do_sport_min : 1;
+    u16 sport_min;
 
-    unsigned int do_dport : 1;
-    u16 dport;
+    unsigned int do_sport_max : 1;
+    u16 sport_max;
+
+    unsigned int do_dport_min : 1;
+    u16 dport_min;
+
+    unsigned int do_dport_max : 1;
+    u16 dport_max;
 } typedef filter_udp_t;
 
 struct filter_icmp

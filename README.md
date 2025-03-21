@@ -194,8 +194,8 @@ You may additionally specified TCP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | tcp_enabled | bool | `false` | Whether to enable TCP on this filter rule. |
-| tcp_sport | int | `NULL` | The TCP source port to match. |
-| tcp_dport | int | `NULL` | The TCP destination port to match. |
+| tcp_sport | int \| string | `NULL` | The TCP source port to match with single range support (e.g., `"20-22"`). |
+| tcp_dport | int \| string | `NULL` | The TCP destination port to match with single range support (e.g., `"20-22"`). |
 | tcp_syn | bool | `false` | Matches if the TCP SYN flag is set. |
 | tcp_ack | bool | `false` | Matches if the TCP ACK flag is set. |
 | tcp_rst | bool | `false` | Matches if the TCP RST flag is set. |
@@ -211,8 +211,8 @@ You may additionally specified UDP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | udp_enabled | bool | `false` | Whether to enable UDP on this filter rule. |
-| udp_sport | int | `NULL` | The UDP source port to match. |
-| udp_dport | int | `NULL` | The UDP destination port to match. |
+| udp_sport | int | `NULL` | The UDP source port to match with single range support (e.g., `"27000-27015"`). |
+| udp_dport | int | `NULL` | The UDP destination port to match with single range support (e.g., `"27000-27015"`). |
 
 #### ICMP Options
 You may additionally specified UDP header options for a filter rule which start with `icmp_`.
@@ -227,6 +227,7 @@ You may additionally specified UDP header options for a filter rule which start 
 * When a setting field inside of a filter rule is not set or if it's set to `-1` (or `NULL`), the default setting value will be used (see [`set_filter_defaults()`](https://github.com/gamemann/XDP-Firewall/blob/master/src/loader/utils/config.c#L1047)).
 * When a filter rule's setting is set, but doesn't match the packet, the program moves onto the next filter rule. Therefore, all of the filter rule's settings that are set must match the packet in order to perform the action specified. Think of it as something like `if src_ip == "10.50.0.3" and udp_dport == 27015: action`. 
 * As of right now, you can specify up to **60 total** dynamic filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Proxy/tree/master/patches) from my XDP Proxy project.
+* At this time, each port value supports a single port range per filter rule. This is because adding support for multiple ports/port ranges would require an additional `for` loop which would make the BPF program larger and result in slower performance, etc.
 
 ### Runtime Example
 Here's a runtime config example.

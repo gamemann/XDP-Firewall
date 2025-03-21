@@ -39,8 +39,6 @@ int main(int argc, char *argv[])
     cli.tos = -1;
 
     cli.tcp_enabled = -1;
-    cli.tcp_sport = -1;
-    cli.tcp_dport = -1;
     cli.tcp_urg = -1;
     cli.tcp_ack = -1;
     cli.tcp_rst = -1;
@@ -51,8 +49,6 @@ int main(int argc, char *argv[])
     cli.tcp_cwr = -1;
 
     cli.udp_enabled = -1;
-    cli.udp_sport = -1;
-    cli.udp_dport = -1;
 
     cli.icmp_enabled = -1;
     cli.icmp_code = -1;
@@ -267,12 +263,12 @@ int main(int argc, char *argv[])
             new_filter.tcp.enabled = cli.tcp_enabled;
         }
 
-        if (cli.tcp_sport > -1)
+        if (cli.tcp_sport)
         {
             new_filter.tcp.sport = cli.tcp_sport;
         }
 
-        if (cli.tcp_dport > -1)
+        if (cli.tcp_dport)
         {
             new_filter.tcp.dport = cli.tcp_dport;
         }
@@ -322,12 +318,12 @@ int main(int argc, char *argv[])
             new_filter.udp.enabled = cli.udp_enabled;
         }
 
-        if (cli.udp_sport > -1)
+        if (cli.udp_sport)
         {
             new_filter.udp.sport = cli.udp_sport;
         }
 
-        if (cli.udp_dport > -1)
+        if (cli.udp_dport)
         {
             new_filter.udp.dport = cli.udp_dport;
         }
