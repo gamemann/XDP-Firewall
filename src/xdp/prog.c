@@ -446,14 +446,24 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-            // Source port.
-            if (filter->tcp.do_sport && filter->tcp.sport != tcph->source)
+            // Source port checks.
+            if (filter->tcp.do_sport_min && tcph->source < filter->tcp.sport_min)
             {
                 continue;
             }
 
-            // Destination port.
-            if (filter->tcp.do_dport && filter->tcp.dport != tcph->dest)
+            if (filter->tcp.do_sport_max && tcph->source > filter->tcp.sport_max)
+            {
+                continue;
+            }
+
+            // Destination port checks.
+            if (filter->tcp.do_dport_min && tcph->dest < filter->tcp.dport_min)
+            {
+                continue;
+            }
+
+            if (filter->tcp.do_dport_max && tcph->dest > filter->tcp.dport_max)
             {
                 continue;
             }
@@ -513,16 +523,25 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
 
-            // Source port.
-            if (filter->udp.do_sport && filter->udp.sport != udph->source)
+            // Source port checks.
+            if (filter->udp.do_sport_min && udph->source < filter->udp.sport_min)
             {
                 continue;
             }
 
-            // Destination port.
-            if (filter->udp.do_dport && filter->udp.dport != udph->dest)
+            if (filter->udp.do_sport_max && udph->source > filter->udp.sport_max)
             {
+                continue;
+            }
 
+            // Destination port checks.
+            if (filter->udp.do_dport_min && udph->source < filter->udp.dport_min)
+            {
+                continue;
+            }
+
+            if (filter->udp.do_dport_max && udph->source > filter->udp.dport_max)
+            {
                 continue;
             }
         }

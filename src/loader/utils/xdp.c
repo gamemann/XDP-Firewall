@@ -231,6 +231,11 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
     filter_t filter = {0};
 
     filter.set = filter_cfg->set;
+
+    if (!filter_cfg->enabled)
+    {
+        return 0;
+    }
     
     if (filter_cfg->enabled > -1)
     {
@@ -340,18 +345,26 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.tcp.enabled = filter_cfg->tcp.enabled;
     }
 
-    if (filter_cfg->tcp.sport > -1)
-    {
-        filter.tcp.do_sport = 1;
+    port_range_t tcp_src_port_range = parse_port_range(filter_cfg->tcp.sport);
 
-        filter.tcp.sport = htons((u16)filter_cfg->tcp.sport);
+    if (tcp_src_port_range.success)
+    {
+        filter.tcp.do_sport_min = 1;
+        filter.tcp.do_sport_max = 1;
+
+        filter.tcp.sport_min = htons(tcp_src_port_range.min);
+        filter.tcp.sport_max = htons(tcp_src_port_range.max);
     }
 
-    if (filter_cfg->tcp.dport > -1)
-    {
-        filter.tcp.do_dport = 1;
+    port_range_t tcp_dst_port_range = parse_port_range(filter_cfg->tcp.dport);
 
-        filter.tcp.dport = htons((u16)filter_cfg->tcp.dport);
+    if (tcp_dst_port_range.success)
+    {
+        filter.tcp.do_dport_min = 1;
+        filter.tcp.do_dport_max = 1;
+
+        filter.tcp.dport_min = htons(tcp_dst_port_range.min);
+        filter.tcp.dport_max = htons(tcp_dst_port_range.max);
     }
 
     if (filter_cfg->tcp.urg > -1)
@@ -415,18 +428,26 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.udp.enabled = filter_cfg->udp.enabled;
     }
 
-    if (filter_cfg->udp.sport > -1)
-    {
-        filter.udp.do_sport = 1;
+    port_range_t udp_src_port_range = parse_port_range(filter_cfg->udp.sport);
 
-        filter.udp.sport = htons((u16)filter_cfg->udp.sport);
+    if (udp_src_port_range.success)
+    {
+        filter.udp.do_sport_min = 1;
+        filter.udp.do_sport_max = 1;
+
+        filter.udp.sport_min = htons(udp_src_port_range.min);
+        filter.udp.sport_max = htons(udp_src_port_range.max);
     }
 
-    if (filter_cfg->udp.dport > -1)
-    {
-        filter.udp.do_dport = 1;
+    port_range_t udp_dst_port_range = parse_port_range(filter_cfg->udp.dport);
 
-        filter.udp.dport = htons((u16)filter_cfg->udp.dport);
+    if (udp_dst_port_range.success)
+    {
+        filter.udp.do_dport_min = 1;
+        filter.udp.do_dport_max = 1;
+
+        filter.udp.dport_min = htons(udp_dst_port_range.min);
+        filter.udp.dport_max = htons(udp_dst_port_range.max);
     }
 
     if (filter_cfg->icmp.enabled > -1)
