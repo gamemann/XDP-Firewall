@@ -46,8 +46,8 @@ struct cli
     int tos;
 
     int tcp_enabled;
-    int tcp_sport;
-    int tcp_dport;
+    char* tcp_sport;
+    char* tcp_dport;
     int tcp_urg;
     int tcp_ack;
     int tcp_rst;
@@ -58,8 +58,8 @@ struct cli
     int tcp_cwr;
 
     int udp_enabled;
-    int udp_sport;
-    int udp_dport;
+    char* udp_sport;
+    char* udp_dport;
 
     int icmp_enabled;
     int icmp_code;

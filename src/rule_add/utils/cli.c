@@ -185,12 +185,12 @@ void parse_cli(cli_t* cli, int argc, char* argv[])
                 break;
 
             case 12:
-                cli->tcp_sport = atoi(optarg);
+                cli->tcp_sport = optarg;
 
                 break;
 
             case 13:
-                cli->tcp_dport = atoi(optarg);
+                cli->tcp_dport = optarg;
 
                 break;
 
@@ -240,12 +240,12 @@ void parse_cli(cli_t* cli, int argc, char* argv[])
                 break;
 
             case 23:
-                cli->udp_sport = atoi(optarg);
+                cli->udp_sport = optarg;
 
                 break;
 
             case 24:
-                cli->udp_dport = atoi(optarg);
+                cli->udp_dport = optarg;
 
                 break;
 
