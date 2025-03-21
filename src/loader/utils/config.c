@@ -505,19 +505,57 @@ int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
             }
 
             // Source port.
-            int tcp_sport;
+            config_setting_t* tcp_sport = config_setting_lookup(filter_cfg, "tcp_sport");
 
-            if (config_setting_lookup_int(filter_cfg, "tcp_sport", &tcp_sport) == CONFIG_TRUE)
+            if (tcp_sport)
             {
-                filter->tcp.sport = tcp_sport;
+                int type = config_setting_type(tcp_sport);
+
+                if (type == CONFIG_TYPE_STRING)
+                {
+                    const char* val = config_setting_get_string(tcp_sport);
+
+                    if (val)
+                    {
+                        filter->tcp.sport = strdup(val);
+                    }
+                }
+                else if (type == CONFIG_TYPE_INT)
+                {
+                    int val = config_setting_get_int(tcp_sport);
+
+                    char val_str[12];
+                    snprintf(val_str, sizeof(val_str), "%d", val);
+
+                    filter->tcp.sport = strdup(val_str);
+                }
             }
 
             // Destination port.
-            int tcp_dport;
+            config_setting_t* tcp_dport = config_setting_lookup(filter_cfg, "tcp_dport");
 
-            if (config_setting_lookup_int(filter_cfg, "tcp_dport", &tcp_dport) == CONFIG_TRUE)
+            if (tcp_dport)
             {
-                filter->tcp.dport = tcp_dport;
+                int type = config_setting_type(tcp_dport);
+
+                if (type == CONFIG_TYPE_STRING)
+                {
+                    const char* val = config_setting_get_string(tcp_dport);
+
+                    if (val)
+                    {
+                        filter->tcp.dport = strdup(val);
+                    }
+                }
+                else if (type == CONFIG_TYPE_INT)
+                {
+                    int val = config_setting_get_int(tcp_dport);
+
+                    char val_str[12];
+                    snprintf(val_str, sizeof(val_str), "%d", val);
+
+                    filter->tcp.dport = strdup(val_str);
+                }
             }
 
             // URG flag.
@@ -595,21 +633,59 @@ int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
             }
 
             // Source port.
-            int udp_sport;
+            config_setting_t* udp_sport = config_setting_lookup(filter_cfg, "udp_sport");
 
-            if (config_setting_lookup_int(filter_cfg, "udp_sport", &udp_sport) == CONFIG_TRUE)
+            if (udp_sport)
             {
-                filter->udp.sport = udp_sport;
+                int type = config_setting_type(udp_sport);
+
+                if (type == CONFIG_TYPE_STRING)
+                {
+                    const char* val = config_setting_get_string(udp_sport);
+
+                    if (val)
+                    {
+                        filter->udp.sport = strdup(val);
+                    }
+                }
+                else if (type == CONFIG_TYPE_INT)
+                {
+                    int val = config_setting_get_int(udp_sport);
+
+                    char val_str[12];
+                    snprintf(val_str, sizeof(val_str), "%d", val);
+
+                    filter->udp.sport = strdup(val_str);
+                }
             }
 
             // Destination port.
-            int udp_dport;
+            config_setting_t* udp_dport = config_setting_lookup(filter_cfg, "udp_dport");
 
-            if (config_setting_lookup_int(filter_cfg, "udp_dport", &udp_dport) == CONFIG_TRUE)
+            if (udp_dport)
             {
-                filter->udp.dport = udp_dport;
-            }
+                int type = config_setting_type(udp_dport);
 
+                if (type == CONFIG_TYPE_STRING)
+                {
+                    const char* val = config_setting_get_string(udp_dport);
+
+                    if (val)
+                    {
+                        filter->udp.dport = strdup(val);
+                    }
+                }
+                else if (type == CONFIG_TYPE_INT)
+                {
+                    int val = config_setting_get_int(udp_dport);
+
+                    char val_str[12];
+                    snprintf(val_str, sizeof(val_str), "%d", val);
+
+                    filter->udp.dport = strdup(val_str);
+                }
+            }
+            
             /* ICMP options */
 
             // Enabled.
@@ -884,17 +960,17 @@ int save_cfg(config__t* cfg, const char* file_path)
                 }
 
                 // Add TCP source port.
-                if (filter->tcp.sport > -1)
+                if (filter->tcp.sport)
                 {
-                    config_setting_t* tcp_sport = config_setting_add(filter_cfg, "tcp_sport", CONFIG_TYPE_INT);
-                    config_setting_set_int(tcp_sport, filter->tcp.sport);
+                    config_setting_t* tcp_sport = config_setting_add(filter_cfg, "tcp_sport", CONFIG_TYPE_STRING);
+                    config_setting_set_string(tcp_sport, filter->tcp.sport);
                 }
 
                 // Add TCP destination port.
-                if (filter->tcp.dport > -1)
+                if (filter->tcp.dport)
                 {
-                    config_setting_t* tcp_dport = config_setting_add(filter_cfg, "tcp_dport", CONFIG_TYPE_INT);
-                    config_setting_set_int(tcp_dport, filter->tcp.dport);
+                    config_setting_t* tcp_dport = config_setting_add(filter_cfg, "tcp_dport", CONFIG_TYPE_STRING);
+                    config_setting_set_string(tcp_dport, filter->tcp.dport);
                 }
 
                 // Add TCP URG flag.
@@ -961,17 +1037,17 @@ int save_cfg(config__t* cfg, const char* file_path)
                 }
 
                 // Add UDP source port.
-                if (filter->udp.sport > -1)
+                if (filter->udp.sport)
                 {
-                    config_setting_t* udp_sport = config_setting_add(filter_cfg, "udp_sport", CONFIG_TYPE_INT);
-                    config_setting_set_int(udp_sport, filter->udp.sport);
+                    config_setting_t* udp_sport = config_setting_add(filter_cfg, "udp_sport", CONFIG_TYPE_STRING);
+                    config_setting_set_string(udp_sport, filter->udp.sport);
                 }
 
                 // Add UDP destination port.
-                if (filter->udp.dport > -1)
+                if (filter->udp.dport)
                 {
-                    config_setting_t* udp_dport = config_setting_add(filter_cfg, "udp_dport", CONFIG_TYPE_INT);
-                    config_setting_set_int(udp_dport, filter->udp.dport);
+                    config_setting_t* udp_dport = config_setting_add(filter_cfg, "udp_dport", CONFIG_TYPE_STRING);
+                    config_setting_set_string(udp_dport, filter->udp.dport);
                 }
 
                 // Add ICMP enabled.
@@ -1095,8 +1171,19 @@ void set_filter_defaults(filter_rule_cfg_t* filter)
 
     filter->tcp.enabled = -1;
 
-    filter->tcp.sport = -1;
-    filter->tcp.dport = -1;
+    if (filter->tcp.sport)
+    {
+        free(filter->tcp.sport);
+
+        filter->tcp.sport = NULL;
+    }
+
+    if (filter->tcp.dport)
+    {
+        free(filter->tcp.dport);
+
+        filter->tcp.dport = NULL;
+    }
 
     filter->tcp.urg = -1;
     filter->tcp.ack = -1;
@@ -1108,8 +1195,20 @@ void set_filter_defaults(filter_rule_cfg_t* filter)
     filter->tcp.cwr = -1;
 
     filter->udp.enabled = -1;
-    filter->udp.sport = -1;
-    filter->udp.dport = -1;
+    
+    if (filter->udp.sport)
+    {
+        free(filter->udp.sport);
+
+        filter->udp.sport = NULL;
+    }
+
+    if (filter->udp.dport)
+    {
+        free(filter->udp.dport);
+
+        filter->udp.dport = NULL;
+    }
 
     filter->icmp.enabled = -1;
     filter->icmp.code = -1;
@@ -1254,8 +1353,8 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
     // TCP Options.
     printf("\t\tTCP Options\n");
     printf("\t\t\tTCP Enabled => %d\n", filter->tcp.enabled);
-    printf("\t\t\tTCP Source Port => %d\n", filter->tcp.sport);
-    printf("\t\t\tTCP Destination Port => %d\n", filter->tcp.dport);
+    printf("\t\t\tTCP Source Port => %s\n", filter->tcp.sport);
+    printf("\t\t\tTCP Destination Port => %s\n", filter->tcp.dport);
     printf("\t\t\tTCP URG Flag => %d\n", filter->tcp.urg);
     printf("\t\t\tTCP ACK Flag => %d\n", filter->tcp.ack);
     printf("\t\t\tTCP RST Flag => %d\n", filter->tcp.rst);
@@ -1268,8 +1367,8 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
     // UDP Options.
     printf("\t\tUDP Options\n");
     printf("\t\t\tUDP Enabled => %d\n", filter->udp.enabled);
-    printf("\t\t\tUDP Source Port => %d\n", filter->udp.sport);
-    printf("\t\t\tUDP Destination Port => %d\n\n", filter->udp.dport);
+    printf("\t\t\tUDP Source Port => %s\n", filter->udp.sport);
+    printf("\t\t\tUDP Destination Port => %s\n\n", filter->udp.dport);
 
     // ICMP Options.
     printf("\t\tICMP Options\n");

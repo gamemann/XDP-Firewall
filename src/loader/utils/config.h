@@ -34,8 +34,8 @@ struct filter_rule_filter_tcp
 {
     int enabled;
 
-    int sport;
-    int dport;
+    char* sport;
+    char* dport;
 
     int urg;
     int ack;
@@ -51,8 +51,8 @@ struct filter_rule_filter_udp
 {
     int enabled;
 
-    int sport;
-    int dport;
+    char* sport;
+    char* dport;
 } typedef filter_rule_filter_udp_t;
 
 struct filter_rule_filter_icmp
