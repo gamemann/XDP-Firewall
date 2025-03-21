@@ -122,3 +122,67 @@ u64 get_boot_nano_time()
 
     return sys.uptime * 1e9;
 }
+
+/**
+ * Parses a port range string and returns the minimum and maximum port.
+ * 
+ * @param range_str The port range string.
+ * 
+ * @return The port range as port_range_t type. Fields will be set to 0 on failure.
+ */
+port_range_t parse_port_range(const char* range_str)
+{
+    port_range_t ret = {0};
+
+    if (!range_str)
+    {
+        return ret;
+    }
+
+    // Copy range string.
+    char range_str_copy[24];
+    strncpy(range_str_copy, range_str, sizeof(range_str_copy) - 1);
+    range_str_copy[sizeof(range_str_copy) - 1] = '\0';
+
+    // First scan for port ranges with ":".
+    char* start = range_str_copy;
+    char* end = strchr(range_str_copy, '-');
+
+    if (!end)
+    {
+        end = strchr(range_str_copy, ':');
+    }
+
+    if (end)
+    {
+        *end = '\0';
+        end++;
+    }
+
+    char *end_ptr = NULL;
+
+    ret.min = strtol(start, &end_ptr, 10);
+
+    if (end_ptr == start || (*end_ptr != '\0' && !isspace((unsigned char)*end_ptr)))
+    {
+        return ret;
+    }
+
+    if (end)
+    {
+        ret.max = strtol(end, &end_ptr, 10);
+
+        if (end_ptr == end || (*end_ptr != '\0' && !isspace((unsigned char)*end_ptr)))
+        {
+            return ret;
+        }
+    }
+    else
+    {
+        ret.max = ret.min;
+    }
+
+    ret.success = 1;
+
+    return ret;
+}
