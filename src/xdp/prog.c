@@ -573,12 +573,12 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
 
             // Destination port checks.
-            if (filter->udp.do_dport_min && udph->source < filter->udp.dport_min)
+            if (filter->udp.do_dport_min && udph->dest < filter->udp.dport_min)
             {
                 continue;
             }
 
-            if (filter->udp.do_dport_max && udph->source > filter->udp.dport_max)
+            if (filter->udp.do_dport_max && udph->dest > filter->udp.dport_max)
             {
                 continue;
             }
