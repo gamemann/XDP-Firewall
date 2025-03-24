@@ -313,8 +313,10 @@ The following CLI arguments are supported.
 | --min-len | `--min-len 42` | The packet's mimimum length to match with the dynamic filter. |
 | --max-len | `--max-len 96` | The packet's maximum length to match with the dynamic filter. |
 | --tos | `--tos 1` | The IP's Type of Service to match with the dynamic filter. |
-| --pps | `--pps 10000` | The minimum PPS rate to match with the dynamic filter. |
-| --bps | `--bps 126000` | The minimum BPS rate to match with the dynamic filter. |
+| --ip-pps | `--ip-pps 10000` | The minimum PPS rate of a source IP to match with the dynamic filter. |
+| --ip-bps | `--ip-bps 126000` | The minimum BPS rate of a source IP to match with the dynamic filter. |
+| --flow-pps | `--flow-pps 3000` | The minimum PPS rate of a source flow to match with the dynamic filter. |
+| --flow-bps | `--flow-bps 26000` | The minimum BPS rate of a source flow to match with the dynamic filter. |
 | --tcp | `--tcp 1` | Enables or disables TCP matching with the dynamic filter. |
 | --tsport | `--tsport 22` | The TCP source port to match with the dynamic filter. |
 | --tdport | `--tdport 443` | The TCP destination port to match with the dynamic filter. |

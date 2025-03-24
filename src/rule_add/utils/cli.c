@@ -33,8 +33,8 @@ const struct option opts[] =
     { "ip-pps", required_argument, NULL, 9 },
     { "ip-bps", required_argument, NULL, 10 },
 
-    { "ip-pps", required_argument, NULL, 32 },
-    { "ip-bps", required_argument, NULL, 33 },
+    { "flow-pps", required_argument, NULL, 32 },
+    { "flow-bps", required_argument, NULL, 33 },
 
     { "tcp", required_argument, NULL, 11 },
     { "tsport", required_argument, NULL, 12 },
