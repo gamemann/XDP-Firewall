@@ -213,8 +213,8 @@ You may additionally specified UDP header options for a filter rule which start 
 | Name | Type | Default | Description |
 | ---- | ---- | ------- | ----------- |
 | udp_enabled | bool | `false` | Whether to enable UDP on this filter rule. |
-| udp_sport | int | `NULL` | The UDP source port to match with single range support (e.g., `"27000-27015"`). |
-| udp_dport | int | `NULL` | The UDP destination port to match with single range support (e.g., `"27000-27015"`). |
+| udp_sport | int \| string | `NULL` | The UDP source port to match with single range support (e.g., `"27000-27015"`). |
+| udp_dport | int \| string | `NULL` | The UDP destination port to match with single range support (e.g., `"27000-27015"`). |
 
 #### ICMP Options
 You may additionally specified UDP header options for a filter rule which start with `icmp_`.
