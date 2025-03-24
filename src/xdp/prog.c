@@ -324,6 +324,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     int action = 0;
     u64 block_time = 1;
 
+#pragma unroll
     for (int i = 0; i < MAX_FILTERS; i++)
     {
         u32 key = i;
