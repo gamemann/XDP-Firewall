@@ -287,15 +287,11 @@ int xdp_prog_main(struct xdp_md *ctx)
 
 #ifdef ENABLE_FILTERS
     // Update client stats (PPS/BPS).
-#ifdef ENABLE_RL_IP
     u64 ip_pps = 0;
     u64 ip_bps = 0;
-#endif
 
-#ifdef ENABLE_RL_FLOW
     u64 flow_pps = 0;
     u64 flow_bps = 0;
-#endif
 
 #if defined(ENABLE_RL_IP) || defined(ENABLE_RL_FLOW)
     if (iph)
@@ -622,19 +618,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 #ifdef ENABLE_FILTER_LOGGING
         if (filter->log > 0)
         {
-#if defined(ENABLE_RL_IP) || defined(ENABLE_RL_FLOW)
-#if defined(ENABLE_RL_IP) && defined(ENABLE_RL_FLOW)
             log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, ip_pps, ip_bps, flow_pps, flow_bps, pkt_len, i);
-#else
-#ifdef ENABLE_RL_IP
-            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, ip_pps, ip_bps, 0, 0, pkt_len, i);
-#else
-            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, 0, 0, flow_pps, flow_bps, pkt_len, i);
-#endif
-#endif
-#else
-            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, 0, 0, 0, 0, pkt_len, i);
-#endif
         }
 #endif
         
