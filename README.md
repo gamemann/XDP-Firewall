@@ -173,8 +173,10 @@ Here are more details on the layout of the runtime configuration.
 | log | bool | `false` | Whether to log packets that are matched. |
 | action | int | `1` | The value of `0` drops or blocks the packet while `1` allows/passes the packet through. |
 | block_time | int | `1` | The amount of seconds to block the source IP for if matched. |
-| pps | int64 | `NULL` | Matches if this threshold of packets per second is exceeded for a source IP. |
-| bps | int64 | `NULL` | Matches if this threshold of bytes per second is exceeded for a source IP. |
+| ip_pps | int64 | `NULL` | Matches if this threshold of packets per second is exceeded for a source IP. |
+| ip_bps | int64 | `NULL` | Matches if this threshold of bytes per second is exceeded for a source IP. |
+| flow_pps | int64 | `NULL` | Matches if this threshold of packets per second is exceeded for a source flow (IP and port). |
+| flow_bps | int64 | `NULL` | Matches if this threshold of bytes per second is exceeded for a source flow (IP and port). |
 
 #### IP Options
 | Name | Type | Default | Description |
