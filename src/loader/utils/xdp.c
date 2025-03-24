@@ -257,19 +257,37 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.block_time = filter_cfg->block_time;
     }
 
-    if (filter_cfg->pps > -1)
+#ifdef ENABLE_RL_IP
+    if (filter_cfg->ip_pps > -1)
     {
-        filter.do_pps = 1;
+        filter.do_ip_pps = 1;
 
-        filter.pps = (u64) filter_cfg->pps;
+        filter.ip_pps = (u64) filter_cfg->ip_pps;
     }
 
-    if (filter_cfg->bps > -1)
+    if (filter_cfg->ip_bps > -1)
     {
-        filter.do_bps = 1;
+        filter.do_ip_bps = 1;
 
-        filter.bps = (u64) filter_cfg->bps;
+        filter.ip_bps = (u64) filter_cfg->ip_bps;
     }
+#endif
+
+#ifdef ENABLE_RL_FLOW
+    if (filter_cfg->flow_pps > -1)
+    {
+        filter.do_flow_pps = 1;
+
+        filter.flow_pps = (u64) filter_cfg->flow_pps;
+    }
+
+    if (filter_cfg->flow_bps > -1)
+    {
+        filter.do_flow_bps = 1;
+
+        filter.flow_bps = (u64) filter_cfg->flow_bps;
+    }
+#endif
 
     if (filter_cfg->ip.src_ip)
     {

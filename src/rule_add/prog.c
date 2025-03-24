@@ -29,8 +29,11 @@ int main(int argc, char *argv[])
     cli.action = -1;
     cli.block_time = -1;
 
-    cli.pps = -1;
-    cli.bps = -1;
+    cli.ip_pps = -1;
+    cli.ip_bps = -1;
+
+    cli.flow_pps = -1;
+    cli.flow_bps = -1;
 
     cli.min_ttl = -1;
     cli.max_ttl = -1;
@@ -223,14 +226,24 @@ int main(int argc, char *argv[])
 
         // To Do: See if I can create a macro for below.
         // As long as the naming convention lines up, it should be easily possible.
-        if (cli.pps > -1)
+        if (cli.ip_pps > -1)
         {
-            new_filter.pps = cli.pps;
+            new_filter.ip_pps = cli.ip_pps;
         }
 
-        if (cli.bps > -1)
+        if (cli.ip_bps > -1)
         {
-            new_filter.bps = cli.bps;
+            new_filter.ip_bps = cli.ip_bps;
+        }
+
+        if (cli.flow_pps > -1)
+        {
+            new_filter.flow_pps = cli.flow_pps;
+        }
+
+        if (cli.flow_bps > -1)
+        {
+            new_filter.flow_bps = cli.flow_bps;
         }
 
         if (cli.min_ttl > -1)

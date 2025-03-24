@@ -1,8 +1,116 @@
 #include <xdp/utils/rl.h>
 
 #ifdef ENABLE_FILTERS
+
+#ifdef ENABLE_RL_IP
 /**
- * Updates IPv4 client stats.
+ * Updates source IPv4 address stats.
+ * 
+ * @param pps A pointer to the PPS integer.
+ * @param bps A pointer to the BPS integer.
+ * @param ip The client's source IP.
+ * @param pkt_len The total packet length.
+ * @param now The current time since boot in nanoseconds.alignas
+ * 
+ * @return always 0
+ */
+static __always_inline int update_ip_stats(u64 *pps, u64 *bps, u32 ip, u16 pkt_len, u64 now)
+{
+    cl_stats_t* stats = bpf_map_lookup_elem(&map_ip_stats, &ip);
+
+    if (stats)
+    {
+        // Check for next update.
+        if (now > stats->next_update)
+        {
+            stats->pps = 1;
+            stats->bps = pkt_len;
+            stats->next_update = now + NANO_TO_SEC;
+        }
+        else
+        {
+            // Increment PPS and BPS using built-in functions.
+            __sync_fetch_and_add(&stats->pps, 1);
+            __sync_fetch_and_add(&stats->bps, pkt_len);
+        }
+
+        *pps = stats->pps;
+        *bps = stats->bps;
+    }
+    else
+    {
+        // Create new entry.
+        cl_stats_t new = {0};
+
+        new.pps = 1;
+        new.bps = pkt_len;
+        new.next_update = now + NANO_TO_SEC;
+
+        *pps = new.pps;
+        *bps = new.bps;
+
+        bpf_map_update_elem(&map_ip_stats, &ip, &new, BPF_ANY);
+    }
+
+    return 0;
+}
+
+/**
+ * Updates source IPv6 address stats.
+ * 
+ * @param pps A pointer to the PPS integer.
+ * @param bps A pointer to the BPS integer.
+ * @param ip The client's source IP.
+ * @param pkt_len The total packet length.
+ * @param now The current time since boot in nanoseconds.alignas
+ * 
+ * @return always 0
+ */
+static __always_inline int update_ip6_stats(u64 *pps, u64 *bps, u128 *ip, u16 pkt_len, u64 now)
+{
+    cl_stats_t* stats = bpf_map_lookup_elem(&map_ip6_stats, ip);
+
+    if (stats)
+    {
+        // Check for next update.
+        if (now > stats->next_update)
+        {
+            stats->pps = 1;
+            stats->bps = pkt_len;
+            stats->next_update = now + NANO_TO_SEC;
+        }
+        else
+        {
+            // Increment PPS and BPS using built-in functions.
+            __sync_fetch_and_add(&stats->pps, 1);
+            __sync_fetch_and_add(&stats->bps, pkt_len);
+        }
+
+        *pps = stats->pps;
+        *bps = stats->bps;
+    }
+    else
+    {
+        // Create new entry.
+        cl_stats_t new = {0};
+
+        new.pps = 1;
+        new.bps = pkt_len;
+        new.next_update = now + NANO_TO_SEC;
+
+        *pps = new.pps;
+        *bps = new.bps;
+
+        bpf_map_update_elem(&map_ip6_stats, ip, &new, BPF_ANY);
+    }
+
+    return 0;
+}
+#endif
+
+#ifdef ENABLE_RL_FLOW
+/**
+ * Updates IPv4 flow stats.
  * 
  * @param pps A pointer to the PPS integer.
  * @param bps A pointer to the BPS integer.
@@ -10,46 +118,42 @@
  * @param port The client's source port.
  * @param protocol The client's protocol.
  * @param pkt_len The total packet length.
- * @param now The current time since boot in nanoseconds.alignas
+ * @param now The current time since boot in nanoseconds.
  * 
- * @return void
+ * @return always 0
  */
-static __always_inline void update_ip_stats(u64 *pps, u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
+static __always_inline int update_flow_stats(u64 *pps, u64 *bps, u32 ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
-#ifdef USE_FLOW_RL
     flow_t key = {0};
     key.ip = ip;
     key.port = port;
     key.protocol = protocol;
 
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip_stats, &key);
-#else
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip_stats, &ip);
-#endif
+    cl_stats_t* stats = bpf_map_lookup_elem(&map_flow_stats, &key);
 
-    if (ip_stats)
+    if (stats)
     {
         // Check for next update.
-        if (now > ip_stats->next_update)
+        if (now > stats->next_update)
         {
-            ip_stats->pps = 1;
-            ip_stats->bps = pkt_len;
-            ip_stats->next_update = now + NANO_TO_SEC;
+            stats->pps = 1;
+            stats->bps = pkt_len;
+            stats->next_update = now + NANO_TO_SEC;
         }
         else
         {
             // Increment PPS and BPS using built-in functions.
-            __sync_fetch_and_add(&ip_stats->pps, 1);
-            __sync_fetch_and_add(&ip_stats->bps, pkt_len);
+            __sync_fetch_and_add(&stats->pps, 1);
+            __sync_fetch_and_add(&stats->bps, pkt_len);
         }
 
-        *pps = ip_stats->pps;
-        *bps = ip_stats->bps;
+        *pps = stats->pps;
+        *bps = stats->bps;
     }
     else
     {
         // Create new entry.
-        ip_stats_t new = {0};
+        cl_stats_t new = {0};
 
         new.pps = 1;
         new.bps = pkt_len;
@@ -58,16 +162,14 @@ static __always_inline void update_ip_stats(u64 *pps, u64 *bps, u32 ip, u16 port
         *pps = new.pps;
         *bps = new.bps;
 
-#ifdef USE_FLOW_RL
-        bpf_map_update_elem(&map_ip_stats, &key, &new, BPF_ANY);
-#else
-        bpf_map_update_elem(&map_ip_stats, &ip, &new, BPF_ANY);
-#endif
+        bpf_map_update_elem(&map_flow_stats, &key, &new, BPF_ANY);
     }
+
+    return 0;
 }
 
 /**
- * Updates IPv6 client stats.
+ * Updates IPv6 flow stats.
  * 
  * @param pps A pointer to the PPS integer.
  * @param bps A pointer to the BPS integer.
@@ -75,46 +177,42 @@ static __always_inline void update_ip_stats(u64 *pps, u64 *bps, u32 ip, u16 port
  * @param port The client's source port.
  * @param protocol The client's protocol.
  * @param pkt_len The total packet length.
- * @param now The current time since boot in nanoseconds.alignas
+ * @param now The current time since boot in nanoseconds.
  * 
- * @return void
+ * @return always 0
  */
-static __always_inline void update_ip6_stats(u64 *pps, u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
+static __always_inline int update_flow6_stats(u64 *pps, u64 *bps, u128 *ip, u16 port, u8 protocol, u16 pkt_len, u64 now)
 {
-#ifdef USE_FLOW_RL
     flow6_t key = {0};
     key.ip = *ip;
     key.port = port;
     key.protocol = protocol;
 
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip6_stats, &key);
-#else
-    ip_stats_t *ip_stats = bpf_map_lookup_elem(&map_ip6_stats, ip);
-#endif
+    cl_stats_t* stats = bpf_map_lookup_elem(&map_flow6_stats, &key);
 
-    if (ip_stats)
+    if (stats)
     {
         // Check for next update.
-        if (now > ip_stats->next_update)
+        if (now > stats->next_update)
         {
-            ip_stats->pps = 1;
-            ip_stats->bps = pkt_len;
-            ip_stats->next_update = now + NANO_TO_SEC;
+            stats->pps = 1;
+            stats->bps = pkt_len;
+            stats->next_update = now + NANO_TO_SEC;
         }
         else
         {
             // Increment PPS and BPS using built-in functions.
-            __sync_fetch_and_add(&ip_stats->pps, 1);
-            __sync_fetch_and_add(&ip_stats->bps, pkt_len);
+            __sync_fetch_and_add(&stats->pps, 1);
+            __sync_fetch_and_add(&stats->bps, pkt_len);
         }
 
-        *pps = ip_stats->pps;
-        *bps = ip_stats->bps;
+        *pps = stats->pps;
+        *bps = stats->bps;
     }
     else
     {
         // Create new entry.
-        ip_stats_t new = {0};
+        cl_stats_t new = {0};
 
         new.pps = 1;
         new.bps = pkt_len;
@@ -123,11 +221,10 @@ static __always_inline void update_ip6_stats(u64 *pps, u64 *bps, u128 *ip, u16 p
         *pps = new.pps;
         *bps = new.bps;
 
-#ifdef USE_FLOW_RL
-        bpf_map_update_elem(&map_ip6_stats, &key, &new, BPF_ANY);
-#else
-        bpf_map_update_elem(&map_ip6_stats, ip, &new, BPF_ANY);
-#endif
+        bpf_map_update_elem(&map_flow6_stats, &key, &new, BPF_ANY);
     }
+
+    return 0;
 }
+#endif
 #endif

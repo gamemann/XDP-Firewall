@@ -30,8 +30,11 @@ const struct option opts[] =
     { "max-len", required_argument, NULL, 7 },
     { "tos", required_argument, NULL, 8 },
 
-    { "pps", required_argument, NULL, 9 },
-    { "bps", required_argument, NULL, 10 },
+    { "ip-pps", required_argument, NULL, 9 },
+    { "ip-bps", required_argument, NULL, 10 },
+
+    { "ip-pps", required_argument, NULL, 32 },
+    { "ip-bps", required_argument, NULL, 33 },
 
     { "tcp", required_argument, NULL, 11 },
     { "tsport", required_argument, NULL, 12 },
@@ -170,12 +173,22 @@ void parse_cli(cli_t* cli, int argc, char* argv[])
                 break;
 
             case 9:
-                cli->pps = strtoll(optarg, NULL, 10);
+                cli->ip_pps = strtoll(optarg, NULL, 10);
 
                 break;
 
             case 10:
-                cli->bps = strtoll(optarg, NULL, 10);
+                cli->ip_bps = strtoll(optarg, NULL, 10);
+
+                break;
+
+            case 32:
+                cli->flow_pps = strtoll(optarg, NULL, 10);
+
+                break;
+
+            case 33:
+                cli->flow_bps = strtoll(optarg, NULL, 10);
 
                 break;
 

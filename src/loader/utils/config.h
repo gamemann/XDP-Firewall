@@ -72,8 +72,11 @@ struct filter_rule_cfg
     int action;
     int block_time;
 
-    s64 pps;
-    s64 bps;
+    s64 ip_pps;
+    s64 ip_bps;
+
+    s64 flow_pps;
+    s64 flow_bps;
 
     filter_rule_ip_opts_t ip;
     

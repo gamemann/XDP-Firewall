@@ -404,20 +404,36 @@ int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
                 filter->block_time = block_time;
             }
 
-            // PPS (not required).
-            s64 pps;
+            // IP PPS (not required).
+            s64 ip_pps;
 
-            if (config_setting_lookup_int64(filter_cfg, "pps", &pps) == CONFIG_TRUE)
+            if (config_setting_lookup_int64(filter_cfg, "ip_pps", &ip_pps) == CONFIG_TRUE)
             {
-                filter->pps = pps;
+                filter->ip_pps = ip_pps;
             }
 
-            // BPS (not required).
-            s64 bps;
+            // IP BPS (not required).
+            s64 ip_bps;
 
-            if (config_setting_lookup_int64(filter_cfg, "bps", &bps) == CONFIG_TRUE)
+            if (config_setting_lookup_int64(filter_cfg, "ip_bps", &ip_bps) == CONFIG_TRUE)
             {
-                filter->bps = bps;
+                filter->ip_bps = ip_bps;
+            }
+
+            // Flow PPS (not required).
+            s64 flow_pps;
+
+            if (config_setting_lookup_int64(filter_cfg, "flow_pps", &flow_pps) == CONFIG_TRUE)
+            {
+                filter->flow_pps = flow_pps;
+            }
+
+            // Flow BPS (not required).
+            s64 flow_bps;
+
+            if (config_setting_lookup_int64(filter_cfg, "flow_bps", &flow_bps) == CONFIG_TRUE)
+            {
+                filter->flow_bps = flow_bps;
             }
 
             /* IP Options */
@@ -874,18 +890,32 @@ int save_cfg(config__t* cfg, const char* file_path)
                     config_setting_set_int(block_time, filter->block_time);
                 }
 
-                // Add PPS.
-                if (filter->pps > -1)
+                // Add IP PPS.
+                if (filter->ip_pps > -1)
                 {
-                    config_setting_t* pps = config_setting_add(filter_cfg, "pps", CONFIG_TYPE_INT64);
-                    config_setting_set_int64(pps, filter->pps);
+                    config_setting_t* pps = config_setting_add(filter_cfg, "ip_pps", CONFIG_TYPE_INT64);
+                    config_setting_set_int64(pps, filter->ip_pps);
                 }
 
-                // Add BPS.
-                if (filter->bps > -1)
+                // Add IP BPS.
+                if (filter->ip_bps > -1)
                 {
-                    config_setting_t* bps = config_setting_add(filter_cfg, "bps", CONFIG_TYPE_INT64);
-                    config_setting_set_int64(bps, filter->bps);
+                    config_setting_t* bps = config_setting_add(filter_cfg, "ip_bps", CONFIG_TYPE_INT64);
+                    config_setting_set_int64(bps, filter->ip_bps);
+                }
+
+                // Add flow PPS.
+                if (filter->flow_pps > -1)
+                {
+                    config_setting_t* pps = config_setting_add(filter_cfg, "flow_pps", CONFIG_TYPE_INT64);
+                    config_setting_set_int64(pps, filter->flow_pps);
+                }
+
+                // Add flow BPS.
+                if (filter->flow_bps > -1)
+                {
+                    config_setting_t* bps = config_setting_add(filter_cfg, "flow_bps", CONFIG_TYPE_INT64);
+                    config_setting_set_int64(bps, filter->flow_bps);
                 }
 
                 // Add source IPv4.
@@ -1130,8 +1160,10 @@ void set_filter_defaults(filter_rule_cfg_t* filter)
     filter->action = 1;
     filter->block_time = 1;
 
-    filter->pps = -1;
-    filter->bps = -1;
+    filter->ip_pps = -1;
+    filter->ip_bps = -1;
+    filter->flow_pps = -1;
+    filter->flow_bps = -1;
 
     if (filter->ip.src_ip)
     {
@@ -1299,8 +1331,11 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
     printf("\t\tAction => %d (0 = Block, 1 = Allow).\n", filter->action);
     printf("\t\t\tBlock Time => %d\n\n", filter->block_time);
 
-    printf("\t\t\tPPS => %lld\n", filter->pps);
-    printf("\t\t\tBPS => %lld\n\n", filter->bps);
+    printf("\t\t\tIP PPS => %lld\n", filter->ip_pps);
+    printf("\t\t\tIP BPS => %lld\n", filter->ip_bps);
+
+    printf("\t\t\tFlow PPS => %lld\n", filter->flow_pps);
+    printf("\t\t\tFlow BPS => %lld\n", filter->flow_bps);
 
     // IP Options.
     printf("\t\tIP Options\n");

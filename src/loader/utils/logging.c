@@ -163,7 +163,7 @@ int hdl_filters_rb_event(void* ctx, void* data, size_t sz)
 
     const char* protocol_str = get_protocol_str_by_id(e->protocol);
 
-    log_msg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (PPS => %llu, BPS => %llu, Filter Block Time => %llu, length => %d)...", e->filter_id + 1, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->pps, e->bps, filter->block_time, e->length);
+    log_msg(cfg, 0, 0, "[FILTER %d] %s %s packet '%s:%d' => '%s:%d' (IP PPS => %llu, IP BPS => %llu, Flow PPS => %llu, Flow BPS => %llu Filter Block Time => %llu, length => %d)...", e->filter_id + 1, action, protocol_str, src_ip_str, htons(e->src_port), dst_ip_str, htons(e->dst_port), e->ip_pps, e->ip_bps, e->flow_pps, e->flow_bps, filter->block_time, e->length);
 
     return 0;
 }
