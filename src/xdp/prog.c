@@ -285,18 +285,41 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
     }
 
+#ifdef ENABLE_FILTERS
     // Update client stats (PPS/BPS).
-    u64 pps = 0;
-    u64 bps = 0;
-    
-    if (iph6)
+#ifdef ENABLE_RL_IP
+    u64 ip_pps = 0;
+    u64 ip_bps = 0;
+#endif
+
+#ifdef ENABLE_RL_FLOW
+    u64 flow_pps = 0;
+    u64 flow_bps = 0;
+#endif
+
+#if defined(ENABLE_RL_IP) || defined(ENABLE_RL_FLOW)
+    if (iph)
     {
-        update_ip6_stats(&pps, &bps, &src_ip6, src_port, protocol, pkt_len, now);
+#ifdef ENABLE_RL_IP
+        update_ip_stats(&ip_pps, &ip_bps, iph->saddr, pkt_len, now);
+#endif
+
+#ifdef ENABLE_RL_FLOW
+        update_flow_stats(&flow_pps, &flow_bps, iph->saddr, src_port, protocol, pkt_len, now);
+#endif
     }
-    else if (iph)
+    else if (iph6)
     {
-        update_ip_stats(&pps, &bps, iph->saddr, src_port, protocol, pkt_len, now);
+#ifdef ENABLE_RL_IP
+        update_ip6_stats(&ip_pps, &ip_bps, &src_ip6, pkt_len, now);
+#endif
+
+#ifdef ENABLE_RL_FLOW
+        update_flow6_stats(&flow_pps, &flow_bps, &src_ip6, src_port, protocol, pkt_len, now);
+#endif
     }
+#endif
+#endif
 
     int action = 0;
     u64 block_time = 1;
@@ -311,6 +334,32 @@ int xdp_prog_main(struct xdp_md *ctx)
         {
             break;
         }
+
+#ifdef ENABLE_RL_IP
+        // Check source IP rate limits.
+        if (filter->do_ip_pps && ip_pps < filter->ip_pps)
+        {
+            continue;
+        }
+
+        if (filter->do_ip_bps && ip_bps < filter->ip_bps)
+        {
+            continue;
+        }
+#endif
+
+#ifdef ENABLE_RL_FLOW
+        // Check source flow rate limits.
+        if (filter->do_flow_pps && flow_pps < filter->flow_pps)
+        {
+            continue;
+        }
+
+        if (filter->do_flow_bps && flow_bps < filter->flow_bps)
+        {
+            continue;
+        }
+#endif
 
         // Do specific IPv6.
         if (iph6)
@@ -426,18 +475,6 @@ int xdp_prog_main(struct xdp_md *ctx)
             }
         }
 
-        // PPS.
-        if (filter->do_pps && pps < filter->pps)
-        {
-            continue;
-        }
-
-        // BPS.
-        if (filter->do_bps && bps < filter->bps)
-        {
-            continue;
-        }
-        
         // Do TCP options.
         if (filter->tcp.enabled)
         {
@@ -584,7 +621,19 @@ int xdp_prog_main(struct xdp_md *ctx)
 #ifdef ENABLE_FILTER_LOGGING
         if (filter->log > 0)
         {
-            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, pps, bps, pkt_len, i);
+#if defined(ENABLE_RL_IP) || defined(ENABLE_RL_FLOW)
+#if defined(ENABLE_RL_IP) && defined(ENABLE_RL_FLOW)
+            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, ip_pps, ip_bps, flow_pps, flow_bps, pkt_len, i);
+#else
+#ifdef ENABLE_RL_IP
+            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, ip_pps, ip_bps, 0, 0, pkt_len, i);
+#else
+            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, 0, 0, flow_pps, flow_bps, pkt_len, i);
+#endif
+#endif
+#else
+            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, 0, 0, 0, 0, pkt_len, i);
+#endif
         }
 #endif
         

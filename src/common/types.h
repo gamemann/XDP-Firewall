@@ -108,11 +108,21 @@ struct filter
     u8 action;
     u16 block_time;
 
-    unsigned int do_pps : 1;
-    u64 pps;
+#ifdef ENABLE_RL_IP
+    unsigned int do_ip_pps : 1;
+    u64 ip_pps;
 
-    unsigned int do_bps : 1;
-    u64 bps;
+    unsigned int do_ip_bps : 1;
+    u64 ip_bps;
+#endif
+
+#ifdef ENABLE_RL_FLOW
+    unsigned int do_flow_pps : 1;
+    u64 flow_pps;
+
+    unsigned int do_flow_bps : 1;
+    u64 flow_bps;
+#endif
     
     filter_ip_t ip;
 
@@ -128,12 +138,12 @@ struct stats
     u64 passed;
 } typedef stats_t;
 
-struct ip_stats
+struct cl_stats
 {
     u64 pps;
     u64 bps;
     u64 next_update;
-} typedef ip_stats_t ;
+} typedef cl_stats_t;
 
 struct flow
 {
@@ -168,8 +178,11 @@ struct filter_log_event
 
     u8 protocol;
 
-    u64 pps;
-    u64 bps;
+    u64 ip_pps;
+    u64 ip_bps;
+
+    u64 flow_pps;
+    u64 flow_bps;
 } typedef filter_log_event_t;
 
 struct lpm_trie_key

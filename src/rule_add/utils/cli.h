@@ -36,8 +36,11 @@ struct cli
     char* src_ip6;
     char* dst_ip6;
 
-    s64 pps;
-    s64 bps;
+    s64 ip_pps;
+    s64 ip_bps;
+
+    s64 flow_pps;
+    s64 flow_bps;
 
     int min_ttl;
     int max_ttl;
