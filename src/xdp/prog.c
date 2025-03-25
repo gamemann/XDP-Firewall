@@ -90,8 +90,8 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 #endif
     
-    // We only want to process TCP, UDP, and ICMP packets.
-    if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
+    // We only want to process TCP, UDP, and ICMP protocols.
+    if ((iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP) || (iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP))
     {
         inc_pkt_stats(stats, STATS_TYPE_PASSED);
 
@@ -162,6 +162,7 @@ int xdp_prog_main(struct xdp_md *ctx)
     struct tcphdr *tcph = NULL;
     struct udphdr *udph = NULL;
     struct icmphdr *icmph = NULL;
+
     struct icmp6hdr *icmp6h = NULL;
 
     u16 src_port = 0;
