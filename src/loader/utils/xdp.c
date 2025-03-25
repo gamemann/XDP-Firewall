@@ -455,8 +455,8 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.udp.do_sport_min = 1;
         filter.udp.do_sport_max = 1;
 
-        filter.udp.sport_min = htons(udp_src_port_range.min);
-        filter.udp.sport_max = htons(udp_src_port_range.max);
+        filter.udp.sport_min = udp_src_port_range.min;
+        filter.udp.sport_max = udp_src_port_range.max;
     }
 
     port_range_t udp_dst_port_range = parse_port_range(filter_cfg->udp.dport);
@@ -466,8 +466,8 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.udp.do_dport_min = 1;
         filter.udp.do_dport_max = 1;
 
-        filter.udp.dport_min = htons(udp_dst_port_range.min);
-        filter.udp.dport_max = htons(udp_dst_port_range.max);
+        filter.udp.dport_min = udp_dst_port_range.min;
+        filter.udp.dport_max = udp_dst_port_range.max;
     }
 
     if (filter_cfg->icmp.enabled > -1)
