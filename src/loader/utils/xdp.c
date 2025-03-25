@@ -304,7 +304,7 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.ip.dst_ip = ip_range.ip;
         filter.ip.dst_cidr = ip_range.cidr;
     }
-    
+
 #ifdef ENABLE_IPV6
     if (filter_cfg->ip.src_ip6)
     {
@@ -372,8 +372,8 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.tcp.do_sport_min = 1;
         filter.tcp.do_sport_max = 1;
 
-        filter.tcp.sport_min = htons(tcp_src_port_range.min);
-        filter.tcp.sport_max = htons(tcp_src_port_range.max);
+        filter.tcp.sport_min = tcp_src_port_range.min;
+        filter.tcp.sport_max = tcp_src_port_range.max;
     }
 
     port_range_t tcp_dst_port_range = parse_port_range(filter_cfg->tcp.dport);
@@ -383,8 +383,8 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.tcp.do_dport_min = 1;
         filter.tcp.do_dport_max = 1;
 
-        filter.tcp.dport_min = htons(tcp_dst_port_range.min);
-        filter.tcp.dport_max = htons(tcp_dst_port_range.max);
+        filter.tcp.dport_min = tcp_dst_port_range.min;
+        filter.tcp.dport_max = tcp_dst_port_range.max;
     }
 
     if (filter_cfg->tcp.urg > -1)
