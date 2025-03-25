@@ -36,11 +36,14 @@ static __always_inline int log_filter_msg(struct iphdr* iph, struct ipv6hdr* iph
         {
             e->src_ip = iph->saddr;
             e->dst_ip = iph->daddr;
-        } else if (iph6)
+        }
+#ifdef ENABLE_IPV6
+        else if (iph6)
         {
             memcpy(&e->src_ip6, iph6->saddr.in6_u.u6_addr32, 4);
             memcpy(&e->dst_ip6, iph6->daddr.in6_u.u6_addr32, 4);
         }
+#endif
 
         e->src_port = src_port;
         e->dst_port = dst_port;

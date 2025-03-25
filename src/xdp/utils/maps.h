@@ -21,6 +21,7 @@ struct
     __type(value, u64);
 } map_block SEC(".maps");
 
+#ifdef ENABLE_IPV6
 struct 
 {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
@@ -28,6 +29,7 @@ struct
     __type(key, u128);
     __type(value, u64);
 } map_block6 SEC(".maps");
+#endif
 
 #ifdef ENABLE_IP_RANGE_DROP
 struct
@@ -50,6 +52,7 @@ struct
     __type(value, cl_stats_t);
 } map_ip_stats SEC(".maps");
 
+#ifdef ENABLE_IPV6
 struct 
 {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
@@ -57,6 +60,7 @@ struct
     __type(key, u128);
     __type(value, cl_stats_t);
 } map_ip6_stats SEC(".maps");
+#endif
 #endif
 
 #ifdef ENABLE_RL_FLOW
@@ -68,6 +72,7 @@ struct
     __type(value, cl_stats_t);
 } map_flow_stats SEC(".maps");
 
+#ifdef ENABLE_IPV6
 struct 
 {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
@@ -75,6 +80,7 @@ struct
     __type(key, flow6_t);
     __type(value, cl_stats_t);
 } map_flow6_stats SEC(".maps");
+#endif
 #endif
 
 struct 

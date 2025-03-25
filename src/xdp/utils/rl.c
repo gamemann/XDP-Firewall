@@ -55,6 +55,7 @@ static __always_inline int update_ip_stats(u64 *pps, u64 *bps, u32 ip, u16 pkt_l
     return 0;
 }
 
+#ifdef ENABLE_IPV6
 /**
  * Updates source IPv6 address stats.
  * 
@@ -106,6 +107,7 @@ static __always_inline int update_ip6_stats(u64 *pps, u64 *bps, u128 *ip, u16 pk
 
     return 0;
 }
+#endif
 #endif
 
 #ifdef ENABLE_RL_FLOW
@@ -168,6 +170,7 @@ static __always_inline int update_flow_stats(u64 *pps, u64 *bps, u32 ip, u16 por
     return 0;
 }
 
+#ifdef ENABLE_IPV6
 /**
  * Updates IPv6 flow stats.
  * 
@@ -226,5 +229,6 @@ static __always_inline int update_flow6_stats(u64 *pps, u64 *bps, u128 *ip, u16 
 
     return 0;
 }
+#endif
 #endif
 #endif

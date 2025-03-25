@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
         {
             log_msg(&cfg, 3, 0, "BPF map 'map_block' pinned to '%s/map_block'.", XDP_MAP_PIN_DIR);
         }
-
+#ifdef ENABLE_IPV6
         if ((ret = pin_bpf_map(obj, XDP_MAP_PIN_DIR, "map_block6")) != 0)
         {
             log_msg(&cfg, 1, 0, "[WARNING] Failed to pin 'map_block6' to file system (%d)...", ret);
@@ -330,6 +330,7 @@ int main(int argc, char *argv[])
         {
             log_msg(&cfg, 3, 0, "BPF map 'map_block6' pinned to '%s/map_block6'.", XDP_MAP_PIN_DIR);
         }
+#endif
 
 #ifdef ENABLE_IP_RANGE_DROP
         // Pin the IPv4 range drop map.

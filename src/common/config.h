@@ -50,3 +50,7 @@
 
 // Maximum entries in block map.
 #define MAX_BLOCK 100000
+
+// Enables IPv6.
+// If you're not using IPv6, this will speed up performance of the XDP program.
+#define ENABLE_IPV6

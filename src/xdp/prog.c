@@ -46,7 +46,11 @@ int xdp_prog_main(struct xdp_md *ctx)
     }
 
     // Check Ethernet protocol.
+#ifdef ENABLE_IPV6
     if (unlikely(eth->h_proto != htons(ETH_P_IP) && eth->h_proto != htons(ETH_P_IPV6)))
+#else
+    if (unlikely(eth->h_proto != htons(ETH_P_IP)))
+#endif
     {
         inc_pkt_stats(stats, STATS_TYPE_PASSED);
         
@@ -59,7 +63,19 @@ int xdp_prog_main(struct xdp_md *ctx)
     u128 src_ip6 = 0;
 
     // Set IPv4 and IPv6 common variables.
-    if (eth->h_proto == htons(ETH_P_IPV6))
+    if (eth->h_proto == htons(ETH_P_IP))
+    {
+        iph = data + sizeof(struct ethhdr);
+
+        if (unlikely(iph + 1 > (struct iphdr *)data_end))
+        {
+            inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
+            return XDP_DROP;
+        }
+    }
+#ifdef ENABLE_IPV6
+    else
     {
         iph6 = data + sizeof(struct ethhdr);
 
@@ -72,17 +88,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
         memcpy(&src_ip6, iph6->saddr.in6_u.u6_addr32, sizeof(src_ip6));
     }
-    else
-    {
-        iph = data + sizeof(struct ethhdr);
-
-        if (unlikely(iph + 1 > (struct iphdr *)data_end))
-        {
-            inc_pkt_stats(stats, STATS_TYPE_DROPPED);
-
-            return XDP_DROP;
-        }
-    }
+#endif
     
     // We only want to process TCP, UDP, and ICMP packets.
     if ((iph6 && iph6->nexthdr != IPPROTO_UDP && iph6->nexthdr != IPPROTO_TCP && iph6->nexthdr != IPPROTO_ICMP) && (iph && iph->protocol != IPPROTO_UDP && iph->protocol != IPPROTO_TCP && iph->protocol != IPPROTO_ICMP))
@@ -98,28 +104,32 @@ int xdp_prog_main(struct xdp_md *ctx)
     // Check block map.
     u64 *blocked = NULL;
 
-    if (iph6)
-    {
-        blocked = bpf_map_lookup_elem(&map_block6, &src_ip6);
-    }
-    else if (iph)
+    if (iph)
     {
         blocked = bpf_map_lookup_elem(&map_block, &iph->saddr);
     }
+#ifdef ENABLE_IPV6
+    else
+    {
+        blocked = bpf_map_lookup_elem(&map_block6, &src_ip6);
+    }
+#endif
     
     if (blocked != NULL)
     {
         if (*blocked > 0 && now > *blocked)
         {
             // Remove element from map.
-            if (iph6)
-            {
-                bpf_map_delete_elem(&map_block6, &src_ip6);
-            }
-            else if (iph)
+            if (iph)
             {
                 bpf_map_delete_elem(&map_block, &iph->saddr);
             }
+#ifdef ENABLE_IPV6
+            else
+            {
+                bpf_map_delete_elem(&map_block6, &src_ip6);
+            }
+#endif
         }
         else
         {
@@ -162,68 +172,7 @@ int xdp_prog_main(struct xdp_md *ctx)
 
     u8 protocol = 0;
     
-    if (iph6)
-    {
-        protocol = iph6->nexthdr;
-
-        switch (iph6->nexthdr)
-        {
-            case IPPROTO_TCP:
-                // Scan TCP header.
-                tcph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
-
-                // Check TCP header.
-                if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
-                {
-                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
-
-                    return XDP_DROP;
-                }
-
-                src_port = tcph->source;
-
-#ifdef ENABLE_FILTER_LOGGING
-                dst_port = tcph->dest;
-#endif
-
-                break;
-
-            case IPPROTO_UDP:
-                // Scan UDP header.
-                udph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
-
-                // Check TCP header.
-                if (unlikely(udph + 1 > (struct udphdr *)data_end))
-                {
-                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
-
-                    return XDP_DROP;
-                }
-
-                src_port = udph->source;
-
-#ifdef ENABLE_FILTER_LOGGING
-                dst_port = udph->dest;
-#endif
-
-                break;
-
-            case IPPROTO_ICMPV6:
-                // Scan ICMPv6 header.
-                icmp6h = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
-
-                // Check ICMPv6 header.
-                if (unlikely(icmp6h + 1 > (struct icmp6hdr *)data_end))
-                {
-                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
-
-                    return XDP_DROP;
-                }
-
-                break;
-        }
-    }
-    else if (iph)
+    if (iph)
     {
         protocol = iph->protocol;
 
@@ -284,6 +233,69 @@ int xdp_prog_main(struct xdp_md *ctx)
                 break;
         }
     }
+#ifdef ENABLE_IPV6
+    else if (iph6)
+    {
+        protocol = iph6->nexthdr;
+
+        switch (iph6->nexthdr)
+        {
+            case IPPROTO_TCP:
+                // Scan TCP header.
+                tcph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
+
+                // Check TCP header.
+                if (unlikely(tcph + 1 > (struct tcphdr *)data_end))
+                {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
+                    return XDP_DROP;
+                }
+
+                src_port = tcph->source;
+
+#ifdef ENABLE_FILTER_LOGGING
+                dst_port = tcph->dest;
+#endif
+
+                break;
+
+            case IPPROTO_UDP:
+                // Scan UDP header.
+                udph = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
+
+                // Check TCP header.
+                if (unlikely(udph + 1 > (struct udphdr *)data_end))
+                {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
+                    return XDP_DROP;
+                }
+
+                src_port = udph->source;
+
+#ifdef ENABLE_FILTER_LOGGING
+                dst_port = udph->dest;
+#endif
+
+                break;
+
+            case IPPROTO_ICMPV6:
+                // Scan ICMPv6 header.
+                icmp6h = data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr);
+
+                // Check ICMPv6 header.
+                if (unlikely(icmp6h + 1 > (struct icmp6hdr *)data_end))
+                {
+                    inc_pkt_stats(stats, STATS_TYPE_DROPPED);
+
+                    return XDP_DROP;
+                }
+
+                break;
+        }
+    }
+#endif
 
 #ifdef ENABLE_FILTERS
     // Update client stats (PPS/BPS).
@@ -304,6 +316,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         update_flow_stats(&flow_pps, &flow_bps, iph->saddr, src_port, protocol, pkt_len, now);
 #endif
     }
+#ifdef ENABLE_IPV6
     else if (iph6)
     {
 #ifdef ENABLE_RL_IP
@@ -314,6 +327,7 @@ int xdp_prog_main(struct xdp_md *ctx)
         update_flow6_stats(&flow_pps, &flow_bps, &src_ip6, src_port, protocol, pkt_len, now);
 #endif
     }
+#endif
 #endif
 #endif
 
@@ -358,8 +372,76 @@ int xdp_prog_main(struct xdp_md *ctx)
         }
 #endif
 
-        // Do specific IPv6.
-        if (iph6)
+        // Match IP settings.
+        if (iph)
+        {
+            // Source address.
+            if (filter->ip.src_ip)
+            {
+                if (filter->ip.src_cidr == 32 && iph->saddr != filter->ip.src_ip)
+                {
+                    continue;
+                }
+
+                if (!is_ip_in_range(iph->saddr, filter->ip.src_ip, filter->ip.src_cidr))
+                {
+                    continue;
+                }
+            }
+
+            // Destination address.
+            if (filter->ip.dst_ip)
+            {
+                if (filter->ip.dst_cidr == 32 && iph->daddr != filter->ip.dst_ip)
+                {
+                    continue;
+                }
+                
+                if (!is_ip_in_range(iph->daddr, filter->ip.dst_ip, filter->ip.dst_cidr))
+                {
+                    continue;
+                }
+            }
+
+#if defined(ENABLE_IPV6) && defined(ALLOW_SINGLE_IP_V4_V6)
+            if ((filter->ip.src_ip6[0] != 0 || filter->ip.src_ip6[1] != 0 || filter->ip.src_ip6[2] != 0 || filter->ip.src_ip6[3] != 0) || (filter->ip.dst_ip6[0] != 0 || filter->ip.dst_ip6[1] != 0 || filter->ip.dst_ip6[2] != 0 || filter->ip.dst_ip6[3] != 0))
+            {
+                continue;
+            }
+#endif
+
+            // TOS.
+            if (filter->ip.do_tos && filter->ip.tos != iph->tos)
+            {
+                continue;
+            }
+
+            // Max TTL.
+            if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph->ttl)
+            {
+                continue;
+            }
+
+            // Min TTL.
+            if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph->ttl)
+            {
+                continue;
+            }
+
+            // Max packet length.
+            if (filter->ip.do_max_len && filter->ip.max_len < pkt_len)
+            {
+                continue;
+            }
+
+            // Min packet length.
+            if (filter->ip.do_min_len && filter->ip.min_len > pkt_len)
+            {
+                continue;
+            }
+        }
+#ifdef ENABLE_IPV6
+        else if (iph6)
         {
             // Source address.
             if (filter->ip.src_ip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->ip.src_ip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->ip.src_ip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->ip.src_ip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->ip.src_ip6[3]))
@@ -404,75 +486,9 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
         }
-        else if (iph)
-        {
-            // Source address.
-            if (filter->ip.src_ip)
-            {
-                if (filter->ip.src_cidr == 32 && iph->saddr != filter->ip.src_ip)
-                {
-                    continue;
-                }
-
-                if (!is_ip_in_range(iph->saddr, filter->ip.src_ip, filter->ip.src_cidr))
-                {
-                    continue;
-                }
-            }
-
-            // Destination address.
-            if (filter->ip.dst_ip)
-            {
-                if (filter->ip.dst_cidr == 32 && iph->daddr != filter->ip.dst_ip)
-                {
-                    continue;
-                }
-                
-                if (!is_ip_in_range(iph->daddr, filter->ip.dst_ip, filter->ip.dst_cidr))
-                {
-                    continue;
-                }
-            }
-
-#ifdef ALLOW_SINGLE_IP_V4_V6
-            if ((filter->ip.src_ip6[0] != 0 || filter->ip.src_ip6[1] != 0 || filter->ip.src_ip6[2] != 0 || filter->ip.src_ip6[3] != 0) || (filter->ip.dst_ip6[0] != 0 || filter->ip.dst_ip6[1] != 0 || filter->ip.dst_ip6[2] != 0 || filter->ip.dst_ip6[3] != 0))
-            {
-                continue;
-            }
 #endif
 
-            // TOS.
-            if (filter->ip.do_tos && filter->ip.tos != iph->tos)
-            {
-                continue;
-            }
-
-            // Max TTL.
-            if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph->ttl)
-            {
-                continue;
-            }
-
-            // Min TTL.
-            if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph->ttl)
-            {
-                continue;
-            }
-
-            // Max packet length.
-            if (filter->ip.do_max_len && filter->ip.max_len < pkt_len)
-            {
-                continue;
-            }
-
-            // Min packet length.
-            if (filter->ip.do_min_len && filter->ip.min_len > pkt_len)
-            {
-                continue;
-            }
-        }
-
-        // Do TCP options.
+        // Check TCP matches.
         if (filter->tcp.enabled)
         {
             if (!tcph)
@@ -550,6 +566,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                 continue;
             }
         }
+        // Check UDP matches.
         else if (filter->udp.enabled)
         {
             if (!udph)
@@ -595,6 +612,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                     continue;
                 }  
             }
+#ifdef ENABLE_IPV6
             else if (icmp6h)
             {
                 // Code.
@@ -609,10 +627,7 @@ int xdp_prog_main(struct xdp_md *ctx)
                     continue;
                 }
             }
-            else
-            {
-                continue;
-            }
+#endif
         }
 
 #ifdef ENABLE_FILTER_LOGGING
@@ -643,14 +658,16 @@ matched:
         {
             u64 new_time = now + (block_time * NANO_TO_SEC);
             
-            if (iph6)
-            {
-                bpf_map_update_elem(&map_block6, &src_ip6, &new_time, BPF_ANY);
-            }
-            else if (iph)
+            if (iph)
             {
                 bpf_map_update_elem(&map_block, &iph->saddr, &new_time, BPF_ANY);
             }
+#ifdef ENABLE_IPV6
+            else
+            {
+                bpf_map_update_elem(&map_block6, &src_ip6, &new_time, BPF_ANY);
+            }
+#endif      
         }
 
         inc_pkt_stats(stats, STATS_TYPE_DROPPED);

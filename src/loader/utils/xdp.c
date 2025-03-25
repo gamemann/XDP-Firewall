@@ -304,7 +304,8 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
         filter.ip.dst_ip = ip_range.ip;
         filter.ip.dst_cidr = ip_range.cidr;
     }
-
+    
+#ifdef ENABLE_IPV6
     if (filter_cfg->ip.src_ip6)
     {
         struct in6_addr in;
@@ -322,6 +323,7 @@ int update_filter(int map_filters, filter_rule_cfg_t* filter_cfg, int idx)
 
         memcpy(filter.ip.dst_ip6, in.__in6_u.__u6_addr32, 4);
     }
+#endif
 
     if (filter_cfg->ip.min_ttl > -1)
     {

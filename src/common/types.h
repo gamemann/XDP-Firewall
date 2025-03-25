@@ -10,8 +10,10 @@ struct filter_ip
     u32 dst_ip;
     u8 dst_cidr;
 
+#ifdef ENABLE_IPV6
     u32 src_ip6[4];
     u32 dst_ip6[4];
+#endif
 
     unsigned int do_min_ttl : 1;
     u8 min_ttl;
