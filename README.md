@@ -378,6 +378,11 @@ Unfortunately, we can't really eliminate the `for` loop with the current amount 
 
 The firewall is still decent at filtering non-spoofed attacks, especially when a block time is specified so that malicious IPs are filtered at the beginning of the program for some time.
 
+### Rate Limiting
+This firewall supports both source **flow-based** (`flow_pps` and `flow_bps` settings) and **IP-based** (`ip_pps` and `ip_bps` settings) rate limiting. However, source IP-based rate limiting is disabled by default and can be enabled inside of the [`config.h`](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L40) file.
+
+The reason source IP-based rate limiting is disabled by default is because both methods require seperate calculations which isn't ideal if both methods aren't used inside of filter rules. I've found most users prefer flow-based rate limiting which is why I decided to only enable that by default.
+
 ### Filter Logging
 This tool uses `bpf_ringbuf_reserve()` and `bpf_ringbuf_submit()` for filter match logging. At this time, there is no rate limit for the amount of log messages that may be sent. Therefore, if you're encountering a spoofed attack that is matching a filter rule with logging enabled, it will cause additional processing and disk load.
 

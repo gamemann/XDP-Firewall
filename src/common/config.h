@@ -37,7 +37,7 @@
 // NOTE - If you're receiving a high volume of spoofed packets, it is recommended you disable rate limiting below.
 // This is because the PPS/BPS counters are updated for every packet and with a spoofed attack, the LRU map will recycle a lot of entries resulting in additional load on the CPU.
 // Enable source IP rate limiting.
-#define ENABLE_RL_IP
+//#define ENABLE_RL_IP
 
 // Enable source flow rate limiting.
 #define ENABLE_RL_FLOW
