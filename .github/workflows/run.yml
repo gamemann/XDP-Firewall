@@ -1,19 +1,21 @@
 name: Run
 
 on:
-  - push
-  - workflow_call
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
 
 jobs:
-  reuse_build:
-    uses: ./.github/workflows/build.yml@${{ github.ref }}
   run:
-    needs: reuse_build
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
     - name: Download artifact from Build workflow
       uses: actions/download-artifact@v4
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        run-id: ${{ github.event.workflow_run.id }}
         name: build-output
     - name: Run apt update
       run: sudo apt update
