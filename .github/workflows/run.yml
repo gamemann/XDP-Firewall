@@ -6,7 +6,7 @@ on:
 
 jobs:
   reuse_build:
-    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
+    uses: ./.github/workflows/build.yml@${{ github.ref }}
   run:
     needs: reuse_build
     runs-on: ubuntu-latest
