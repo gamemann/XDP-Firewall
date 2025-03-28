@@ -27,5 +27,7 @@ jobs:
       run: ls -la
     - name: Add execute permissions to executable file
       run: sudo chmod +x ./xdpfw
-    - name: Run XDP FW with help menu
-      run: sudo ./xdpfw -h
+    - name: Create basic config file.
+      run: echo 'filters = ( { enabled = true; log = true; action = 0; tcp_enabled = true; tcp_dport = 22; } );' > ./basic.conf
+    - name: Run XDP FW for 10 seconds using basic config and default network interface.
+      run: sudo ./xdpfw -c ./basic.conf -t 10 -i $(ip route | awk '/default/ {print $5}')
