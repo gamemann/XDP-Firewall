@@ -1,8 +1,8 @@
 name: Build
 
 on:
-  - push
-  - workflow_call
+  push:
+  workflow_call:
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
     - name: Install project
       run: sudo make install
     - name: Store build artifacts
-      uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@v4
       with:
         name: build-output
         path: build/
