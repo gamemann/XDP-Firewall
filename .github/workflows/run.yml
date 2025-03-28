@@ -8,13 +8,13 @@ on:
 
 jobs:
   reuse_build:
-    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
+    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@${{ github.ref_name }}
   run:
     needs: reuse_build
     runs-on: ubuntu-latest
     steps:
     - name: Download artifact from Build workflow
-      uses: actions/download-artifact@master
+      uses: actions/download-artifact@v3
       with:
         name: build-output
     - name: Run apt update
