@@ -273,6 +273,17 @@ int parse_cfg(config__t *cfg, const char* data, config_overrides_t* overrides)
             }
         }
     }
+    else if (overrides && overrides->interface)
+    {
+        if (cfg->interfaces[0])
+        {
+            free(cfg->interfaces[0]);
+            cfg->interfaces[0] = NULL;
+        }
+
+        cfg->interfaces[0] = strdup(overrides->interface);
+        cfg->interfaces_cnt = 1;
+    }
 
     // Pin BPF maps.
     int pin_maps;
@@ -1433,7 +1444,7 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
 
     // ICMP Options.
     printf("\t\tICMP Options\n");
-    
+
     printf("\t\t\tICMP Enabled => %d\n", filter->icmp.enabled);
     printf("\t\t\tICMP Code => %d\n", filter->icmp.code);
     printf("\t\t\tICMP Type => %d\n", filter->icmp.type);
