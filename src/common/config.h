@@ -13,7 +13,7 @@
 
 // The maximum amount of filters allowed.
 // Decrease this value if you receive errors related to the BPF program being too large.
-#define MAX_FILTERS 60
+#define MAX_FILTERS 1000
 
 // Feel free to comment this out if you don't want the `blocked` entry on the stats map to be incremented every single time a packet is dropped from the source IP being on the blocked map.
 // Commenting this line out should increase performance when blocking malicious traffic.
@@ -54,3 +54,7 @@
 // Enables IPv6.
 // If you're not using IPv6, this will speed up performance of the XDP program.
 #define ENABLE_IPV6
+
+// If enabled, uses a newer bpf_loop() function when choosing a source port for a new connection.
+// This allows for a much higher source port range. However, it requires a more recent kernel.
+#define USE_NEW_LOOP

@@ -229,7 +229,7 @@ You may additionally specified UDP header options for a filter rule which start 
 #### Notes
 * When a setting field inside of a filter rule is not set or if it's set to `-1` (or `NULL`), the default setting value will be used (see [`set_filter_defaults()`](https://github.com/gamemann/XDP-Firewall/blob/master/src/loader/utils/config.c#L1047)).
 * When a filter rule's setting is set, but doesn't match the packet, the program moves onto the next filter rule. Therefore, all of the filter rule's settings that are set must match the packet in order to perform the action specified. Think of it as something like `if src_ip == "10.50.0.3" and udp_dport == 27015: action`. 
-* As of right now, you can specify up to **60 total** dynamic filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall. If you receive a BPF program too large error, this is due to BPF's limitations with complexity and jumps. You may try increasing BPF limitations manually or with a patch. If you want to do this, please read [this](https://github.com/gamemann/XDP-Proxy/tree/master/patches) from my XDP Proxy project.
+* As of right now, you can specify up to **1000 total** dynamic filter rules. You may increase this limit by raising the `MAX_FILTERS` constant in the `src/common/config.h` [file](https://github.com/gamemann/XDP-Firewall/blob/master/src/common/config.h#L5) and then recompile the firewall.
 * At this time, each port value supports a single port range per filter rule. This is because adding support for multiple ports/port ranges would require an additional `for` loop which would make the BPF program larger and result in slower performance, etc.
 
 ### Runtime Example
@@ -357,7 +357,7 @@ Offloading your XDP/BPF program to your system's NIC allows for the fastest pack
 As of this time, I am not aware of any NIC manufacturers that will be able to offload this firewall completely to the NIC due to its BPF complexity. To be honest, in the current networking age, I believe it's best to leave offloaded programs to BPF map lookups and minimum packet inspection. For example, a BPF blacklist map lookup for malicious source IPs or ports. However, XDP is still very new and I would imagine we're going to see these limitations loosened or lifted in the next upcoming years. This is why I added support for offload mode on this firewall. 
 
 ### BPF Loop Support + Performance Notes
-The dynamic filters feature requires loop support with BPF. Older kernels will not support this feature and output an error such as the following.
+The dynamic filter rules feature requires general loop support along with support for the [`bpf_loop()`](https://docs.ebpf.io/linux/helper-function/bpf_loop/) function. Older kernels will not support general loops and output an error such as the following.
 
 ```vim
 libbpf: load bpf program failed: Invalid argument
@@ -367,10 +367,12 @@ back-edge from insn 113 to 100
 
 libbpf: -- END LOG --
 libbpf: failed to load program 'xdp_prog'
-libbpf: failed to load object '/etc/xdpfw/xdpfw_kern.o'
+libbpf: failed to load object '/etc/xdpfwd/xdp_prog.o'
 ```
 
-It looks like BPF loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this program to run properly.
+It looks like general BPF loop [support](https://lwn.net/Articles/794934/) was added in kernel 5.3. Therefore, you'll need kernel 5.3 or above for this tool to run properly.
+
+With that said, the `bpf_loop()` function was added in kernel `5.17`, but *may* still require `6.4` or above due to support for open coded iterators. If you do not wish to upgrade your kernel to 6.4 or above, you will need to disable/comment out the `USE_NEW_LOOP` constant in the [`config.h`](./src/common/config.h) file. Please note if you do this, you will be **extremely limited** in how many filter rules you can create at once (I recommend up to 60). Therefore, it is recommended you use `bpf_loop()` since you will be able to create many more filter rules (over 1000)!
 
 #### Performance With Loops & Dynamic Filters
 Due to the usage of a [`for` loop](https://github.com/gamemann/XDP-Firewall/blob/master/src/xdp/prog.c#L339) inside the XDP program that handles looping through all filtering rules inside of a BPF array map, performance will be impacted depending on how many filtering rules you have configured (ultimately, the firewall **doesn't scale** that well). This firewall was designed to be as flexible as possible regarding configuration and is most effective when configured to add malicious source IPs to the block map for a certain amount of time which are then dropped at the beginning of the XDP program for the best performance.
