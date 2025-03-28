@@ -1,22 +1,17 @@
 name: Run
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
 
 jobs:
-  reuse_build:
-    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
   run:
-    needs: reuse_build
     runs-on: ubuntu-latest
+
     steps:
     - name: Download artifact from Build workflow
-      uses: actions/download-artifact@master
-      with:
-        name: build-output
+      uses: actions/download-artifact@v4
     - name: Run apt update
       run: sudo apt update
     - name: Install LibConfig
@@ -25,7 +20,15 @@ jobs:
       run: sudo apt install libelf-dev
     - name: List files
       run: ls -la
+    - name: Create /etc/xdpfw directory.
+      run: sudo mkdir -p /etc/xdpfw
+    - name: Copy XDP program to /etc/xdpfw.
+      run: sudo cp -f ./build-output/xdp/xdp_prog.o /etc/xdpfw
     - name: Add execute permissions to executable file
-      run: sudo chmod +x ./xdpfw
-    - name: Run XDP FW with help menu
-      run: sudo ./xdpfw -h
+      run: sudo chmod +x ./build-output/loader/xdpfw
+    - name: Create basic config file.
+      run: echo 'verbose = 5; filters = ( { enabled = true; log = true; action = 0; tcp_enabled = true; tcp_dport = 22; } );' > ./basic.conf
+    - name: Retrieve default network interface
+      run: echo "INTERFACE=$(ip route | awk '/default/ {print $5}')" >> $GITHUB_ENV
+    - name: Run XDP FW for 10 seconds using basic config and default network interface.
+      run: sudo ./build-output/loader/xdpfw -c ./basic.conf -t 10 -i ${{ env.INTERFACE }}
