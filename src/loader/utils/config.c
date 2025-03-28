@@ -1328,27 +1328,25 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
     printf("\t\tEnabled => %d\n", filter->enabled);
     printf("\t\tLog => %d\n\n", filter->log);
 
-    printf("\t\tAction => %d (0 = Block, 1 = Allow).\n", filter->action);
-    printf("\t\t\tBlock Time => %d\n\n", filter->block_time);
+    printf("\t\tAction => %d (0 = Block, 1 = Allow)\n", filter->action);
+    printf("\t\tBlock Time => %d\n\n", filter->block_time);
 
-    printf("\t\t\tIP PPS => %lld\n", filter->ip_pps);
-    printf("\t\t\tIP BPS => %lld\n", filter->ip_bps);
+    printf("\t\tIP PPS => %lld\n", filter->ip_pps);
+    printf("\t\tIP BPS => %lld\n", filter->ip_bps);
 
-    printf("\t\t\tFlow PPS => %lld\n", filter->flow_pps);
-    printf("\t\t\tFlow BPS => %lld\n", filter->flow_bps);
+    printf("\t\tFlow PPS => %lld\n", filter->flow_pps);
+    printf("\t\tFlow BPS => %lld\n", filter->flow_bps);
+
+    printf("\t\tMin Packet Length => %d\n", filter->ip.min_len);
+    printf("\t\tMax Packet Length => %d\n\n", filter->ip.max_len);
 
     // IP Options.
-    printf("\t\tIP Options\n");
-
-    // IP addresses require additional code for string printing.
     const char* src_ip = "N/A";
 
     if (filter->ip.src_ip)
     {
         src_ip = filter->ip.src_ip;
     }
-
-    printf("\t\t\tSource IPv4 => %s\n", src_ip);
 
     const char* dst_ip = "N/A";
 
@@ -1357,16 +1355,12 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
         dst_ip = filter->ip.dst_ip;
     }
 
-    printf("\t\t\tDestination IPv4 => %s\n", dst_ip);
-
     const char* src_ip6 = "N/A";
 
     if (filter->ip.src_ip6)
     {
         src_ip6 = filter->ip.src_ip6;
     }
-
-    printf("\t\t\tSource IPv6 => %s\n", src_ip6);
 
     const char* dst_ip6 = "N/A";
 
@@ -1375,21 +1369,38 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
         dst_ip6 = filter->ip.dst_ip6;
     }
 
+    printf("\t\tIP Options\n");
+
+    printf("\t\t\tSource IPv4 => %s\n", src_ip);
+    printf("\t\t\tDestination IPv4 => %s\n", dst_ip);
+    printf("\t\t\tSource IPv6 => %s\n", src_ip6);
     printf("\t\t\tDestination IPv6 => %s\n", dst_ip6);
-    
+
     printf("\t\t\tMin TTL => %d\n", filter->ip.min_ttl);
     printf("\t\t\tMax TTL => %d\n", filter->ip.max_ttl);
-
-    printf("\t\t\tMin Length => %d\n", filter->ip.min_len);
-    printf("\t\t\tMax Length => %d\n", filter->ip.max_len);
 
     printf("\t\t\tTOS => %d\n\n", filter->ip.tos);
 
     // TCP Options.
+    const char* tcp_sport = "N/A";
+
+    if (filter->tcp.sport)
+    {
+        tcp_sport = filter->tcp.sport;
+    }
+
+    const char* tcp_dport = "N/A";
+
+    if (filter->tcp.dport)
+    {
+        tcp_dport = filter->tcp.dport;
+    }
+
     printf("\t\tTCP Options\n");
+
     printf("\t\t\tTCP Enabled => %d\n", filter->tcp.enabled);
-    printf("\t\t\tTCP Source Port => %s\n", filter->tcp.sport);
-    printf("\t\t\tTCP Destination Port => %s\n", filter->tcp.dport);
+    printf("\t\t\tTCP Source Port => %s\n", tcp_sport);
+    printf("\t\t\tTCP Destination Port => %s\n", tcp_dport);
     printf("\t\t\tTCP URG Flag => %d\n", filter->tcp.urg);
     printf("\t\t\tTCP ACK Flag => %d\n", filter->tcp.ack);
     printf("\t\t\tTCP RST Flag => %d\n", filter->tcp.rst);
@@ -1400,13 +1411,29 @@ void print_filter(filter_rule_cfg_t* filter, int idx)
     printf("\t\t\tTCP CWR Flag => %d\n\n", filter->tcp.cwr);
 
     // UDP Options.
+    const char* udp_sport = "N/A";
+
+    if (filter->udp.sport)
+    {
+        udp_sport = filter->udp.sport;
+    }
+
+    const char* udp_dport = "N/A";
+
+    if (filter->udp.dport)
+    {
+        udp_dport = filter->udp.dport;
+    }
+
     printf("\t\tUDP Options\n");
+
     printf("\t\t\tUDP Enabled => %d\n", filter->udp.enabled);
-    printf("\t\t\tUDP Source Port => %s\n", filter->udp.sport);
-    printf("\t\t\tUDP Destination Port => %s\n\n", filter->udp.dport);
+    printf("\t\t\tUDP Source Port => %s\n", udp_sport);
+    printf("\t\t\tUDP Destination Port => %s\n\n", udp_dport);
 
     // ICMP Options.
     printf("\t\tICMP Options\n");
+    
     printf("\t\t\tICMP Enabled => %d\n", filter->icmp.enabled);
     printf("\t\t\tICMP Code => %d\n", filter->icmp.code);
     printf("\t\t\tICMP Type => %d\n", filter->icmp.type);

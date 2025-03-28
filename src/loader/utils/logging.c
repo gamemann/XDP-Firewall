@@ -148,7 +148,8 @@ int hdl_filters_rb_event(void* ctx, void* data, size_t sz)
     {
         inet_ntop(AF_INET6, e->src_ip6, src_ip_str, sizeof(src_ip_str));
         inet_ntop(AF_INET6, e->dst_ip6, dst_ip_str, sizeof(dst_ip_str));
-    } else
+    }
+    else
     {
         inet_ntop(AF_INET, &e->src_ip, src_ip_str, sizeof(src_ip_str));
         inet_ntop(AF_INET, &e->dst_ip, dst_ip_str, sizeof(dst_ip_str));
