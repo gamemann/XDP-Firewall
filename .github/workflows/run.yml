@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Download artifact from Build workflow
       uses: actions/download-artifact@v4
+      with:
+        name: build-output
     - name: Run apt update
       run: sudo apt update
     - name: Install LibConfig
