@@ -28,7 +28,9 @@ struct rule_ctx
     u64 now;
     int pkt_len;
     u16 src_port;
+#ifdef ENABLE_FILTER_LOGGING
     u16 dst_port;
+#endif
     u8 protocol;
 
     struct iphdr* iph;

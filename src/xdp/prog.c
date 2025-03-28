@@ -341,7 +341,9 @@ int xdp_prog_main(struct xdp_md *ctx)
     rule.now = now;
     rule.pkt_len = pkt_len;
     rule.src_port = src_port;
+#ifdef ENABLE_FILTER_LOGGING
     rule.dst_port = dst_port;
+#endif
     rule.protocol = protocol;
 
     rule.iph = iph;
