@@ -26,9 +26,9 @@ jobs:
     - name: List files
       run: ls -la
     - name: Create /etc/xdpfw directory.
-      run: mkdir -p /etc/xdpfw
+      run: sudo mkdir -p /etc/xdpfw
     - name: Copy XDP program to /etc/xdpfw.
-      run: cp -f ./build-output/xdp/xdp_prog.o /etc/xdpfw
+      run: sudo cp -f ./build-output/xdp/xdp_prog.o /etc/xdpfw
     - name: Add execute permissions to executable file
       run: sudo chmod +x ./build-output/loader/xdpfw
     - name: Create basic config file.
