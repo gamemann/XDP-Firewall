@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
     - name: Download artifact from Build workflow
       uses: actions/download-artifact@v4
       with:
@@ -24,6 +27,14 @@ jobs:
       run: sudo apt install libconfig-dev
     - name: Install LibELF
       run: sudo apt install libelf-dev
+    - name: Install LLVM
+      run: sudo apt install -y llvm
+    - name: Install LibXDP Depedencies
+      run: sudo apt install -y libpcap-dev m4 gcc-multilib linux-tools-$(uname -r)
+    - name: Build LibXDP.
+      run: make libxdp
+    - name: Install LibXDP.
+      run: sudo make libxdp_install
     - name: List files
       run: ls -la
     - name: Create /etc/xdpfw directory.
