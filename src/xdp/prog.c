@@ -11,7 +11,7 @@
 #include <common/all.h>
 
 #include <xdp/utils/rl.h>
-#include <xdp/utils/logging.h>
+#include <xdp/utils/rule.h>
 #include <xdp/utils/stats.h>
 #include <xdp/utils/helpers.h>
 
@@ -332,316 +332,40 @@ int xdp_prog_main(struct xdp_md *ctx)
 #endif
 #endif
 
-    int action = 0;
-    u64 block_time = 1;
+    // Create rule context.
+    rule_ctx_t rule = {0};
+    rule.flow_pps = flow_pps;
+    rule.flow_bps = flow_bps;
+    rule.ip_pps = ip_pps;
+    rule.ip_bps = ip_bps;
+    rule.now = now;
+    rule.pkt_len = pkt_len;
+    rule.src_port = src_port;
+    rule.dst_port = dst_port;
+    rule.protocol = protocol;
 
+    rule.iph = iph;
+    rule.iph6 = iph6;
+    rule.tcph = tcph;
+    rule.udph = udph;
+    rule.icmph = icmph;
+    rule.icmph6 = icmp6h;
+
+#ifdef USE_NEW_LOOP
+    bpf_loop(MAX_FILTERS, process_rule, &rule, 0);
+#else
 #pragma unroll 30
     for (int i = 0; i < MAX_FILTERS; i++)
     {
-        u32 key = i;
-
-        filter_t *filter = bpf_map_lookup_elem(&map_filters, &key);
-
-        if (!filter || !filter->set)
+        if (process_rule(i, &rule))
         {
             break;
         }
-
-#ifdef ENABLE_RL_IP
-        // Check source IP rate limits.
-        if (filter->do_ip_pps && ip_pps < filter->ip_pps)
-        {
-            continue;
-        }
-
-        if (filter->do_ip_bps && ip_bps < filter->ip_bps)
-        {
-            continue;
-        }
+    }
 #endif
 
-#ifdef ENABLE_RL_FLOW
-        // Check source flow rate limits.
-        if (filter->do_flow_pps && flow_pps < filter->flow_pps)
-        {
-            continue;
-        }
-
-        if (filter->do_flow_bps && flow_bps < filter->flow_bps)
-        {
-            continue;
-        }
-#endif
-
-        // Match IP settings.
-        if (iph)
-        {
-            // Source address.
-            if (filter->ip.src_ip)
-            {
-                if (filter->ip.src_cidr == 32 && iph->saddr != filter->ip.src_ip)
-                {
-                    continue;
-                }
-
-                if (!is_ip_in_range(iph->saddr, filter->ip.src_ip, filter->ip.src_cidr))
-                {
-                    continue;
-                }
-            }
-
-            // Destination address.
-            if (filter->ip.dst_ip)
-            {
-                if (filter->ip.dst_cidr == 32 && iph->daddr != filter->ip.dst_ip)
-                {
-                    continue;
-                }
-                
-                if (!is_ip_in_range(iph->daddr, filter->ip.dst_ip, filter->ip.dst_cidr))
-                {
-                    continue;
-                }
-            }
-
-#if defined(ENABLE_IPV6) && defined(ALLOW_SINGLE_IP_V4_V6)
-            if ((filter->ip.src_ip6[0] != 0 || filter->ip.src_ip6[1] != 0 || filter->ip.src_ip6[2] != 0 || filter->ip.src_ip6[3] != 0) || (filter->ip.dst_ip6[0] != 0 || filter->ip.dst_ip6[1] != 0 || filter->ip.dst_ip6[2] != 0 || filter->ip.dst_ip6[3] != 0))
-            {
-                continue;
-            }
-#endif
-
-            // TOS.
-            if (filter->ip.do_tos && filter->ip.tos != iph->tos)
-            {
-                continue;
-            }
-
-            // Max TTL.
-            if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph->ttl)
-            {
-                continue;
-            }
-
-            // Min TTL.
-            if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph->ttl)
-            {
-                continue;
-            }
-
-            // Max packet length.
-            if (filter->ip.do_max_len && filter->ip.max_len < pkt_len)
-            {
-                continue;
-            }
-
-            // Min packet length.
-            if (filter->ip.do_min_len && filter->ip.min_len > pkt_len)
-            {
-                continue;
-            }
-        }
-#ifdef ENABLE_IPV6
-        else if (iph6)
-        {
-            // Source address.
-            if (filter->ip.src_ip6[0] != 0 && (iph6->saddr.in6_u.u6_addr32[0] != filter->ip.src_ip6[0] || iph6->saddr.in6_u.u6_addr32[1] != filter->ip.src_ip6[1] || iph6->saddr.in6_u.u6_addr32[2] != filter->ip.src_ip6[2] || iph6->saddr.in6_u.u6_addr32[3] != filter->ip.src_ip6[3]))
-            {
-                continue;
-            }
-
-            // Destination address.
-            if (filter->ip.dst_ip6[0] != 0 && (iph6->daddr.in6_u.u6_addr32[0] != filter->ip.dst_ip6[0] || iph6->daddr.in6_u.u6_addr32[1] != filter->ip.dst_ip6[1] || iph6->daddr.in6_u.u6_addr32[2] != filter->ip.dst_ip6[2] || iph6->daddr.in6_u.u6_addr32[3] != filter->ip.dst_ip6[3]))
-            {
-                continue;
-            }
-
-#ifdef ALLOW_SINGLE_IP_V4_V6
-            if (filter->ip.src_ip != 0 || filter->ip.dst_ip != 0)
-            {
-                continue;
-            }
-#endif
-
-            // Max TTL length.
-            if (filter->ip.do_max_ttl && filter->ip.max_ttl < iph6->hop_limit)
-            {
-                continue;
-            }
-
-            // Min TTL length.
-            if (filter->ip.do_min_ttl && filter->ip.min_ttl > iph6->hop_limit)
-            {
-                continue;
-            }
-
-            // Max packet length.
-            if (filter->ip.do_max_len && filter->ip.max_len < pkt_len)
-            {
-                continue;
-            }
-
-            // Min packet length.
-            if (filter->ip.do_min_len && filter->ip.min_len > pkt_len)
-            {
-                continue;
-            }
-        }
-#endif
-
-        // Check TCP matches.
-        if (filter->tcp.enabled)
-        {
-            if (!tcph)
-            {
-                continue;
-            }
-
-            // Source port checks.
-            if (filter->tcp.do_sport_min && ntohs(tcph->source) < filter->tcp.sport_min)
-            {
-                continue;
-            }
-
-            if (filter->tcp.do_sport_max && ntohs(tcph->source) > filter->tcp.sport_max)
-            {
-                continue;
-            }
-
-            // Destination port checks.
-            if (filter->tcp.do_dport_min && ntohs(tcph->dest) < filter->tcp.dport_min)
-            {
-                continue;
-            }
-
-            if (filter->tcp.do_dport_max && ntohs(tcph->dest) > filter->tcp.dport_max)
-            {
-                continue;
-            }
-
-            // URG flag.
-            if (filter->tcp.do_urg && filter->tcp.urg != tcph->urg)
-            {
-                continue;
-            }
-
-            // ACK flag.
-            if (filter->tcp.do_ack && filter->tcp.ack != tcph->ack)
-            {
-                continue;
-            }
-
-            // RST flag.
-            if (filter->tcp.do_rst && filter->tcp.rst != tcph->rst)
-            {
-                continue;
-            }
-
-            // PSH flag.
-            if (filter->tcp.do_psh && filter->tcp.psh != tcph->psh)
-            {
-                continue;
-            }
-
-            // SYN flag.
-            if (filter->tcp.do_syn && filter->tcp.syn != tcph->syn)
-            {
-                continue;
-            }
-
-            // FIN flag.
-            if (filter->tcp.do_fin && filter->tcp.fin != tcph->fin)
-            {
-                continue;
-            }
-
-            // ECE flag.
-            if (filter->tcp.do_ece && filter->tcp.ece != tcph->ece)
-            {
-                continue;
-            }
-
-            // CWR flag.
-            if (filter->tcp.do_cwr && filter->tcp.cwr != tcph->cwr)
-            {
-                continue;
-            }
-        }
-        // Check UDP matches.
-        else if (filter->udp.enabled)
-        {
-            if (!udph)
-            {
-                continue;
-            }
-
-            // Source port checks.
-            if (filter->udp.do_sport_min && ntohs(udph->source) < filter->udp.sport_min)
-            {
-                continue;
-            }
-
-            if (filter->udp.do_sport_max && ntohs(udph->source) > filter->udp.sport_max)
-            {
-                continue;
-            }
-
-            // Destination port checks.
-            if (filter->udp.do_dport_min && ntohs(udph->dest) < filter->udp.dport_min)
-            {
-                continue;
-            }
-
-            if (filter->udp.do_dport_max && ntohs(udph->dest) > filter->udp.dport_max)
-            {
-                continue;
-            }
-        }
-        else if (filter->icmp.enabled)
-        {
-            if (icmph)
-            {
-                // Code.
-                if (filter->icmp.do_code && filter->icmp.code != icmph->code)
-                {
-                    continue;
-                }
-
-                // Type.
-                if (filter->icmp.do_type && filter->icmp.type != icmph->type)
-                {
-                    continue;
-                }  
-            }
-#ifdef ENABLE_IPV6
-            else if (icmp6h)
-            {
-                // Code.
-                if (filter->icmp.do_code && filter->icmp.code != icmp6h->icmp6_code)
-                {
-                    continue;
-                }
-
-                // Type.
-                if (filter->icmp.do_type && filter->icmp.type != icmp6h->icmp6_type)
-                {
-                    continue;
-                }
-            }
-#endif
-        }
-
-#ifdef ENABLE_FILTER_LOGGING
-        if (filter->log > 0)
-        {
-            log_filter_msg(iph, iph6, src_port, dst_port, protocol, now, ip_pps, ip_bps, flow_pps, flow_bps, pkt_len, i);
-        }
-#endif
-        
-        // Matched.
-        action = filter->action;
-        block_time = filter->block_time;
-
+    if (rule.matched)
+    {
         goto matched;
     }
 #endif
@@ -652,12 +376,12 @@ int xdp_prog_main(struct xdp_md *ctx)
 
 #ifdef ENABLE_FILTERS
 matched:
-    if (action == 0)
+    if (rule.action == 0)
     {
         // Before dropping, update the block map.
-        if (block_time > 0)
+        if (rule.block_time > 0)
         {
-            u64 new_time = now + (block_time * NANO_TO_SEC);
+            u64 new_time = now + (rule.block_time * NANO_TO_SEC);
             
             if (iph)
             {
