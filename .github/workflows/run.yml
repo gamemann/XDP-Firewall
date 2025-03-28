@@ -29,12 +29,12 @@ jobs:
     - name: Create /etc/xdpfw directory.
       run: sudo mkdir -p /etc/xdpfw
     - name: Copy XDP program to /etc/xdpfw.
-      run: sudo cp -f ./build-output/xdp/xdp_prog.o /etc/xdpfw
+      run: sudo cp -f ./xdp/xdp_prog.o /etc/xdpfw
     - name: Add execute permissions to executable file
-      run: sudo chmod +x ./build-output/loader/xdpfw
+      run: sudo chmod +x ./loader/xdpfw
     - name: Create basic config file.
       run: echo 'verbose = 5; filters = ( { enabled = true; log = true; action = 0; tcp_enabled = true; tcp_dport = 22; } );' > ./basic.conf
     - name: Retrieve default network interface
       run: echo "INTERFACE=$(ip route | awk '/default/ {print $5}')" >> $GITHUB_ENV
     - name: Run XDP FW for 10 seconds using basic config and default network interface.
-      run: sudo ./build-output/loader/xdpfw -c ./basic.conf -t 10 -i ${{ env.INTERFACE }}
+      run: sudo ./loader/xdpfw -c ./basic.conf -t 10 -i ${{ env.INTERFACE }}
