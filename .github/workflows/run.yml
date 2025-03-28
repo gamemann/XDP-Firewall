@@ -1,12 +1,16 @@
 name: Run
 
 on:
-  workflow_run:
-    workflows: ["Build"]
-    types: [completed]
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
+  reuse_build:
+    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
   run:
+    needs: reuse_build
     runs-on: ubuntu-latest
 
     steps:
