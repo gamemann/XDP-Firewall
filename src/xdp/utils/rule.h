@@ -19,19 +19,21 @@ struct rule_ctx
     int action;
     u64 block_time;
 
+    int pkt_len;
+
     u64 ip_pps;
     u64 ip_bps;
 
     u64 flow_pps;
     u64 flow_bps;
 
-    u64 now;
-    int pkt_len;
-    u16 src_port;
 #ifdef ENABLE_FILTER_LOGGING
+    u64 now;
+
+    u8 protocol;
+    u16 src_port;
     u16 dst_port;
 #endif
-    u8 protocol;
 
     struct iphdr* iph;
     struct ipv6hdr* iph6;

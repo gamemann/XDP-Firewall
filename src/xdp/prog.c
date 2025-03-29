@@ -338,19 +338,22 @@ int xdp_prog_main(struct xdp_md *ctx)
     rule.flow_bps = flow_bps;
     rule.ip_pps = ip_pps;
     rule.ip_bps = ip_bps;
-    rule.now = now;
     rule.pkt_len = pkt_len;
-    rule.src_port = src_port;
+
 #ifdef ENABLE_FILTER_LOGGING
+    rule.now = now;
+    rule.protocol = protocol;
+    rule.src_port = src_port;
     rule.dst_port = dst_port;
 #endif
-    rule.protocol = protocol;
-
+    
     rule.iph = iph;
-    rule.iph6 = iph6;
+    
     rule.tcph = tcph;
     rule.udph = udph;
     rule.icmph = icmph;
+
+    rule.iph6 = iph6;
     rule.icmph6 = icmp6h;
 
 #ifdef USE_NEW_LOOP
