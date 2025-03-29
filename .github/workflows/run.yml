@@ -7,26 +7,19 @@ on:
     branches: [ master ]
 
 jobs:
-  reuse_build:
-    uses: gamemann/XDP-Firewall/.github/workflows/build.yml@master
   run:
-    needs: reuse_build
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - name: Download artifact from Build workflow
-      uses: actions/download-artifact@v4
-      with:
-        name: build-output
     - name: Run apt update
       run: sudo apt update
-    - name: Install LibConfig
-      run: sudo apt install libconfig-dev
     - name: Install LibELF
-      run: sudo apt install libelf-dev
+      run: sudo apt install -y libelf-dev
+    - name: Install LibConfig
+      run: sudo apt install -y libconfig-dev 
     - name: Install LLVM
       run: sudo apt install -y llvm
     - name: Install LibXDP Depedencies
@@ -35,17 +28,13 @@ jobs:
       run: make libxdp
     - name: Install LibXDP.
       run: sudo make libxdp_install
-    - name: List files
-      run: ls -la
-    - name: Create /etc/xdpfw directory.
-      run: sudo mkdir -p /etc/xdpfw
-    - name: Copy XDP program to /etc/xdpfw.
-      run: sudo cp -f ./xdp/xdp_prog.o /etc/xdpfw
-    - name: Add execute permissions to executable file
-      run: sudo chmod +x ./loader/xdpfw
+    - name: Make project
+      run: make
+    - name: Install project
+      run: sudo make install
     - name: Create basic config file.
       run: echo 'verbose = 5; filters = ( { enabled = true; log = true; action = 0; tcp_enabled = true; tcp_dport = 22; } );' > ./basic.conf
-    - name: Retrieve default network interface
+    - name: Retrieve default network interface.
       run: echo "INTERFACE=$(ip route | awk '/default/ {print $5}')" >> $GITHUB_ENV
-    - name: Run XDP FW for 10 seconds using basic config and default network interface.
-      run: sudo ./loader/xdpfw -c ./basic.conf -t 10 -i ${{ env.INTERFACE }}
+    - name: Run XDP Firewall for 10 seconds using basic config and default network interface.
+      run: sudo xdpfw -c ./basic.conf -t 10 -i ${{ env.INTERFACE }}
