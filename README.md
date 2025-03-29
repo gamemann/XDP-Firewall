@@ -386,6 +386,8 @@ This firewall supports both source **flow-based** (`flow_pps` and `flow_bps` set
 
 The reason source IP-based rate limiting is disabled by default is because both methods require seperate calculations which isn't ideal if both methods aren't used inside of filter rules. I've found most users prefer flow-based rate limiting which is why I decided to only enable that by default.
 
+Additionally, if you're encountering a large amount of spoofed packets, it is **highly recommended** that you disable rate limiting entirely, at least temporarily until you stop receiving the spoofed packets. This is because a large amount of spoofed packets from different IPs and ports will cause the rate limit BPF maps to rapidly recycle entries and this can cause very high CPU usage depending on how many spoofed packets are being sent and the host's hardware.
+
 ### Filter Logging
 This tool uses `bpf_ringbuf_reserve()` and `bpf_ringbuf_submit()` for filter match logging. At this time, there is no rate limit for the amount of log messages that may be sent. Therefore, if you're encountering a spoofed attack that is matching a filter rule with logging enabled, it will cause additional processing and disk load.
 
