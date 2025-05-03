@@ -188,6 +188,7 @@ Here are more details on the layout of the runtime configuration.
 | dst_ip6 | string | `NULL` | The destination IPv6 address to match (e.g. `fe80::ac21:14ff:fe4b:3a6d`). |
 | min_ttl | int | `NULL` | The minimum TTL (time-to-live) to match. |
 | max_ttl | int | `NULL` | The maximum TTL (time-to-live) to match. |
+| min_len | int | `NULL` | The minimum packet length to match (includes the entire packet including the ethernet header and payload). |
 | max_len | int | `NULL` | The maximum packet length to match (includes the entire packet including the ethernet header and payload). |
 | tos | int | `NULL` | The ToS (type-of-service) to match. |
 
