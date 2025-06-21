@@ -32,6 +32,15 @@ static void unpin_needed_maps(config__t* cfg, struct bpf_object* obj, int ignore
 {
     int ret;
 
+    // Unpin stats map.
+    if ((ret = unpin_bpf_map(obj, XDP_MAP_PIN_DIR, "map_stats")) != 0)
+    {
+        if (!ignore_errors)
+        {
+            log_msg(cfg, 1, 0, "[WARNING] Failed to un-pin BPF map 'map_stats' from file system (%d).", ret);
+        }
+    }
+
     // Unpin block map.
     if ((ret = unpin_bpf_map(obj, XDP_MAP_PIN_DIR, "map_block")) != 0)
     {
@@ -311,6 +320,16 @@ int main(int argc, char *argv[])
         // There are times where the BPF maps from the last run weren't cleaned up properly.
         // So it's best to attempt to unpin the maps before pinning while ignoring errors.
         unpin_needed_maps(&cfg, obj, 1);
+
+        // Pin the stats map.
+        if ((ret = pin_bpf_map(obj, XDP_MAP_PIN_DIR, "map_stats")) != 0)
+        {
+            log_msg(&cfg, 1, 0, "[WARNING] Failed to pin 'map_stats' to file system (%d)...", ret);
+        }
+        else
+        {
+            log_msg(&cfg, 3, 0, "BPF map 'map_stats' pinned to '%s/map_stats'.", XDP_MAP_PIN_DIR);
+        }
 
         // Pin the block maps.
         if ((ret = pin_bpf_map(obj, XDP_MAP_PIN_DIR, "map_block")) != 0)
