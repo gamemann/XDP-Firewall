@@ -49,7 +49,7 @@ static void unpin_needed_maps(config__t* cfg, struct bpf_object* obj, int ignore
             log_msg(cfg, 1, 0, "[WARNING] Failed to un-pin BPF map 'map_block' from file system (%d).", ret);
         }
     }
-
+#ifdef ENABLE_IPV6
     // Unpin block (IPv6) map.
     if ((ret = unpin_bpf_map(obj, XDP_MAP_PIN_DIR, "map_block6")) != 0)
     {
@@ -58,6 +58,7 @@ static void unpin_needed_maps(config__t* cfg, struct bpf_object* obj, int ignore
             log_msg(cfg, 1, 0, "[WARNING] Failed to un-pin BPF map 'map_block6' from file system (%d).", ret);
         }
     }
+#endif
 
 #ifdef ENABLE_IP_RANGE_DROP
     // Unpin IPv4 range drop map.
