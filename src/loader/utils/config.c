@@ -808,7 +808,7 @@ int save_cfg(config__t* cfg, const char* file_path)
     {
         if (cfg->interfaces_cnt > 1)
         {
-            setting = config_setting_add(root, ", CONFIG_TYPE_LIST);
+            setting = config_setting_add(root, "interface", CONFIG_TYPE_LIST);
 
             for (int i = 0; i < cfg->interfaces_cnt; i++)
             {
