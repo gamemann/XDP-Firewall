@@ -58,3 +58,12 @@
 // If enabled, uses a newer bpf_loop() function when choosing a source port for a new connection.
 // This allows for a much higher source port range. However, it requires a more recent kernel.
 #define USE_NEW_LOOP
+
+// Whether to enable chaining multiple XDP programs with this tool (1 = enable. 0 = disable).
+#define XDP_MULTIPROG_ENABLED 1
+
+// The XDP program's run priority (used for running multiple XDP programs together).
+#define XDP_MULTIPROG_PRIORITY 10
+
+// The action that indicates it should go onto the next program (default XDP_PASS).
+#define XDP_MULTIPROG_ACTION XDP_PASS
