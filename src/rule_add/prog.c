@@ -92,8 +92,10 @@ int main(int argc, char *argv[])
         printf("  --max-len         The maximum packet length to match.\n");
         printf("  --tos             The IP Type of Service to match.\n\n");
 
-        printf("  --pps             The minimum packet rate (per second) to match.\n");
-        printf("  --bps             The minimum byte rate (per second) to match\n\n");
+        printf("  --ip-pps          The minimum IP-level packet rate (per second) to match.\n");
+        printf("  --ip-bps          The minimum IP-level byte rate (per second) to match.\n");
+        printf("  --flow-pps        The minimum flow-level packet rate (per second) to match.\n");
+        printf("  --flow-bps        The minimum flow-level byte rate (per second) to match.\n\n");
         
         printf("  --tcp             Enable or disables matching on the TCP protocol.\n");
         printf("  --tsport          The TCP source port to match on.\n");
