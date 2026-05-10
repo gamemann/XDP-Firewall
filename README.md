@@ -439,20 +439,25 @@ Basically, Clang/LLVM 12 or above is required and I'd recommend running Linux ke
 At this time, there are no plans to make this firewall stateful. There is a chance I may make a separate firewall with basic connection tracking, but I have no ETA on that and haven't started its development. With that said, I cannot share code for things like layer-7 filters or a full TCP proxy with SYN cookies support.
 
 ## 🌟 My Other XDP Projects
-I just wanted to share other open source projects I've made which also utilize XDP (or AF_XDP sockets) for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
+I just wanted to share other open source projects I've made which also utilize XDP and AF_XDP sockets for those interested. I hope code from these other projects help programmers trying to utilize XDP in their own projects!
 
 ### [XDP Proxy](https://github.com/gamemann/XDP-Proxy)
-A *stateless*, high-performance NAT-like proxy that attaches to the [XDP](https://www.iovisor.org/technology/xdp) hook in the Linux kernel using [(e)BPF](https://ebpf.io/) for fast packet processing.
+A *stateless*, high-performance NAT-like proxy that uses **source-port mapping**, similar to [IPTables](https://linux.die.net/man/8/iptables) and [NFTables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page), to forward packets to different destination IPs and ports based on configurable rules.
 
-This proxy forwards packets based on configurable rules and performs **source-port mapping**, similar to [IPTables](https://linux.die.net/man/8/iptables) and [NFTables](https://wiki.nftables.org/wiki-nftables/index.php/Main_Page).
+![XDP Proxy Demo](./images/demo-xdpproxy.gif)
+
+### [XDP Stats](https://github.com/gamemann/xdpstats-rs)
+A packet and byte counting tool that utilizes XDP and AF_XDP sockets for calculating stats. This project is used for benchmarking and testing XDP programs and AF_XDP socket performance.
+
+![XDP Stats Demo](./images/demo-xdpstats.gif)
+
+### [Packet Batch (AF_XDP)](https://github.com/Packet-Batch/pktbatch-rs)
+A tool that generates and sends packets using technologies such as **fast [AF_XDP](https://docs.kernel.org/networking/af_xdp.html) Linux sockets**. This is used for penetration testing including [Denial of Service](https://www.cloudflare.com/learning/ddos/glossary/denial-of-service/) (DoS), network monitoring, and more!
+
+![Packet Batch Demo](./images/demo-pktbatch.gif)
 
 ### [Kilimanjaro](https://github.com/gamemann/Kilimanjaro)
 This is a complex packet processing/forwarding/dropping project I made for a gaming community I was a part of that utilizes XDP, AF_XDP, and the IPIP network protocol. I no longer work on/maintain the project, but the source code may be very helpful to other XDP developers, especially when it comes to manipulating packets inside of XDP and such.
-
-### [Packet Batch (AF_XDP)](https://github.com/Packet-Batch/PB-AF-XDP)
-An application that utilizes fast [AF_XDP](https://docs.kernel.org/networking/af_xdp.html) Linux sockets to generate and send network packets. This is used for penetration testing including [Denial of Service](https://www.cloudflare.com/learning/ddos/glossary/denial-of-service/) (DoS), network monitoring, and more!
-
-While this application doesn't utilize native XDP or (e)BPF, I do feel it should be mentioned here. AF_XDP sockets are very fast and often used with raw XDP programs via the `bpf_redirect_map()` function call (also see my [XDP Stats](https://github.com/gamemann/XDP-Stats) project which calculates stats in raw XDP and AF_XDP programs).
 
 ## 🙌 Credits
 * [Christian Deacon](https://github.com/gamemann) - Creator.
