@@ -115,8 +115,6 @@ make
 sudo make install
 ```
 
-![Script Build Demo](./images/build_make.gif)
-
 ## 💻 CLI Usage
 The following command line arguments are supported when running the firewall.
 
